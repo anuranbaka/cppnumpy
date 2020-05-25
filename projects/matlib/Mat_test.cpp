@@ -14,15 +14,11 @@ int main (){
     printf("matrix x\n");
     x.print();
 
-    m.T();
-    printf("matrix m\n");
-    m.print();
+    x = m;
+    printf("matrix x\n");
+    x.print();
 
-    n.T();
-    printf("matrix n\n");
-    n.print();
-
-    x.T();
+    x = n;
     printf("matrix x\n");
     x.print();
 

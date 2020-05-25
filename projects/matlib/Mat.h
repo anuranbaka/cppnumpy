@@ -8,6 +8,7 @@ class Mat {
     size_t ndims = 2;
     size_t* dims;
     Type* data;
+    int64_t* refCount;
     
     void errorCheck(bool e, const char* message) const{
         if(e){
@@ -27,60 +28,76 @@ class Mat {
             return rows()*columns();
         }
         Mat(size_t a, size_t b){
+            refCount = new int64_t;
+            *refCount = 1;
             data = new Type[a*b];
             dims = new size_t[ndims];
             dims[0] = a;
             dims[1] = b;
         }
         Mat(std::initializer_list<Type> list, size_t a, size_t b){
+            refCount = new int64_t;
+            *refCount = 1;
             dims = new size_t[ndims];
             dims[0] = a;
             dims[1] = b;
             data = new Type[a*b];
             size_t i = 0;
             for(auto elem : list){
-                this->errorCheck(i >= this->size(), "Initializer out of bounds");
+                this->errorCheck(i >= this->size(), "Initializer out of bounds\n");
                 this->data[i] = elem;
                 i++;
             }
         }
         Mat(const Mat& b){
-            data = new Type[b.size()];
-            dims = new size_t[b.ndims];
-            dims[0] = b.rows();
-            dims[1] = b.columns();
-            for(size_t i = 0; i < this->size(); i++){
-                this->operator()(0,i) = b(0,i);
-            }
-
+            refCount = b.refCount;
+            (*refCount)++;
+            printf("Copy Constructor: refCount is now %ld\n", *refCount);
+            data = b.data;
+            dims = b.dims;
         }
         ~Mat(){
-            delete []data;
-            delete []dims;
+            (*refCount)--;
+            printf("Destructor: refCount is now %ld\n", *refCount);
+            errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
+            if(*refCount == 0){
+                delete refCount;
+                delete []data;
+                delete []dims;
+            }
         }
         Type& operator() (size_t a, size_t b){
-            this->errorCheck(a < 0 || b < 0 || a + b > this->size(),"Element access outside matrix scope");
+            this->errorCheck(a < 0 || b < 0 || a + b > this->size(),"Element access outside matrix scope\n");
             return data[a*columns() + b];
         }
         const Type& operator() (size_t a, size_t b) const{
-            this->errorCheck(a < 0 || b < 0 || a + b > this->size(),"Element access outside matrix scope");
+            this->errorCheck(a < 0 || b < 0 || a + b > this->size(),"Element access outside matrix scope\n");
             return data[a*columns() + b];
         }
-        Mat operator= (const Mat b){
-            this->errorCheck(b.size() != this->size(),"Matrix size mismatch during assignment");
-            for(size_t i = 0; i < this->size(); i++){
-                this->operator()(0,i) = b(0,i);
+        Mat& operator= (const Mat &b){
+            (*refCount)--;
+            printf("Assignment: refCount is now %ld\n", *refCount);
+            errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
+            if(*refCount == 0){
+                delete this->refCount;
+                delete[] this->data;
+                delete[] this->dims;
             }
+            this->refCount = b.refCount;
+            (*refCount)++;
+            printf("Assignment: refCount is now %ld\n", *refCount);
+            this->data = b.data;
+            this->dims = b.dims;
             return *this;
         }
-        Mat operator+ (Mat b){
+        Mat operator+ (Mat &b){
             size_t i = 0;
             size_t* x;
             if(this->ndims >= b.ndims) x = new size_t[this->ndims];
             else x = new size_t[b.ndims];
 
             for(size_t n = 0; n < this->ndims; n++){
-                this->errorCheck(this->dims[n] != 1 && this->dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned");
+                this->errorCheck(this->dims[n] != 1 && this->dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
                 if(this->dims[n] == 1) x[i] = b.dims[i];
                 else x[i] = this->dims[i];
                 i++;
@@ -96,14 +113,14 @@ class Mat {
             }
             return result;
         }
-        Mat operator- (Mat b){
+        Mat operator- (Mat &b){
             size_t i = 0;
             size_t* x;
             if(this->ndims >= b.ndims) x = new size_t[this->ndims];
             else x = new size_t[b.ndims];
 
             for(size_t n = 0; n < this->ndims; n++){
-                this->errorCheck(this->dims[n] != 1 && this->dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned");
+                this->errorCheck(this->dims[n] != 1 && this->dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
                 if(this->dims[n] == 1) x[i] = b.dims[i];
                 else x[i] = this->dims[i];
                 i++;
@@ -126,9 +143,9 @@ class Mat {
             }
             return result;
         }
-        Mat operator^ (Mat b){
+        Mat operator^ (Mat &b){
             if(this->columns() != b.rows()){
-                fprintf(stderr,"Matrix size mismatch");
+                fprintf(stderr,"Matrix size mismatch\n");
                 exit(1);
             }
             Mat<Type> result(this->rows(),b.columns());
@@ -145,8 +162,8 @@ class Mat {
             return result;
         }
         void T(Mat& dest){
-            this->errorCheck(this->size() != dest.size(),"Matrix size mismatch");
-            this->errorCheck(this->data == dest.data, "Source and destination matrix share same backing data");
+            this->errorCheck(this->size() != dest.size(),"Matrix size mismatch\n");
+            this->errorCheck(this->data == dest.data, "Source and destination matrix share same backing data\n");
             for(size_t i=0;i<this->size();i++){
                 dest(0,i) = this->operator()(i%this->rows(),i/this->rows());
             }
