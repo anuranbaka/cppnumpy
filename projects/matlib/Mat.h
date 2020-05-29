@@ -3,14 +3,26 @@
 #include <initializer_list>
 using namespace std;
 
+template <class Type>
+class MatIter;
+
 template <class Type = double>
 class Mat {
-    size_t ndims = 2;
-    size_t* dims;
-    //size_t* strides;
+    friend class MatIter<Type>;
+
+    typedef MatIter<Type> iterator;
+    typedef ptrdiff_t difference_type;
+    typedef size_t size_type;
+    typedef Type value_type;
+    typedef Type * pointer;
+    typedef Type & reference;
+
+    size_type ndims = 2;
+    size_type* dims;
+    size_type* strides;
     Type* data;
     int64_t* refCount;
-    
+
     void errorCheck(bool e, const char* message) const{
         if(e){
             fprintf(stderr, "%s", message);
@@ -19,37 +31,43 @@ class Mat {
         return;
     }
     public:
-        size_t rows() const{
+        iterator begin(){
+            return iterator(*this, 0);
+        }
+        iterator end(){
+            return iterator(*this, size());
+        }
+        size_type rows() const{
             return this->dims[0];
         }
-        size_t columns() const{
+        size_type columns() const{
             return this->dims[1];
         }
-        size_t size() const{
+        size_type size() const{
             return rows()*columns();
         }
-        Mat(size_t a, size_t b){
+        Mat(size_type a, size_type b){
             refCount = new int64_t;
             *refCount = 1;
             data = new Type[a*b];
-            dims = new size_t[ndims];
+            dims = new size_type[ndims];
             dims[0] = a;
             dims[1] = b;
-            //strides = new size_t[ndims];
-            //strides[0] = sizeof(Type);
-            //strides[1] = sizeof(Type)*columns();
+            strides = new size_type[ndims];
+            strides[0] = 1;
+            strides[1] = columns();
         }
-        Mat(std::initializer_list<Type> list, size_t a, size_t b){
+        Mat(std::initializer_list<Type> list, size_type a, size_type b){
             refCount = new int64_t;
             *refCount = 1;
-            dims = new size_t[ndims];
+            dims = new size_type[ndims];
             dims[0] = a;
             dims[1] = b;
-            //strides = new size_t[ndims];
-            //strides[0] = sizeof(Type);
-            //strides[1] = sizeof(Type)*columns();
+            strides = new size_type[ndims];
+            strides[0] = 1;
+            strides[1] = columns();
             data = new Type[a*b];
-            size_t i = 0;
+            size_type i = 0;
             for(auto elem : list){
                 errorCheck(i >= size(), "Initializer out of bounds\n");
                 data[i] = elem;
@@ -60,8 +78,12 @@ class Mat {
             refCount = b.refCount;
             (*refCount)++;
             data = b.data;
-            dims = b.dims;
-            //strides = b.strides;
+            dims = new size_type[ndims];
+            dims[0] = b.dims[0];
+            dims[1] = b.dims[1];
+            strides = new size_type[ndims];
+            strides[0] = b.strides[0];
+            strides[1] = b.strides[1];
         }
         ~Mat(){
             (*refCount)--;
@@ -69,19 +91,20 @@ class Mat {
             if(*refCount == 0){
                 delete refCount;
                 delete []data;
-                delete []dims;
-                //delete []strides;
             }
+            delete []dims;
+            delete []strides;
         }
-        Type& operator() (size_t a, size_t b){
+        Type& operator() (size_type a, size_type b){
             errorCheck(a < 0 || b < 0 || a + b > size(),"Element access outside matrix scope\n");
-            return data[a*columns() + b];
-            //return *(data + a*strides[1] + b*strides[0]);
+            return data[a*strides[1] + b*strides[0]];
         }
-        const Type& operator() (size_t a, size_t b) const{
+        const Type& operator() (size_type a, size_type b) const{
             errorCheck(a < 0 || b < 0 || a + b > size(),"Element access outside matrix scope\n");
-            return data[a*columns() + b];
-            //return *(data + a*strides[1] + b*strides[0]);
+            return data[a*strides[1] + b*strides[0]];
+        }
+        Type& operator() (iterator i){
+            return data[i.position];
         }
         Mat& operator= (const Mat &b){
             (*refCount)--;
@@ -89,80 +112,84 @@ class Mat {
             if(*refCount == 0){
                 delete refCount;
                 delete[] data;
-                delete[] dims;
-                //delete[] strides;
             }
+            delete[] dims;
+            delete[] strides;
             refCount = b.refCount;
             (*refCount)++;
             data = b.data;
-            dims = b.dims;
-            //strides = b.strides;
+            dims = new size_type[ndims];
+            dims[0] = b.dims[0];
+            dims[1] = b.dims[1];
+            strides = new size_type[ndims];
+            strides[0] = b.strides[0];
+            strides[1] = b.strides[1];
             return *this;
         }
-        Mat operator+ (Mat &b){
-            size_t i = 0;
-            size_t* x;
-            if(ndims >= b.ndims) x = new size_t[ndims];
-            else x = new size_t[b.ndims];
+        Mat operator+ (const Mat &b){
+            size_type i = 0;
+            size_type* x;
+            if(ndims >= b.ndims) x = new size_type[ndims];
+            else x = new size_type[b.ndims];
 
-            for(size_t n = 0; n < ndims; n++){
+            for(size_type n = 0; n < ndims; n++){
                 errorCheck(dims[n] != 1 && dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
                 if(dims[n] == 1) x[i] = b.dims[i];
                 else x[i] = dims[i];
                 i++;
             }
-            Mat<Type> result(x[0], x[1]); //update later when higher dimension support
+            Mat<Type> result(x[0], x[1]);
             delete []x;
 
-            size_t width;
+            size_type width;
             if(columns() > b.columns()) width = columns();
             else width = b.columns();
-            for(size_t i = 0; i < result.size(); i++){
+            for(size_type i = 0; i < result.size(); i++){
                 result(0,i) = operator()(i/width%rows(),i%columns()) + b(i/width%b.rows(),i%b.columns());
             }
             return result;
         }
-        Mat operator- (Mat &b){
-            size_t i = 0;
-            size_t* x;
-            if(ndims >= b.ndims) x = new size_t[ndims];
-            else x = new size_t[b.ndims];
+        Mat operator- (const Mat &b){
+            size_type i = 0;
+            size_type* x;
+            if(ndims >= b.ndims) x = new size_type[ndims];
+            else x = new size_type[b.ndims];
 
-            for(size_t n = 0; n < ndims; n++){
+            for(size_type n = 0; n < ndims; n++){
                 errorCheck(dims[n] != 1 && dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
                 if(dims[n] == 1) x[i] = b.dims[i];
                 else x[i] = dims[i];
                 i++;
             }
-            Mat<Type> result(x[0], x[1]); //update later when higher dimension support
+            Mat<Type> result(x[0], x[1]);
             delete []x;
 
-            size_t width;
+            size_type width;
             if(columns() > b.columns()) width = columns();
             else width = b.columns();
-            for(size_t i = 0; i < result.size(); i++){
+            for(size_type i = 0; i < result.size(); i++){
                 result(0,i) = operator()(i/width%rows(),i%columns()) - b(i/width%b.rows(),i%b.columns());
             }
             return result;
         }
         Mat operator- (){
             Mat<Type> result(rows(),columns());
-            for(size_t i = 0; i < size(); i++){
+            for(size_type i = 0; i < size(); i++){ //change this to iterator
                 result(0,i) = operator()(0,i) * -1;
             }
             return result;
         }
-        Mat operator^ (Mat &b){
+        Mat operator^ (const Mat &b){
             if(columns() != b.rows()){
                 fprintf(stderr,"Matrix size mismatch\n");
                 exit(1);
             }
             Mat<Type> result(rows(),b.columns());
             Type sum;
-            for(size_t x = 0; x < rows(); x++){
-                for(size_t i = 0; i<b.columns();i++){
+            for(size_type x = 0; x < rows(); x++){
+                for(size_type i = 0; i<b.columns();i++){
                     sum = 0;
-                    for(size_t n = 0; n< columns(); n++){
+                    for(size_type n = 0; n< columns(); n++){
                         sum += operator()(x,n)*b(n,i);
                     }
                     result(x,i) = sum;
@@ -173,26 +200,79 @@ class Mat {
         void T(Mat& dest){
             errorCheck(size() != dest.size(),"Matrix size mismatch\n");
             errorCheck(data == dest.data, "Source and destination matrix share same backing data\n");
-            for(size_t i=0;i<size();i++){
+            for(size_type i=0;i<size();i++){
                 dest(0,i) = operator()(i%rows(),i/rows());
             }
-            size_t temp = dest.dims[0];
+            size_type temp = dest.dims[0];
             if(columns() != dest.rows()) dest.dims[0] = dest.dims[1];
             if(rows() != dest.columns()) dest.dims[1] = temp;
             return;
         }
         Mat T(){
             Mat<Type> dest(columns(),rows());
-            for(size_t i=0;i<size();i++){
+            for(size_type i=0;i<size();i++){
                 dest(0,i) = operator()(i%rows(),i/rows());
             }
             return dest;
         }
-        void print(){
-            for(size_t i = 0; i<size();i++){
-                printf("%g",operator()(0,i));
-                if(i%columns() == columns() - 1) printf("\n");
-                else printf(", ");
-            }
+        Mat t() const{
+            Mat<Type> dest(*this);
+            dest.strides[0] = strides[1];
+            dest.strides[1] = strides[0];
+            dest.dims[0] = dims[1];
+            dest.dims[1] = dims[0];
+            return dest;
         }
+        void print(){
+            size_t n = 0;
+            for(iterator i = begin(); i != end(); i++){
+            //for(iterator i : *this){
+                printf("%g", operator()(i));
+                n++;
+                if(n%columns() != 0) printf(", ");
+                else printf("\n");
+            }
+            return;
+        }
+};
+
+template <class Type>
+class MatIter{
+    public:
+        Mat<Type>& matrix;
+        size_t position;
+        MatIter(Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
+        
+        bool operator==(MatIter b){
+            matrix.errorCheck(matrix.data != b.matrix.data, "Comparison between iterators of different matrices");
+            if(position == b.position) return true;
+            else return false;
+        }
+        bool operator!=(MatIter b){
+            matrix.errorCheck(matrix.data != b.matrix.data, "Comparison between iterators of different matrices");
+            if(position != b.position) return true;
+            else return false;
+        }
+        MatIter& operator++(){
+            position += matrix.strides[0];
+            if(position%matrix.rows() == 0) position -= matrix.strides[0]*matrix.rows();
+            position += matrix.strides[1];
+            return *this;
+        }
+        MatIter operator++(int){
+            MatIter<Type> clone(*this);
+            if(position%matrix.strides[1] == matrix.strides[1] - 1 && position >= matrix.strides[0]*(matrix.columns() - 1)){
+                if(position == matrix.size() - 1) position = matrix.size();
+                else{
+                    position -= matrix.strides[0]*(matrix.columns() - 1);
+                    position += matrix.strides[1];
+                }
+            }
+            else position += matrix.strides[0];
+            return clone;
+        }
+        Type & operator*(){
+            return matrix.data[position];
+        }
+
 };
