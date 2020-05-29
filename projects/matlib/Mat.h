@@ -174,8 +174,8 @@ class Mat {
         }
         Mat operator- (){
             Mat<Type> result(rows(),columns());
-            for(size_type i = 0; i < size(); i++){ //change this to iterator
-                result(0,i) = operator()(0,i) * -1;
+            for(auto i : *this){ //change this to iterator
+                result(0,i) = i * -1;
             }
             return result;
         }
@@ -225,9 +225,8 @@ class Mat {
         }
         void print(){
             size_t n = 0;
-            for(iterator i = begin(); i != end(); i++){
-            //for(iterator i : *this){
-                printf("%g", operator()(i));
+            for(auto i : *this){
+                printf("%g", (double)i);
                 n++;
                 if(n%columns() != 0) printf(", ");
                 else printf("\n");
@@ -254,9 +253,14 @@ class MatIter{
             else return false;
         }
         MatIter& operator++(){
-            position += matrix.strides[0];
-            if(position%matrix.rows() == 0) position -= matrix.strides[0]*matrix.rows();
-            position += matrix.strides[1];
+            if(position%matrix.strides[1] == matrix.strides[1] - 1 && position >= matrix.strides[0]*(matrix.columns() - 1)){
+                if(position == matrix.size() - 1) position = matrix.size();
+                else{
+                    position -= matrix.strides[0]*(matrix.columns() - 1);
+                    position += matrix.strides[1];
+                }
+            }
+            else position += matrix.strides[0];
             return *this;
         }
         MatIter operator++(int){
