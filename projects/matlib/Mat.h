@@ -46,7 +46,7 @@ class Mat {
         size_type size() const{
             return rows()*columns();
         }
-        Mat(size_type a, size_type b){
+        Mat(size_type a = 1, size_type b = 1){
             refCount = new int64_t;
             *refCount = 1;
             data = new Type[a*b];
@@ -230,6 +230,27 @@ class Mat {
                 n++;
                 if(n%columns() != 0) printf(", ");
                 else printf("\n");
+            }
+            return;
+        }
+        Mat copy(){
+                Mat<Type> dest(rows(),columns());
+                size_t n = 0;
+                for(auto i : *this){
+                    dest(0,n) = i;
+                    n++;
+                }
+                return dest;
+        }
+        void copy(Mat<Type>& dest){
+            errorCheck(dest.ndims != ndims, "Matrix dimension mismatch");
+            for(size_t i = 0; i > dest.ndims; i++){
+                errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
+            }
+            size_t n = 0;
+            for(auto i : *this){
+                dest(0,n) = i;
+                n++;
             }
             return;
         }

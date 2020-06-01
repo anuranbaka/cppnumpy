@@ -43,5 +43,10 @@ int main (){
     printf("matrix multiplication n ^ x\n");
     output.print();
 
+    Mat<> newMat(2,4);
+    m.copy(newMat);
+    printf("newMat = m\n");
+    newMat.print();
+
     return 0;
 }
