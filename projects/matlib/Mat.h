@@ -106,6 +106,26 @@ class Mat {
         Type& operator() (iterator i){
             return data[i.position];
         }
+        Mat roi(int rowStart = -1, int rowEnd = -1, int colStart = -1, int colEnd = -1){
+            errorCheck(rowStart < -1 || rowStart > static_cast<int>(columns()), "roi argument 1 invalid");
+            errorCheck(rowEnd < -1 || rowEnd > static_cast<int>(columns()), "roi argument 2 invalid");
+            errorCheck(colStart < -1 || colStart > static_cast<int>(rows()), "roi argument 3 invalid");
+            errorCheck(colEnd < -1 || colEnd > static_cast<int>(rows()), "roi argument 4 invalid");
+            
+            if(rowStart == -1) rowStart = 0;
+            if(rowEnd == -1) rowEnd = static_cast<int>(columns());
+            if(colStart == -1) colStart = 0;
+            if(colEnd == -1) colEnd = static_cast<int>(rows());
+            Mat<Type> result(colEnd-colStart,rowEnd-rowStart);
+            int x = 0;
+            for(int i = colStart; i < colEnd; i++){
+                for(int n = rowStart; n < rowEnd; n++){
+                    result(0,x) = operator()(i,n);
+                    x++;
+                }
+            }
+            return result;
+        }
         Mat& operator= (const Mat &b){
             (*refCount)--;
             errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
@@ -244,7 +264,7 @@ class Mat {
         }
         void copy(Mat<Type>& dest){
             errorCheck(dest.ndims != ndims, "Matrix dimension mismatch");
-            for(size_t i = 0; i > dest.ndims; i++){
+            for(size_type i = 0; i > dest.ndims; i++){
                 errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
             }
             size_t n = 0;

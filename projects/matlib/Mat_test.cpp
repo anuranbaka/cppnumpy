@@ -4,6 +4,7 @@ int main (){
     Mat<double> m({1,2,3,4,5,6,7,8},2,4);
     Mat<> n({1,2,3},1,3);
     Mat<> x({1,2,3,4,5,6,7,8,9},3,3);
+    Mat<> y({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23},4,6);
     Mat<> output(1,1);
 
     printf("matrix m\n");
@@ -15,6 +16,9 @@ int main (){
     printf("matrix x\n");
     x.print();
 
+    printf("matrix y\n");
+    y.print();
+
     output = x.t();
     printf("transpose of x\n");
     output.print();
@@ -23,8 +27,8 @@ int main (){
     printf("transpose of m\n");
     output.print();
 
-    output = n.t();
-    printf("transpose of n\n");
+    output = y.t();
+    printf("transpose of y\n");
     output.print();
 
     output = n + x;
@@ -45,8 +49,20 @@ int main (){
 
     Mat<> newMat(2,4);
     m.copy(newMat);
-    printf("newMat = m\n");
+    printf("m.copy(newMat)\n");
     newMat.print();
+
+    output = m.roi(1,3);
+    printf("m.roi(1,3)\n");
+    output.print();
+
+    output = x.roi(1,-1,1);
+    printf("x.roi(1,-1,1)\n");
+    output.print();
+
+    output = y.roi(2,5,1,3);
+    printf("y.roi(2,5,1,3)\n");
+    output.print();
 
     return 0;
 }
