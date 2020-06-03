@@ -20,6 +20,7 @@ class Mat {
     size_type ndims = 2;
     size_type* dims;
     size_type* strides;
+    Type* memory; 
     Type* data;
     int64_t* refCount;
 
@@ -35,7 +36,7 @@ class Mat {
             return iterator(*this, 0);
         }
         iterator end(){
-            return iterator(*this, size());
+            return iterator(*this, strides[0]*columns() + strides[1]*rows());
         }
         size_type rows() const{
             return this->dims[0];
@@ -49,7 +50,8 @@ class Mat {
         Mat(size_type a = 1, size_type b = 1){
             refCount = new int64_t;
             *refCount = 1;
-            data = new Type[a*b];
+            memory = new Type[a*b];
+            data = memory;
             dims = new size_type[ndims];
             dims[0] = a;
             dims[1] = b;
@@ -66,7 +68,8 @@ class Mat {
             strides = new size_type[ndims];
             strides[0] = 1;
             strides[1] = columns();
-            data = new Type[a*b];
+            memory = new Type[a*b];
+            data = memory;
             size_type i = 0;
             for(auto elem : list){
                 errorCheck(i >= size(), "Initializer out of bounds\n");
@@ -77,6 +80,7 @@ class Mat {
         Mat(const Mat& b){
             refCount = b.refCount;
             (*refCount)++;
+            memory = b.memory;
             data = b.data;
             dims = new size_type[ndims];
             dims[0] = b.dims[0];
@@ -90,7 +94,7 @@ class Mat {
             errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
             if(*refCount == 0){
                 delete refCount;
-                delete []data;
+                delete []memory;
             }
             delete []dims;
             delete []strides;
@@ -111,19 +115,17 @@ class Mat {
             errorCheck(rowEnd < -1 || rowEnd > static_cast<int>(columns()), "roi argument 2 invalid");
             errorCheck(colStart < -1 || colStart > static_cast<int>(rows()), "roi argument 3 invalid");
             errorCheck(colEnd < -1 || colEnd > static_cast<int>(rows()), "roi argument 4 invalid");
-            
+
             if(rowStart == -1) rowStart = 0;
             if(rowEnd == -1) rowEnd = static_cast<int>(columns());
             if(colStart == -1) colStart = 0;
             if(colEnd == -1) colEnd = static_cast<int>(rows());
-            Mat<Type> result(colEnd-colStart,rowEnd-rowStart);
-            int x = 0;
-            for(int i = colStart; i < colEnd; i++){
-                for(int n = rowStart; n < rowEnd; n++){
-                    result(0,x) = operator()(i,n);
-                    x++;
-                }
-            }
+            errorCheck(rowStart == rowEnd || colStart == colEnd, "roi dim cannot equal 0");
+
+            Mat<Type> result(*this);
+            result.dims[0] = colEnd-colStart;
+            result.dims[1] = rowEnd-rowStart;
+            result.data = &memory[colStart*columns() + rowStart];
             return result;
         }
         Mat& operator= (const Mat &b){
@@ -194,8 +196,10 @@ class Mat {
         }
         Mat operator- (){
             Mat<Type> result(rows(),columns());
-            for(auto i : *this){ //change this to iterator
-                result(0,i) = i * -1;
+            size_type n = 0;
+            for(auto i : *this){
+                result(0,n) = i * -1;
+                n++;
             }
             return result;
         }
@@ -209,7 +213,7 @@ class Mat {
             for(size_type x = 0; x < rows(); x++){
                 for(size_type i = 0; i<b.columns();i++){
                     sum = 0;
-                    for(size_type n = 0; n< columns(); n++){
+                    for(size_type n = 0; n < columns(); n++){
                         sum += operator()(x,n)*b(n,i);
                     }
                     result(x,i) = sum;
@@ -294,8 +298,11 @@ class MatIter{
             else return false;
         }
         MatIter& operator++(){
-            if(position%matrix.strides[1] == matrix.strides[1] - 1 && position >= matrix.strides[0]*(matrix.columns() - 1)){
-                if(position == matrix.size() - 1) position = matrix.size();
+            size_t offset = matrix.strides[0]*(matrix.columns()-1);
+            if((position-offset)%matrix.strides[1] == 0 && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0] + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns() + matrix.strides[1]*matrix.rows(); //end condition
+                }
                 else{
                     position -= matrix.strides[0]*(matrix.columns() - 1);
                     position += matrix.strides[1];
@@ -306,8 +313,11 @@ class MatIter{
         }
         MatIter operator++(int){
             MatIter<Type> clone(*this);
-            if(position%matrix.strides[1] == matrix.strides[1] - 1 && position >= matrix.strides[0]*(matrix.columns() - 1)){
-                if(position == matrix.size() - 1) position = matrix.size();
+            size_t offset = matrix.strides[0]*(matrix.columns()-1);
+            if((position-offset)%matrix.strides[1] == 0 && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0] + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns() + matrix.strides[1]*matrix.rows(); //end condition
+                }
                 else{
                     position -= matrix.strides[0]*(matrix.columns() - 1);
                     position += matrix.strides[1];
