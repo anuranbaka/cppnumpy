@@ -257,6 +257,16 @@ class Mat {
             }
             return;
         }
+        void print(FILE* output){
+            size_t n = 0;
+            for(auto i : *this){
+                fprintf(output, "%g", (double)i);
+                n++;
+                if(n%columns() != 0) fprintf(output, ", ");
+                else fprintf(output, "\n");
+            }
+            return;
+        }
         Mat copy(){
                 Mat<Type> dest(rows(),columns());
                 size_t n = 0;
