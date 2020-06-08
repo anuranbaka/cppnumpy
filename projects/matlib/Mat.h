@@ -288,6 +288,10 @@ class Mat {
             }
             return;
         }
+        bool inbounds(size_type a, size_type b){
+            if(a >= 0 && a < columns() && b >= 0 && b < rows()) return true;
+            else return false;
+        }
 };
 
 template <class Type>
