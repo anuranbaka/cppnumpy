@@ -63,7 +63,7 @@ int main(){
     start = {4,4};
     floodFillCustom(map2, start, 5, fuzzyFill3);
 
-    fprintf(outFile,"Map2 Custom filling center with 5 (threshold 3):\n");
+    fprintf(outFile,"Map2 reset, then Custom filling center with 5 (threshold 3):\n");
     map2.print(outFile);
 
     return 0;

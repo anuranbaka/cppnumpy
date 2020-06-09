@@ -9,6 +9,7 @@ void floodFill(Mat<T>& image, vector<size_t> start, T color, int connectivity = 
 
 template <class T>
 void floodHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, int connectivity = 4){
+    if(image(start[0],start[1]) == new_color) return;
     if(connectivity != 4 && connectivity != 8){
         fprintf(stderr, "%s", "connectivity must equal 4 or 8");
         exit(1);
@@ -37,6 +38,7 @@ void floodFillCustom(Mat<T> image, vector<size_t> start, T color, bool (*fillFun
 }
 template <class T>
 void floodCustomHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, bool (*fillFunction)(T, T), int connectivity = 4){
+    if(image(start[0],start[1]) == new_color) return;
     if(connectivity != 4 && connectivity != 8){
         fprintf(stderr, "%s", "connectivity must equal 4 or 8");
         exit(1);

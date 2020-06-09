@@ -48,7 +48,7 @@ Map2 Custom filling center with 5 (threshold 1):
 9, 5, 5, 5, 2, 0, 0, 0, 9
 9, 5, 5, 5, 9, 0, 0, 0, 9
 9, 9, 9, 9, 9, 9, 9, 9, 9
-Map2 Custom filling center with 5 (threshold 3):
+Map2 reset, then Custom filling center with 5 (threshold 3):
 9, 9, 9, 9, 9, 9, 9, 9, 9
 9, 5, 5, 5, 9, 5, 5, 5, 9
 9, 5, 5, 5, 5, 5, 5, 5, 9
