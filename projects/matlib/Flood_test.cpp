@@ -2,8 +2,12 @@
 #include <vector>
 using namespace std;
 
-bool fuzzyFill(int current_color, int target_color){
-    if(current_color >= target_color - 1 && target_color <= target_color + 1) return true;
+bool fuzzyFill1(int current_color, int target_color){
+    if(current_color >= target_color - 1 && current_color <= target_color + 1) return true;
+    else return false;
+}
+bool fuzzyFill3(int current_color, int target_color){
+    if(current_color >= target_color - 3 && current_color <= target_color + 3) return true;
     else return false;
 }
 
@@ -43,15 +47,24 @@ int main(){
 
     fprintf(outFile,"Filling center with 7 (connectivity 4):\n");
     map1.print(outFile);
-/*
+
     fprintf(outFile,"Map2 before flood fill:\n");
     map2.print(outFile);
     
     start = {4,4};
-    floodFillCustom(map1, start, 5, fuzzyFill);
+    floodFillCustom(map2, start, 5, fuzzyFill1);
 
-    fprintf(outFile,"Custom filling center with 5 (connectivity 8):\n");
-    map1.print(outFile);
-    */
+    fprintf(outFile,"Map2 Custom filling center with 5 (threshold 1):\n");
+    map2.print(outFile);
+
+    start = {4,4};
+    floodFillCustom(map2, start, 0, fuzzyFill1);
+
+    start = {4,4};
+    floodFillCustom(map2, start, 5, fuzzyFill3);
+
+    fprintf(outFile,"Map2 Custom filling center with 5 (threshold 3):\n");
+    map2.print(outFile);
+
     return 0;
 }
