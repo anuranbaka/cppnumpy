@@ -1,4 +1,4 @@
-Map before flood fill:
+Map1 before flood fill:
 9, 9, 9, 9, 9, 9, 9, 9, 9
 9, 0, 0, 0, 9, 0, 0, 0, 9
 9, 0, 0, 0, 9, 0, 0, 0, 9

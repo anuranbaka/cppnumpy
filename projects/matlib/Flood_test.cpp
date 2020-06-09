@@ -43,6 +43,15 @@ int main(){
 
     fprintf(outFile,"Filling center with 7 (connectivity 4):\n");
     map1.print(outFile);
+/*
+    fprintf(outFile,"Map2 before flood fill:\n");
+    map2.print(outFile);
     
+    start = {4,4};
+    floodFillCustom(map1, start, 5, fuzzyFill);
+
+    fprintf(outFile,"Custom filling center with 5 (connectivity 8):\n");
+    map1.print(outFile);
+    */
     return 0;
 }
