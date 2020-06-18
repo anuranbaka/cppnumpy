@@ -22,6 +22,8 @@ a + c; //broadcasts the matrix c to size 3x3
 
 b.t() //transposes matrix b
 
+b.roi(1,2,0,1) //points to sub-matrix region of interest (start column, end column, start row, end row)
+
 
 
 
