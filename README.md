@@ -6,7 +6,8 @@ of submatrices in a manner similar to numpy's array slicing. The matrix is initi
 stored and printed in row-major order.
 
 # Installing
-Functionality is contained in "projects/matlib/Mat.h" header library.
+The Mat class and its functions are entirely contained within "projects/matlib/Mat.h"
+header library.
 
 # Running Tests/Examples
 Matrix arithmetic is tested in the "projects/Mat_Test/Mat_test.cpp", and demonstrates basic
