@@ -10,10 +10,19 @@ The library supports several basic matrix arithmetic operations:
 ```
 #include <Mat.h> //single header library
 
-Mat<int> a(2,2) //creates an uninitialized 3x3 matrix of int
+Mat<double> a(3,3) //creates an uninitialized 3x3 matrix of int
 Mat<double> b({1,2,3,4,5,6,7,8},2,4) // creates a 2x4 matrix initialized to the values in curly braces.
 Mat<> c({1,2,3},1,3) // empty <> sets contained type to double by default
 
-b(0,3); //returns element at the listed coordinates, in this case 4
+b(0,3); //returns element at the listed coordinates, in this case: 4
+
+a.scalarFill(1); //fills matrix with the scalar listed
+
+a + c; //broadcasts the matrix c to size 3x3
+
+b.t() //transposes matrix b
+
+
+
 
 
