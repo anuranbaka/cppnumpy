@@ -38,16 +38,21 @@ class Mat {
         iterator end(){
             return iterator(*this, strides[0]*columns() + strides[1]*rows());
         }
+        size_type size() const{
+            if(ndims == 0) return 0;
+            size_type result = dims[0];
+            for(int i = 1; i < ndims; i++){
+                result *= dims[i];
+            }
+            return result;
+        }
         size_type rows() const{
             return this->dims[0];
         }
         size_type columns() const{
             return this->dims[1];
         }
-        size_type size() const{
-            return rows()*columns();
-        }
-        Mat(size_type a = 1, size_type b = 1){
+        Mat(size_type a = 1, size_type b = 1){ // make this variadic!
             refCount = new int64_t;
             *refCount = 1;
             memory = new Type[a*b];
@@ -64,7 +69,8 @@ class Mat {
             *refCount = 1;
             dims = new size_type[ndims];
             dims[0] = a;
-            dims[1] = b;
+            dims[1] = b; // make this variadic
+            errorCheck(list.size() != a*b, "Initializer list size inconsistent with dimensions");
             strides = new size_type[ndims];
             strides[0] = 1;
             strides[1] = columns();
@@ -72,7 +78,6 @@ class Mat {
             data = memory;
             size_type i = 0;
             for(auto elem : list){
-                errorCheck(i >= size(), "Initializer out of bounds\n");
                 data[i] = elem;
                 i++;
             }
@@ -100,11 +105,11 @@ class Mat {
             delete []strides;
         }
         Type& operator() (size_type a, size_type b){
-            errorCheck(a < 0 || b < 0 || a + b > size(),"Element access outside matrix scope\n");
+            errorCheck(a + b >= size(),"Element access outside matrix scope\n");
             return data[a*strides[1] + b*strides[0]];
         }
         const Type& operator() (size_type a, size_type b) const{
-            errorCheck(a < 0 || b < 0 || a + b > size(),"Element access outside matrix scope\n");
+            errorCheck(a + b >= size(),"Element access outside matrix scope\n");
             return data[a*strides[1] + b*strides[0]];
         }
         Type& operator() (iterator i){
@@ -132,57 +137,47 @@ class Mat {
             return *this;
         }
         Mat operator+ (const Mat &b){
-            size_type i = 0;
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
 
             for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
-                if(dims[n] == 1) x[i] = b.dims[i];
-                else x[i] = dims[i];
-                i++;
+                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
+                if(dims[n] == 1) x[n] = b.dims[n];
+                else x[n] = dims[n];
             }
             Mat<Type> result(x[0], x[1]);
             delete []x;
 
-            size_type width;
-            if(columns() > b.columns()) width = columns();
-            else width = b.columns();
             for(size_type i = 0; i < result.size(); i++){
-                result(0,i) = operator()(i/width%rows(),i%columns()) + b(i/width%b.rows(),i%b.columns());
+                result(i/result.columns(),i%result.columns()) = operator()(i/result.columns()%rows(), i%columns())
+                                    + b(i/result.columns()%b.rows(), i%b.columns());
             }
             return result;
         }
         Mat operator- (const Mat &b){
-            size_type i = 0;
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
 
             for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[i] && b.dims[i] != 1, "frames are not aligned\n");
-                if(dims[n] == 1) x[i] = b.dims[i];
-                else x[i] = dims[i];
-                i++;
+                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
+                if(dims[n] == 1) x[n] = b.dims[n];
+                else x[n] = dims[n];
             }
             Mat<Type> result(x[0], x[1]);
             delete []x;
 
-            size_type width;
-            if(columns() > b.columns()) width = columns();
-            else width = b.columns();
             for(size_type i = 0; i < result.size(); i++){
-                result(0,i) = operator()(i/width%rows(),i%columns()) - b(i/width%b.rows(),i%b.columns());
+                result(i/result.columns(),i%result.columns()) = operator()(i/result.columns()%rows(), i%columns())
+                                                                    - b(i/result.columns()%b.rows(), i%b.columns());
             }
             return result;
         }
         Mat operator- (){
-            Mat<Type> result(rows(),columns());
-            size_type n = 0;
-            for(auto i : *this){
-                result(0,n) = i * -1;
-                n++;
+            Mat<Type> result(*this);
+            for(auto& i : *this){
+                i *= -1;
             }
             return result;
         }

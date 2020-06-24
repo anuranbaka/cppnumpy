@@ -7,8 +7,7 @@ int main (){
     Mat<> x({1,2,3,4,5,6,7,8,9},3,3);
     Mat<> y({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24},4,6);
     Mat<> output(1,1);
-    FILE* outFile;
-    outFile = fopen("Mat_Test/Mat_test_output.txt", "w");
+    FILE* outFile = fopen("projects/Mat_Test/Mat_test_output.txt", "w");
 
     fprintf(outFile, "matrix m\n");
     m.print(outFile);
