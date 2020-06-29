@@ -105,11 +105,9 @@ class Mat {
             delete []strides;
         }
         Type& operator() (size_type a, size_type b){
-            errorCheck(a + b >= size(),"Element access outside matrix scope\n");
             return data[a*strides[1] + b*strides[0]];
         }
         const Type& operator() (size_type a, size_type b) const{
-            errorCheck(a + b >= size(),"Element access outside matrix scope\n");
             return data[a*strides[1] + b*strides[0]];
         }
         Type& operator() (iterator i){
@@ -218,20 +216,38 @@ class Mat {
             return result;
         }
         void T(Mat& dest){
-            errorCheck(size() != dest.size(),"Matrix size mismatch\n");
-            errorCheck(data == dest.data, "Source and destination matrix share same backing data\n");
-            for(size_type i=0;i<size();i++){
-                dest(0,i) = operator()(i%rows(),i/rows());
+            errorCheck(ndims < dest.ndims, "Transpose destination matrix has too many dimensions");
+            errorCheck(ndims > dest.ndims, "Transpose destination matrix has too few dimensions");
+            errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0], "Matrix size mismatch\n");
+            errorCheck(memory == dest.memory, "Source and destination matrix share same backing data\n");
+            errorCheck(data == dest.data, "TODO: call other transpose function\n");
+            if(isContiguous()){
+                for(size_type i=0;i<size();i++){
+                    dest(0,i) = operator()(i%rows(),i/rows());
+                }
             }
-            size_type temp = dest.dims[0];
-            if(columns() != dest.rows()) dest.dims[0] = dest.dims[1];
-            if(rows() != dest.columns()) dest.dims[1] = temp;
+            else{
+                for(size_type i=0; i<rows(); i++){
+                    for(size_type j=0; j<columns(); j++){
+                        dest(i,j) = operator()(j,i);
+                    }
+                }
+            }
             return;
         }
         Mat T(){
             Mat<Type> dest(columns(),rows());
-            for(size_type i=0;i<size();i++){
-                dest(0,i) = operator()(i%rows(),i/rows());
+            if(isContiguous()){
+                for(size_type i=0;i<size();i++){
+                    dest(0,i) = operator()(i%rows(),i/rows());
+                }
+            }
+            else{
+                for(size_type i=0; i<rows(); i++){
+                    for(size_type j=0; j<columns(); j++){
+                        dest(i,j) = operator()(j,i);
+                    }
+                }
             }
             return dest;
         }
@@ -287,6 +303,13 @@ class Mat {
         bool inbounds(size_type a, size_type b){
             if(a >= 0 && a < columns() && b >= 0 && b < rows()) return true;
             else return false;
+        }
+        bool isContiguous(){
+            //zero dimensional?
+            if(strides[0] != 1) return false;
+            for(int i = 1; i < ndims; i++){
+                strides[i] != dims[i];
+            }
         }
         void scalarFill(Type x){
             for(size_type n = 0; n < rows();n++){
