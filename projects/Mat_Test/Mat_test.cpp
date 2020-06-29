@@ -62,5 +62,13 @@ int main (){
     fprintf(outFile, "y.roi(2,5,1,3).scalarFill(0)\n");
     y.print(outFile);
 
+    Mat<> smallMat ({5},1,1);
+    fprintf(outFile, "Printing a 1x1 matrix\n");
+    smallMat.print(outFile);
+
+    Mat<> smallerMat (0,0);
+    fprintf(outFile, "Printing a 0x0 matrix\n");
+    smallerMat.print(outFile);
+
     return 0;
 }
