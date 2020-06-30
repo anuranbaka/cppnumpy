@@ -4,6 +4,12 @@
 using namespace std;
 
 template <class Type>
+Type Add(Type a, Type b){ return a + b; };
+
+template <class Type>
+Type Subtract(Type a, Type b){ return a - b; };
+
+template <class Type>
 class MatIter;
 
 template <class Type = double>
@@ -140,42 +146,10 @@ class Mat {
             return *this;
         }
         Mat operator+(const Mat &b){
-            size_type* x;
-            if(ndims >= b.ndims) x = new size_type[ndims];
-            else x = new size_type[b.ndims];
-
-            for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
-                if(dims[n] == 1) x[n] = b.dims[n];
-                else x[n] = dims[n];
-            }
-            Mat<Type> result(x[0], x[1]); //variadic
-            delete []x;
-
-            for(size_type i = 0; i < result.size(); i++){
-                result(i/result.columns(),i%result.columns()) = operator()(i/result.columns()%rows(), i%columns())
-                                    + b(i/result.columns()%b.rows(), i%b.columns());
-            }
-            return result;
+            return broadcast(b, Add);
         }
         Mat operator- (const Mat &b){
-            size_type* x;
-            if(ndims >= b.ndims) x = new size_type[ndims];
-            else x = new size_type[b.ndims];
-
-            for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
-                if(dims[n] == 1) x[n] = b.dims[n];
-                else x[n] = dims[n];
-            }
-            Mat<Type> result(x[0], x[1]); //variadic
-            delete []x;
-
-            for(size_type i = 0; i < result.size(); i++){
-                result(i/result.columns(),i%result.columns()) = operator()(i/result.columns()%rows(), i%columns())
-                                                                    - b(i/result.columns()%b.rows(), i%b.columns());
-            }
-            return result;
+            return broadcast(b, Subtract);
         }
         Mat broadcast(const Mat &b, Type (*f)(Type, Type)){
             size_type* x;
