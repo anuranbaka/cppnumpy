@@ -55,14 +55,14 @@ class Mat {
         Mat(size_type a = 1, size_type b = 1){ // make this variadic!
             refCount = new int64_t;
             *refCount = 1;
-            memory = new Type[a*b];
-            data = memory;
             dims = new size_type[ndims];
             dims[0] = a;
             dims[1] = b;
             strides = new size_type[ndims];
             strides[0] = 1;
-            strides[1] = columns();
+            strides[1] = b;
+            memory = new Type[a*b];
+            data = memory;
         }
         Mat(std::initializer_list<Type> list, size_type a, size_type b){
             refCount = new int64_t;
@@ -85,14 +85,17 @@ class Mat {
         Mat(const Mat& b){
             refCount = b.refCount;
             (*refCount)++;
+            ndims = b.ndims;
+            dims = new size_type[ndims];
+            for(int i = 0; i < ndims; i++){
+                dims[i] = b.dims[i];
+            }
+            strides = new size_type[ndims];
+            for(int i = 0; i < ndims; i++){
+                strides[i] = b.strides[i];
+            }
             memory = b.memory;
             data = b.data;
-            dims = new size_type[ndims];
-            dims[0] = b.dims[0];
-            dims[1] = b.dims[1];
-            strides = new size_type[ndims];
-            strides[0] = b.strides[0];
-            strides[1] = b.strides[1];
         }
         ~Mat(){
             (*refCount)--;
@@ -124,17 +127,19 @@ class Mat {
             delete[] strides;
             refCount = b.refCount;
             (*refCount)++;
+            dims = new size_type[ndims];
+            for(int i = 0; i < ndims; i++){
+                dims[i] = b.dims[i];
+            }
+            strides = new size_type[ndims];
+            for(int i = 0; i < ndims; i++){
+                strides[i] = b.strides[i];
+            }
             memory = b.memory;
             data = b.data;
-            dims = new size_type[ndims];
-            dims[0] = b.dims[0];
-            dims[1] = b.dims[1];
-            strides = new size_type[ndims];
-            strides[0] = b.strides[0];
-            strides[1] = b.strides[1];
             return *this;
         }
-        Mat operator+ (const Mat &b){
+        Mat operator+(const Mat &b){
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
@@ -144,7 +149,7 @@ class Mat {
                 if(dims[n] == 1) x[n] = b.dims[n];
                 else x[n] = dims[n];
             }
-            Mat<Type> result(x[0], x[1]);
+            Mat<Type> result(x[0], x[1]); //variadic
             delete []x;
 
             for(size_type i = 0; i < result.size(); i++){
@@ -163,7 +168,7 @@ class Mat {
                 if(dims[n] == 1) x[n] = b.dims[n];
                 else x[n] = dims[n];
             }
-            Mat<Type> result(x[0], x[1]);
+            Mat<Type> result(x[0], x[1]); //variadic
             delete []x;
 
             for(size_type i = 0; i < result.size(); i++){
@@ -172,9 +177,29 @@ class Mat {
             }
             return result;
         }
+        Mat broadcast(const Mat &b, Type (*f)(Type, Type)){
+            size_type* x;
+            if(ndims >= b.ndims) x = new size_type[ndims];
+            else x = new size_type[b.ndims];
+
+            for(size_type n = 0; n < ndims; n++){
+                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
+                if(dims[n] == 1) x[n] = b.dims[n];
+                else x[n] = dims[n];
+            }
+            Mat<Type> result(x[0], x[1]); //variadic
+            delete []x;
+
+            for(size_type i = 0; i < result.size(); i++){
+                result(i/result.columns(),i%result.columns()) = (*f)(operator()(i/result.columns()%rows(), i%columns())
+                                    , b(i/result.columns()%b.rows(), i%b.columns()));
+            }
+            return result;
+        }
         Mat operator- (){
-            Mat<Type> result(*this);
-            for(auto& i : *this){
+            Mat<Type> result(rows(), columns());
+            copy(result);
+            for(auto& i : result){
                 i *= -1;
             }
             return result;
@@ -216,8 +241,7 @@ class Mat {
             return result;
         }
         void T(Mat& dest){
-            errorCheck(ndims < dest.ndims, "Transpose destination matrix has too many dimensions");
-            errorCheck(ndims > dest.ndims, "Transpose destination matrix has too few dimensions");
+            errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
             errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0], "Matrix size mismatch\n");
             errorCheck(memory == dest.memory, "Source and destination matrix share same backing data\n");
             errorCheck(data == dest.data, "TODO: call other transpose function\n");
@@ -236,6 +260,7 @@ class Mat {
             return;
         }
         Mat T(){
+            errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
             Mat<Type> dest(columns(),rows());
             if(isContiguous()){
                 for(size_type i=0;i<size();i++){
@@ -252,6 +277,7 @@ class Mat {
             return dest;
         }
         Mat t() const{
+            errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
             Mat<Type> dest(*this);
             dest.strides[0] = strides[1];
             dest.strides[1] = strides[0];
@@ -280,10 +306,10 @@ class Mat {
             return;
         }
         Mat copy(){
-                Mat<Type> dest(rows(),columns());
+                Mat<Type> dest(rows(),columns()); //variadic
                 size_t n = 0;
                 for(auto i : *this){
-                    dest(0,n) = i;
+                    dest.data[n] = i;
                     n++;
                 }
                 return dest;
