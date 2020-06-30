@@ -1,6 +1,11 @@
 #include "../matlib/Mat.h"
 #include <fstream>
 
+double Max(double a, double b){
+        if(a > b) return a;
+        else return b;
+};
+
 int main (){
     Mat<double> m({1,2,3,4,5,6,7,8},2,4);
     Mat<> n({1,2,3},1,3);
@@ -69,6 +74,11 @@ int main (){
     Mat<> smallerMat (0,0);
     fprintf(outFile, "Printing a 0x0 matrix\n");
     smallerMat.print(outFile);
+
+    Mat<> justFours ({4,4,4}, 1, 3);
+    output = x.broadcast(justFours, Max);
+    fprintf(outFile, "Set each element of x to a minimum of 4 with broadcast()\n");
+    output.print(outFile);
 
     return 0;
 }
