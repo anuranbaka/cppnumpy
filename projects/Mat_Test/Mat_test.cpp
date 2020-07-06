@@ -80,5 +80,28 @@ int main (){
     fprintf(outFile, "Set each element of x to a minimum of 4 with broadcast()\n");
     output.print(outFile);
 
+    Mat<> a({1,2,3,4,5,6}, 6);
+    Mat<> b({3,3,3,3,3,3}, 6);
+    Mat<> c({5}, 1);
+
+    fprintf(outFile, "1d matrix a\n");
+    a.print(outFile);
+    fprintf(outFile, "1d matrix b\n");
+    b.print(outFile);
+    fprintf(outFile, "1d matrix c\n");
+    c.print(outFile);
+
+    output = a + b;
+    fprintf(outFile, "a + b (assignment to previously 2d matrix)\n");
+    output.print(outFile);
+
+    output = c - a;
+    fprintf(outFile, "c - a\n");
+    output.print(outFile);
+
+    output = -a;
+    fprintf(outFile, "-a\n");
+    output.print(outFile);
+
     return 0;
 }
