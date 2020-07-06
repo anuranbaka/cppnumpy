@@ -110,35 +110,18 @@ class Mat {
         Type& operator() (iterator i){
             return data[i.position];
         }
-        Mat roi(int rowStart = -1, int rowEnd = -1, int colStart = -1, int colEnd = -1){
-            errorCheck(rowStart < -1 || rowStart > static_cast<int>(columns()), "roi argument 1 invalid");
-            errorCheck(rowEnd < -1 || rowEnd > static_cast<int>(columns()), "roi argument 2 invalid");
-            errorCheck(colStart < -1 || colStart > static_cast<int>(rows()), "roi argument 3 invalid");
-            errorCheck(colEnd < -1 || colEnd > static_cast<int>(rows()), "roi argument 4 invalid");
-
-            if(rowStart == -1) rowStart = 0;
-            if(rowEnd == -1) rowEnd = static_cast<int>(columns());
-            if(colStart == -1) colStart = 0;
-            if(colEnd == -1) colEnd = static_cast<int>(rows());
-            errorCheck(rowStart == rowEnd || colStart == colEnd, "roi dim cannot equal 0");
-
-            Mat<Type> result(*this);
-            result.dims[0] = colEnd-colStart;
-            result.dims[1] = rowEnd-rowStart;
-            result.data = &memory[colStart*columns() + rowStart];
-            return result;
-        }
         Mat& operator= (const Mat &b){
             (*refCount)--;
             errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
             if(*refCount == 0){
                 delete refCount;
-                delete[] data;
+                delete[] memory;
             }
             delete[] dims;
             delete[] strides;
             refCount = b.refCount;
             (*refCount)++;
+            memory = b.memory;
             data = b.data;
             dims = new size_type[ndims];
             dims[0] = b.dims[0];
@@ -221,6 +204,24 @@ class Mat {
             }
             return result;
         }
+        Mat roi(int rowStart = -1, int rowEnd = -1, int colStart = -1, int colEnd = -1){
+            errorCheck(rowStart < -1 || rowStart > static_cast<int>(columns()), "roi argument 1 invalid");
+            errorCheck(rowEnd < -1 || rowEnd > static_cast<int>(columns()), "roi argument 2 invalid");
+            errorCheck(colStart < -1 || colStart > static_cast<int>(rows()), "roi argument 3 invalid");
+            errorCheck(colEnd < -1 || colEnd > static_cast<int>(rows()), "roi argument 4 invalid");
+
+            if(rowStart == -1) rowStart = 0;
+            if(rowEnd == -1) rowEnd = static_cast<int>(columns());
+            if(colStart == -1) colStart = 0;
+            if(colEnd == -1) colEnd = static_cast<int>(rows());
+            errorCheck(rowStart == rowEnd || colStart == colEnd, "roi dim cannot equal 0");
+
+            Mat<Type> result(*this);
+            result.dims[0] = colEnd-colStart;
+            result.dims[1] = rowEnd-rowStart;
+            result.data = &memory[colStart*columns() + rowStart];
+            return result;
+        }
         void T(Mat& dest){
             errorCheck(size() != dest.size(),"Matrix size mismatch\n");
             errorCheck(data == dest.data, "Source and destination matrix share same backing data\n");
@@ -291,6 +292,13 @@ class Mat {
         bool inbounds(size_type a, size_type b){
             if(a >= 0 && a < columns() && b >= 0 && b < rows()) return true;
             else return false;
+        }
+        void scalarFill(Type x){
+            for(size_type n = 0; n < rows();n++){
+                for(size_type i = 0; i < columns();i++){
+                    operator()(n,i) = x;
+                }
+            }
         }
 };
 
