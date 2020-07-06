@@ -74,6 +74,7 @@ int main (){
     Mat<> smallerMat (0,0);
     fprintf(outFile, "Printing a 0x0 matrix\n");
     smallerMat.print(outFile);
+    fprintf(outFile, "(should be nothing above this line)\n");
 
     Mat<> justFours ({4,4,4}, 1, 3);
     output = x.broadcast(justFours, Max);
@@ -83,6 +84,7 @@ int main (){
     Mat<> a({1,2,3,4,5,6}, 6);
     Mat<> b({3,3,3,3,3,3}, 6);
     Mat<> c({5}, 1);
+    Mat<> d(0);
 
     fprintf(outFile, "1d matrix a\n");
     a.print(outFile);
@@ -90,6 +92,9 @@ int main (){
     b.print(outFile);
     fprintf(outFile, "1d matrix c\n");
     c.print(outFile);
+    fprintf(outFile, "empty 1d matrix d\n");
+    fprintf(outFile, "(should be nothing above this line)\n");
+    d.print(outFile);
 
     output = a + b;
     fprintf(outFile, "a + b (assignment to previously 2d matrix)\n");
