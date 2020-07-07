@@ -196,6 +196,12 @@ class Mat {
             data = b.data;
             return *this;
         }
+        Mat& operator= (const Type scalar){
+            for(auto& i: *this){
+                i = scalar;
+            }
+            return *this;
+        }
         Mat operator+(const Mat &b){
             return broadcast(b, Add);
         }
@@ -403,6 +409,62 @@ class Mat {
                 i = x;
             }
         }
+        /*static Mat zeros(size_type a){
+            Mat<> result(a);
+            for(auto& i: result){
+                i = 0;
+            }
+            return result;
+        }*/
+        static Mat zeros(size_type a, size_type b){
+            Mat<double> result(a,b);
+            for(auto& i: result){
+                i = 0;
+            }
+            return result;
+        }
+        /*static Mat zeros_like(const Mat a){
+            Mat<> result(a.rows(),a.columns());
+            for(auto& i: result){
+                i = 0;
+            }
+            return result;
+        }
+        static Mat ones(size_type a, size_type b){
+            Mat<> result(a,b);
+            for(auto& i: result){
+                i = 1;
+            }
+            return result;
+        }
+        static Mat ones(size_type a){
+            Mat<> result(a);
+            for(auto& i: result){
+                i = 1;
+            }
+            return result;
+        }
+        static Mat ones_like(const Mat a){
+            Mat<> result(a.rows(),a.columns());
+            for(auto& i: result){
+                i = 1;
+            }
+            return result;
+        }
+        static Mat empty_like(const Mat a){
+            Mat<> result(a.rows(),a.columns());
+            return result;
+        }
+        static Mat identity(size_type a){
+            Mat<> result(a,a);
+            for(size_type i = 0; i < a; i++){
+                for(size_type j = 0; j < a; j++){
+                    if(i == j) result(i,j) = 1;
+                    else result(i,j) = 0;
+                }
+            }
+            return result;
+        }*/
 };
 
 template <class Type>

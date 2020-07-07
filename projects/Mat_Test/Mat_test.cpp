@@ -111,7 +111,23 @@ int main (){
     output = a.roi(2,5);
     fprintf(outFile, "matrix a, elements 2 to 4\n");
     output.print(outFile);
+
+    output = 7;
+    fprintf(outFile, "assignment to 7s\n");
+    output.print(outFile);
+
+    output = Mat<>::zeros(8,8);
+    fprintf(outFile, "8x8 matrix of zeros\n");
+    output.print(outFile);
+/*
+    output = Mat<>::ones(4,5);
+    fprintf(outFile, "4x5 matrix of ones\n");
+    output.print(outFile);
     
 
+    output = Mat<>::identity(6);
+    fprintf(outFile, "6x6 identity matrix\n");
+    output.print(outFile);
+*/
     return 0;
 }
