@@ -55,16 +55,16 @@ int main (){
     fprintf(outFile, "m.copy(newMat)\n");
     newMat.print(outFile);
 
-    output = m.roi(1,3);
-    fprintf(outFile, "m.roi(1,3)\n");
+    output = m.roi(0,1,1,3);
+    fprintf(outFile, "m.roi(0,1,1,3)\n");
     output.print(outFile);
 
     output = -x.roi(1,-1,1);
     fprintf(outFile, "-x.roi(1,-1,1)\n");
     output.print(outFile);
 
-    y.roi(2,5,1,3).scalarFill(0);
-    fprintf(outFile, "y.roi(2,5,1,3).scalarFill(0)\n");
+    y.roi(1,3,2,5).scalarFill(0);
+    fprintf(outFile, "y.roi(1,3,2,5).scalarFill(0)\n");
     y.print(outFile);
 
     Mat<> smallMat ({5},1,1);
@@ -107,6 +107,11 @@ int main (){
     output = -a;
     fprintf(outFile, "-a\n");
     output.print(outFile);
+
+    output = a.roi(2,5);
+    fprintf(outFile, "matrix a, elements 2 to 4\n");
+    output.print(outFile);
+    
 
     return 0;
 }

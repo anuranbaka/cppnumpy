@@ -264,28 +264,38 @@ class Mat {
             }
             return result;
         }
-        Mat roi(int colStart = -1, int colEnd = -1, int rowStart = -1, int rowEnd = -1){
-            errorCheck(ndims == 1 && (rowStart != -1 || rowEnd != -1), "Too many arguments for 1d matrix");
-            errorCheck(colStart < -1 || colStart > static_cast<int>(columns()), "roi argument 1 invalid");
-            errorCheck(colEnd < -1 || colEnd > static_cast<int>(columns()), "roi argument 2 invalid");
-            errorCheck(rowStart < -1 || rowStart > static_cast<int>(rows()), "roi argument 3 invalid");
-            errorCheck(rowEnd < -1 || rowEnd > static_cast<int>(rows()), "roi argument 4 invalid");
+        Mat roi(int dim1Start = -1, int dim1End = -1, int dim2Start = -1, int dim2End = -1){
+            if(ndims == 1){
+                errorCheck(ndims == 1 && (dim2Start != -1 || dim2End != -1), "Too many arguments for 1d matrix");
+                errorCheck(dim1Start < -1 || dim1Start > static_cast<int>(columns()), "roi argument 1 invalid");
+                errorCheck(dim1End < -1 || dim1End > static_cast<int>(columns()), "roi argument 2 invalid");
+                errorCheck(dim2Start != -1, "Too many arguments");
+                errorCheck(dim2End != -1, "Too many arguments");
 
-            if(colStart == -1) colStart = 0;
-            if(colEnd == -1) colEnd = static_cast<int>(columns());
-            if(rowStart == -1 && ndims == 2) rowStart = 0;
-            if(rowEnd == -1 && ndims == 2) rowEnd = static_cast<int>(rows());
-            errorCheck(colStart == colEnd || (ndims == 2 && rowStart == rowEnd), "roi dim cannot equal 0");
+            }
+            else if(ndims == 2){
+                errorCheck(dim1Start < -1 || dim1Start > static_cast<int>(rows()), "roi argument 1 invalid");
+                errorCheck(dim1End < -1 || dim1End > static_cast<int>(rows()), "roi argument 2 invalid");
+                errorCheck(dim2Start < -1 || dim2Start > static_cast<int>(columns()), "roi argument 3 invalid");
+                errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()), "roi argument 4 invalid");
+
+            }
+
+            if(dim1Start == -1) dim1Start = 0;
+            if(dim1End == -1 && ndims == 2) dim1End = static_cast<int>(rows());
+            else if(dim1End == -1 && ndims == 1) dim1End = static_cast<int>(columns());
+            if(dim2Start == -1 && ndims == 2) dim2Start = 0;
+            if(dim2End == -1 && ndims == 2) dim2End = static_cast<int>(columns());
 
             Mat<Type> result(*this);
-            result.dims[ndims - 1] = colEnd-colStart;
+            result.dims[ndims - 1] = dim1End-dim1Start;
             if(ndims == 2){
-                result.dims[ndims - 2] = rowEnd-rowStart;
-                result.data = &memory[rowStart*columns() + colStart];
+                result.dims[ndims - 2] = dim2End-dim2Start;
+                result.data = &memory[dim1Start*columns() + dim2Start];
             }
             else
             {
-                result.data = &memory[colStart];
+                result.data = &memory[dim1Start];
             }
             return result;
         }
