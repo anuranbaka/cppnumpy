@@ -455,11 +455,20 @@ class Mat {
             Mat result(a.rows(),a.columns());
             return result;
         }
-        static Mat identity(size_type a){
+        static Mat eye(size_type a){
             Mat result(a,a);
             for(size_type i = 0; i < a; i++){
                 for(size_type j = 0; j < a; j++){
                     if(i == j) result(i,j) = 1;
+                    else result(i,j) = 0;
+                }
+            }
+            return result;
+        }static Mat eye(size_type a, size_type b, size_type k = 0){
+            Mat result(a,b);
+            for(size_type i = 0; i < a; i++){
+                for(size_type j = k; j < b; j++){
+                    if(i+k == j) result(i,j) = 1;
                     else result(i,j) = 0;
                 }
             }

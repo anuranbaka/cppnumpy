@@ -124,9 +124,12 @@ int main (){
     fprintf(outFile, "4x5 matrix of ones\n");
     output.print(outFile);
     
-
-    output = Mat<>::identity(6);
+    output = Mat<>::eye(6);
     fprintf(outFile, "6x6 identity matrix\n");
+    output.print(outFile);
+
+    output = Mat<>::eye(4,7,1);
+    fprintf(outFile, "4x7 identity matrix with diagonal at 1\n");
     output.print(outFile);
 
     return 0;
