@@ -119,7 +119,7 @@ int main (){
     output = Mat<>::zeros(8,8);
     fprintf(outFile, "8x8 matrix of zeros\n");
     output.print(outFile);
-/*
+
     output = Mat<>::ones(4,5);
     fprintf(outFile, "4x5 matrix of ones\n");
     output.print(outFile);
@@ -128,6 +128,6 @@ int main (){
     output = Mat<>::identity(6);
     fprintf(outFile, "6x6 identity matrix\n");
     output.print(outFile);
-*/
+
     return 0;
 }
