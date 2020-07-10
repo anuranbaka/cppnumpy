@@ -409,6 +409,28 @@ class Mat {
                 i = x;
             }
         }
+        void reshape(size_type new_dim1){
+            Mat<Type> temp(new_dim1);
+            errorCheck(temp.size() != size(), "new shape size mismatch");
+            size_t n = 0;
+            for(auto i : *this){
+                temp.data[n] = i;
+                n++;
+            }
+            *this = temp;
+            return;
+        }
+        void reshape(size_type new_dim1, size_type new_dim2){
+            Mat<Type> temp(new_dim1, new_dim2);
+            errorCheck(temp.size() != size(), "new shape size mismatch");
+            size_t n = 0;
+            for(auto i : *this){
+                temp.data[n] = i;
+                n++;
+            }
+            *this = temp;
+            return;
+        }
         static Mat zeros(size_type a){
             Mat result(a);
             for(auto& i: result){
@@ -464,7 +486,8 @@ class Mat {
                 }
             }
             return result;
-        }static Mat eye(size_type a, size_type b, size_type k = 0){
+        }
+        static Mat eye(size_type a, size_type b, size_type k = 0){
             Mat result(a,b);
             for(size_type i = 0; i < a; i++){
                 for(size_type j = k; j < b; j++){
