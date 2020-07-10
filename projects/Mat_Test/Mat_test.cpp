@@ -132,5 +132,14 @@ int main (){
     fprintf(outFile, "4x7 identity matrix with diagonal at 1\n");
     output.print(outFile);
 
+    output.reshape(14,2);
+    fprintf(outFile, "reshape the previous matrix into a 14x2 matrix\n");
+    output.print(outFile);
+
+    output = x;
+    output.reshape(9);
+    fprintf(outFile, "matrix x as a 1d, 9 element matrix\n");
+    output.print(outFile);
+
     return 0;
 }
