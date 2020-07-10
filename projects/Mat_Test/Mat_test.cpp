@@ -55,12 +55,24 @@ int main (){
     fprintf(outFile, "m.copy(newMat)\n");
     newMat.print(outFile);
 
-    output = m.roi(0,1,1,3);
+    output = m.roi(0,2,1,3);
     fprintf(outFile, "m.roi(0,1,1,3)\n");
     output.print(outFile);
 
     output = -x.roi(1,-1,1);
     fprintf(outFile, "-x.roi(1,-1,1)\n");
+    output.print(outFile);
+
+    output = y.roi(1,3);
+    fprintf(outFile, "y.roi(1,3)\n");
+    output.print(outFile);
+
+    output = y.roi(1);
+    fprintf(outFile, "y.roi(1)\n");
+    output.print(outFile);
+
+    output = x.roi();
+    fprintf(outFile, "x.roi()\n");
     output.print(outFile);
 
     y.roi(1,3,2,5).scalarFill(0);

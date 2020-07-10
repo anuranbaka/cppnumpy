@@ -294,9 +294,9 @@ class Mat {
             if(dim2End == -1 && ndims == 2) dim2End = static_cast<int>(columns());
 
             Mat<Type> result(*this);
-            result.dims[ndims - 1] = dim1End-dim1Start;
+            result.dims[0] = dim1End-dim1Start;
             if(ndims == 2){
-                result.dims[ndims - 2] = dim2End-dim2Start;
+                result.dims[1] = dim2End-dim2Start;
                 result.data = &memory[dim1Start*columns() + dim2Start];
             }
             else
