@@ -32,7 +32,7 @@ class Mat {
 
     void errorCheck(bool e, const char* message) const{
         if(e){
-            fprintf(stderr, "%s", message);
+            fprintf(stderr, "%s\n", message);
             exit(1);
         }
         return;
@@ -70,9 +70,9 @@ class Mat {
         }
         bool isContiguous(){
             if(strides[0] != 1) return false;
-            for(int i = 1; i < ndims; i++){
-                strides[i] != dims[i];
-            }
+            if(ndims == 2 && strides[1] != dims[1]) return false;
+            else if(ndims > 2) errorCheck(true, "n-dimensional contiguity check not yet implemented.");
+            return true;
         }
         Mat(size_type a = 1){
             refCount = new int64_t;
@@ -149,7 +149,7 @@ class Mat {
         }
         ~Mat(){
             (*refCount)--;
-            errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
+            errorCheck(*refCount < 0,"Reference counter is negative somehow");
             if(*refCount == 0){
                 delete refCount;
                 delete []memory;
@@ -214,7 +214,7 @@ class Mat {
             else x = new size_type[b.ndims];
 
             for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned\n");
+                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned");
                 if(dims[n] == 1) x[n] = b.dims[n];
                 else x[n] = dims[n];
             }
@@ -277,14 +277,12 @@ class Mat {
                 errorCheck(dim1End < -1 || dim1End > static_cast<int>(columns()), "roi argument 2 invalid");
                 errorCheck(dim2Start != -1, "Too many arguments");
                 errorCheck(dim2End != -1, "Too many arguments");
-
             }
             else if(ndims == 2){
                 errorCheck(dim1Start < -1 || dim1Start > static_cast<int>(rows()), "roi argument 1 invalid");
                 errorCheck(dim1End < -1 || dim1End > static_cast<int>(rows()), "roi argument 2 invalid");
                 errorCheck(dim2Start < -1 || dim2Start > static_cast<int>(columns()), "roi argument 3 invalid");
                 errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()), "roi argument 4 invalid");
-
             }
 
             if(dim1Start == -1) dim1Start = 0;
@@ -307,9 +305,9 @@ class Mat {
         }
         void T(Mat& dest){
             errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
-            errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0], "Matrix size mismatch\n");
-            errorCheck(memory == dest.memory, "Source and destination matrix share same backing data\n");
-            errorCheck(data == dest.data, "TODO: call other transpose function\n");
+            errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0], "Matrix size mismatch");
+            errorCheck(memory == dest.memory, "Source and destination matrix share same backing data");
+            errorCheck(data == dest.data, "TODO: call other transpose function");
             if(isContiguous()){
                 for(size_type i=0;i<size();i++){
                     dest(0,i) = operator()(i%rows(),i/rows());
@@ -409,26 +407,48 @@ class Mat {
                 i = x;
             }
         }
-        void reshape(size_type new_dim1){
-            Mat<Type> temp(new_dim1);
-            errorCheck(temp.size() != size(), "new shape size mismatch");
-            size_t n = 0;
-            for(auto i : *this){
-                temp.data[n] = i;
-                n++;
+        void reshape(int new_dim1 = -1){
+            errorCheck(!isContiguous(), "Cannot reshape non-contiguous matrix");
+            errorCheck(new_dim1 < -1, "matrix cannot have negative dimensions");
+            if(new_dim1 == -1) new_dim1 = size();
+            else errorCheck(size() != new_dim1, "new shape size mismatch");
+
+            if(ndims == 1) return;
+            else{
+                ndims = 1;
+                delete[] dims;
+                delete[] strides;
+                dims = new size_type[ndims];
+                dims[0] = new_dim1;
+                strides = new size_type[ndims];
+                strides[0] = 1;
             }
-            *this = temp;
             return;
         }
-        void reshape(size_type new_dim1, size_type new_dim2){
-            Mat<Type> temp(new_dim1, new_dim2);
-            errorCheck(temp.size() != size(), "new shape size mismatch");
-            size_t n = 0;
-            for(auto i : *this){
-                temp.data[n] = i;
-                n++;
+        void reshape(int new_dim1, int new_dim2){
+            errorCheck(!isContiguous(), "Cannot reshape non-contiguous matrix");
+            errorCheck(new_dim1 < -1 || new_dim2 < -1, "matrix cannot have negative dimensions");
+            errorCheck(new_dim1 == -1 && new_dim2 == -1, "only one argument of reshape can be -1");
+            if(new_dim1 == -1) new_dim1 = size()/new_dim2;
+            else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
+            else errorCheck(size() != new_dim1 * new_dim2, "new shape size mismatch");
+
+            if(ndims == 2){
+                dims[0] = static_cast<size_type>(new_dim1);
+                dims[1] = static_cast<size_type>(new_dim2);
+                strides[1] = static_cast<size_type>(new_dim2);
             }
-            *this = temp;
+            else{
+                ndims = 2;
+                delete[] dims;
+                delete[] strides;
+                dims = new size_type[ndims];
+                dims[0] = new_dim1;
+                dims[1] = new_dim2;
+                strides = new size_type[ndims];
+                strides[0] = 1;
+                strides[1] = new_dim2;
+            }
             return;
         }
         static Mat zeros(size_type a){
@@ -555,5 +575,4 @@ class MatIter{
         Type & operator*(){
             return matrix.data[position];
         }
-
 };

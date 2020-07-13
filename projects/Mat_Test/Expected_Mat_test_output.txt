@@ -129,3 +129,12 @@ reshape the previous matrix into a 14x2 matrix
 0, 0
 matrix x as a 1d, 9 element matrix
 1, 2, 3, 4, 5, 6, 7, 8, 9
+taking the two middle rows from y and reshaping to a 6x2 matrix
+(legal because full rows are taken and are contiguous)
+(Note that the zeros we filled in before are still there)
+7, 8
+0, 0
+0, 12
+13, 14
+0, 0
+0, 18
