@@ -507,12 +507,23 @@ class Mat {
             }
             return result;
         }
-        static Mat eye(size_type a, size_type b, size_type k = 0){
+        static Mat eye(size_type a, size_type b, int k = 0){
             Mat result(a,b);
-            for(size_type i = 0; i < a; i++){
-                for(size_type j = k; j < b; j++){
-                    if(i+k == j) result(i,j) = 1;
-                    else result(i,j) = 0;
+            if(k < 0){
+                k *= -1;
+                for(size_type i = 0; i < a; i++){
+                    for(size_type j = 0; j < b; j++){
+                        if(i-static_cast<size_type>(k) == j) result(i,j) = 1;
+                        else result(i,j) = 0;
+                    }
+                }
+            }
+            else{
+                for(size_type i = 0; i < a; i++){
+                    for(size_type j = 0; j < b; j++){
+                        if(i+static_cast<size_type>(k) == j) result(i,j) = 1;
+                        else result(i,j) = 0;
+                    }
                 }
             }
             return result;
