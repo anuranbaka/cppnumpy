@@ -144,6 +144,10 @@ int main (){
     fprintf(outFile, "4x7 identity matrix with diagonal at 1\n");
     output.print(outFile);
 
+    output = Mat<>::eye(4,7,-2);
+    fprintf(outFile, "4x7 identity matrix with diagonal at -2\n");
+    output.print(outFile);
+
     output.reshape(14,2);
     fprintf(outFile, "reshape the previous matrix into a 14x2 matrix\n");
     output.print(outFile);

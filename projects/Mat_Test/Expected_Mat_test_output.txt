@@ -112,20 +112,25 @@ assignment to 7s
 0, 0, 1, 0, 0, 0, 0
 0, 0, 0, 1, 0, 0, 0
 0, 0, 0, 0, 1, 0, 0
+4x7 identity matrix with diagonal at -2
+0, 0, 0, 0, 0, 0, 0
+0, 0, 0, 0, 0, 0, 0
+1, 0, 0, 0, 0, 0, 0
+0, 1, 0, 0, 0, 0, 0
 reshape the previous matrix into a 14x2 matrix
-0, 1
 0, 0
 0, 0
 0, 0
-0, 1
 0, 0
 0, 0
 0, 0
-0, 1
+0, 0
+1, 0
 0, 0
 0, 0
 0, 0
-0, 1
+1, 0
+0, 0
 0, 0
 matrix x as a 1d, 9 element matrix
 1, 2, 3, 4, 5, 6, 7, 8, 9
