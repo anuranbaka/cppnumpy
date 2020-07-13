@@ -153,5 +153,12 @@ int main (){
     fprintf(outFile, "matrix x as a 1d, 9 element matrix\n");
     output.print(outFile);
 
+    output = y.roi(1,3);
+    output.reshape(6,2);
+    fprintf(outFile, "taking the two middle rows from y and reshaping to a 6x2 matrix\n");
+    fprintf(outFile, "(legal because full rows are taken and are contiguous)\n");
+    fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
+    output.print(outFile);
+
     return 0;
 }
