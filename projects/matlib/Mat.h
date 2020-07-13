@@ -4,10 +4,10 @@
 using namespace std;
 
 template <class Type>
-Type Add(Type a, Type b){ return a + b; };
+inline Type Add(Type a, Type b){ return a + b; };
 
 template <class Type>
-Type Subtract(Type a, Type b){ return a - b; };
+inline Type Subtract(Type a, Type b){ return a - b; };
 
 template <class Type>
 class MatIter;
@@ -63,6 +63,10 @@ class Mat {
         }
         size_type columns() const{
             return this->dims[ndims - 1];
+        }
+        bool inbounds(size_type a){
+            if(a >= 0 && a < columns()) return true;
+            else return false;
         }
         bool inbounds(size_type a, size_type b){
             if(a >= 0 && a < columns() && b >= 0 && b < rows()) return true;
@@ -163,7 +167,7 @@ class Mat {
         Type& operator() (size_type a, size_type b){
             return data[a*strides[1] + b*strides[0]];
         }
-        Type& operator() (size_type a) const{
+        const Type& operator() (size_type a) const{
             return data[a*strides[0]];
         }
         const Type& operator() (size_type a, size_type b) const{
