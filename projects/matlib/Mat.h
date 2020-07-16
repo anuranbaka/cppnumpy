@@ -43,7 +43,7 @@ class Mat {
         }
         iterator end(){
             if(ndims == 2){
-                return iterator(*this, strides[0]*columns() + strides[1]*rows());
+                return iterator(*this, strides[0]*columns()+strides[1]*rows());
             }
             else{
                 return iterator(*this, strides[0]*columns());
@@ -75,7 +75,8 @@ class Mat {
         bool isContiguous(){
             if(strides[0] != 1) return false;
             if(ndims == 2 && strides[1] != dims[1]) return false;
-            else if(ndims > 2) errorCheck(true, "n-dimensional contiguity check not yet implemented.");
+            else if(ndims > 2) errorCheck(true,
+                "n-dimensional contiguity check not yet implemented.");
             return true;
         }
         Mat(size_type a = 1){
@@ -107,7 +108,8 @@ class Mat {
             ndims = 1;
             dims = new size_type[ndims];
             dims[0] = a;
-            errorCheck(list.size() != a, "Initializer list size inconsistent with dimensions");
+            errorCheck(list.size() != a,
+                "Initializer list size inconsistent with dimensions");
             strides = new size_type[ndims];
             strides[0] = 1;
             memory = new Type[a];
@@ -124,7 +126,8 @@ class Mat {
             dims = new size_type[ndims];
             dims[0] = a;
             dims[1] = b; // make this variadic
-            errorCheck(list.size() != a*b, "Initializer list size inconsistent with dimensions");
+            errorCheck(list.size() != a*b,
+                "Initializer list size inconsistent with dimensions");
             strides = new size_type[ndims];
             strides[0] = 1;
             strides[1] = columns();
@@ -153,7 +156,8 @@ class Mat {
         }
         ~Mat(){
             (*refCount)--;
-            errorCheck(*refCount < 0,"Reference counter is negative somehow");
+            errorCheck(*refCount < 0,
+                "Reference counter is negative somehow");
             if(*refCount == 0){
                 if(memory == nullptr){
                     delete refCount;
@@ -184,7 +188,8 @@ class Mat {
         }
         Mat& operator= (const Mat &b){
             (*refCount)--;
-            errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
+            errorCheck(*refCount < 0,
+                "Reference counter is negative somehow\n");
             if(*refCount == 0){
                 delete refCount;
                 if(memory != nullptr) delete[] memory;
@@ -224,7 +229,8 @@ class Mat {
             else x = new size_type[b.ndims];
 
             for(size_type n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] && b.dims[n] != 1, "frames are not aligned");
+                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] &&
+                    b.dims[n] != 1, "frames are not aligned");
                 if(dims[n] == 1) x[n] = b.dims[n];
                 else x[n] = dims[n];
             }
@@ -232,16 +238,26 @@ class Mat {
             if(ndims == 2){
                 Mat<Type> temp(x[0], x[1]);
                 result = temp;
+                size_type resultRow, resultCol, leftRow,
+                            leftCol, rightRow, rightCol;
                 for(size_type i = 0; i < result.size(); i++){
-                    result(i/result.columns(),i%result.columns()) = (*f)(operator()(i/result.columns()%rows(), i%columns())
-                                        , b(i/result.columns()%b.rows(), i%b.columns()));
+                    resultRow = i/result.columns();
+                    resultCol = i%result.columns();
+                    leftRow = i/result.columns()%rows();
+                    leftCol = i%columns();
+                    rightRow = i/result.columns()%b.rows();
+                    rightCol = i%b.columns();
+
+                    result(resultRow, resultCol) =
+                        (*f)(operator()(leftRow, leftCol),
+                            b(rightRow, rightCol));
                 }
             }
             else{
                 Mat<Type> temp(x[0]);
                 result = temp;
                 for(size_type i = 0; i < result.size(); i++){
-                    result(i) = (*f)(operator()(i%columns()) , b(i%b.columns()));
+                    result(i) = (*f)(operator()(i%columns()),b(i%b.columns()));
                 }
             }
             delete []x;
@@ -265,7 +281,8 @@ class Mat {
             return result;
         }
         Mat operator^ (const Mat &b){
-            errorCheck(ndims != 2 || b.ndims != 2, "Matrix multiply only available on 2d matrices");
+            errorCheck(ndims != 2 || b.ndims != 2,
+                "Matrix multiply only available on 2d matrices");
             errorCheck(columns() != b.rows(), "Matrix size mismatch");
             Mat<Type> result(rows(),b.columns());
             Type sum;
@@ -280,19 +297,32 @@ class Mat {
             }
             return result;
         }
-        Mat roi(int dim1Start = -1, int dim1End = -1, int dim2Start = -1, int dim2End = -1){
+        Mat roi(int dim1Start = -1, int dim1End = -1,
+                int dim2Start = -1, int dim2End = -1){
             if(ndims == 1){
-                errorCheck(ndims == 1 && (dim2Start != -1 || dim2End != -1), "Too many arguments for 1d matrix");
-                errorCheck(dim1Start < -1 || dim1Start > static_cast<int>(columns()), "roi argument 1 invalid");
-                errorCheck(dim1End < -1 || dim1End > static_cast<int>(columns()), "roi argument 2 invalid");
+                errorCheck(ndims == 1 && (dim2Start != -1 || dim2End != -1),
+                    "Too many arguments for 1d matrix");
+                errorCheck(dim1Start < -1 ||
+                    dim1Start > static_cast<int>(columns()),
+                    "roi argument 1 invalid");
+                errorCheck(dim1End < -1 ||
+                    dim1End > static_cast<int>(columns()),
+                    "roi argument 2 invalid");
                 errorCheck(dim2Start != -1, "Too many arguments");
                 errorCheck(dim2End != -1, "Too many arguments");
             }
             else if(ndims == 2){
-                errorCheck(dim1Start < -1 || dim1Start > static_cast<int>(rows()), "roi argument 1 invalid");
-                errorCheck(dim1End < -1 || dim1End > static_cast<int>(rows()), "roi argument 2 invalid");
-                errorCheck(dim2Start < -1 || dim2Start > static_cast<int>(columns()), "roi argument 3 invalid");
-                errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()), "roi argument 4 invalid");
+                errorCheck(dim1Start < -1 ||
+                    dim1Start > static_cast<int>(rows()),
+                    "roi argument 1 invalid");
+                errorCheck(dim1End < -1 ||
+                    dim1End > static_cast<int>(rows()),
+                    "roi argument 2 invalid");
+                errorCheck(dim2Start < -1 ||
+                    dim2Start > static_cast<int>(columns()),
+                    "roi argument 3 invalid");
+                errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()),
+                    "roi argument 4 invalid");
             }
 
             if(dim1Start == -1) dim1Start = 0;
@@ -314,10 +344,14 @@ class Mat {
             return result;
         }
         void T(Mat& dest){
-            errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
-            errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0], "Matrix size mismatch");
-            errorCheck(memory == dest.memory, "Source and destination matrix share same backing data");
-            errorCheck(data == dest.data, "TODO: call other transpose function");
+            errorCheck(ndims != 2,
+                "transpose may only be used on 2d matrix");
+            errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0],
+                "Matrix size mismatch");
+            errorCheck(memory == dest.memory,
+                "Source and destination matrix share same backing data");
+            errorCheck(data == dest.data,
+                "TODO: call other transpose function");
             if(isContiguous()){
                 for(size_type i=0;i<size();i++){
                     dest(0,i) = operator()(i%rows(),i/rows());
@@ -396,7 +430,8 @@ class Mat {
             return dest;
         }
         void copy(Mat<Type>& dest){
-            errorCheck(dest.ndims != ndims, "Matrix dimension mismatch during copy");
+            errorCheck(dest.ndims != ndims,
+                "Matrix dimension mismatch during copy");
             for(size_type i = 0; i > dest.ndims; i++){
                 errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
             }
@@ -419,7 +454,7 @@ class Mat {
                     n++;
                 }
             }
-            else errorCheck(true, "whut?");
+            else errorCheck(true, "n-dimensional copy not yet implemented");
             return;
         }
         void scalarFill(Type x){
@@ -428,8 +463,10 @@ class Mat {
             }
         }
         void reshape(int new_dim1 = -1){
-            errorCheck(!isContiguous(), "Cannot reshape non-contiguous matrix");
-            errorCheck(new_dim1 < -1, "matrix cannot have negative dimensions");
+            errorCheck(!isContiguous(),
+                "Cannot reshape non-contiguous matrix");
+            errorCheck(new_dim1 < -1,
+                "matrix cannot have negative dimensions");
             if(new_dim1 == -1) new_dim1 = size();
             else errorCheck(size() != new_dim1, "new shape size mismatch");
 
@@ -446,12 +483,16 @@ class Mat {
             return;
         }
         void reshape(int new_dim1, int new_dim2){
-            errorCheck(!isContiguous(), "Cannot reshape non-contiguous matrix");
-            errorCheck(new_dim1 < -1 || new_dim2 < -1, "matrix cannot have negative dimensions");
-            errorCheck(new_dim1 == -1 && new_dim2 == -1, "only one argument of reshape can be -1");
+            errorCheck(!isContiguous(),
+                "Cannot reshape non-contiguous matrix");
+            errorCheck(new_dim1 < -1 || new_dim2 < -1,
+                "matrix cannot have negative dimensions");
+            errorCheck(new_dim1 == -1 && new_dim2 == -1,
+                "only one argument of reshape can be -1");
             if(new_dim1 == -1) new_dim1 = size()/new_dim2;
             else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-            else errorCheck(size() != new_dim1 * new_dim2, "new shape size mismatch");
+            else errorCheck(size() != new_dim1 * new_dim2,
+                    "new shape size mismatch");
 
             if(ndims == 2){
                 dims[0] = static_cast<size_type>(new_dim1);
@@ -471,7 +512,8 @@ class Mat {
             }
             return;
         }
-        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims, size_type* new_dims){
+        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims,
+                                size_type* new_dims){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
@@ -488,7 +530,8 @@ class Mat {
             result.data = a;
             return result;
         }
-        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims, size_type* new_dims, int64_t* ref){
+        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims,
+                                size_type* new_dims, int64_t* ref){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
@@ -595,12 +638,14 @@ class MatIter{
         MatIter(Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
         
         bool operator==(MatIter b){
-            matrix.errorCheck(matrix.data != b.matrix.data, "Comparison between iterators of different matrices");
+            matrix.errorCheck(matrix.data != b.matrix.data,
+                "Comparison between iterators of different matrices");
             if(position == b.position) return true;
             else return false;
         }
         bool operator!=(MatIter b){
-            matrix.errorCheck(matrix.data != b.matrix.data, "Comparison between iterators of different matrices");
+            matrix.errorCheck(matrix.data != b.matrix.data,
+                "Comparison between iterators of different matrices");
             if(position != b.position) return true;
             else return false;
         }
@@ -610,9 +655,13 @@ class MatIter{
                 if(position >= matrix.columns()-1) position = matrix.columns();
                 else position += matrix.strides[0];
             }
-            else if((position-offset)%matrix.strides[1] == 0 && position >= offset){
-                if(position >= (matrix.columns()-1)*matrix.strides[0] + (matrix.rows()-1)*matrix.strides[1]){
-                    position = matrix.strides[0]*matrix.columns() + matrix.strides[1]*matrix.rows(); //end condition
+            else if((position - offset) % matrix.strides[1] == 0
+                        && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0]
+                                + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns()
+                                + matrix.strides[1]*matrix.rows();
+                    //if at the end of a row, jump to the next
                 }
                 else{
                     position -= matrix.strides[0]*(matrix.columns() - 1);
@@ -628,9 +677,13 @@ class MatIter{
             if(matrix.ndims == 1){
                 if(position >= matrix.columns()-1) position = matrix.columns();
             }
-            else if((position-offset)%matrix.strides[1] == 0 && position >= offset){
-                if(position >= (matrix.columns()-1)*matrix.strides[0] + (matrix.rows()-1)*matrix.strides[1]){
-                    position = matrix.strides[0]*matrix.columns() + matrix.strides[1]*matrix.rows(); //end condition
+            else if((position-offset)%matrix.strides[1] == 0
+                        && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0]
+                                + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns()
+                                + matrix.strides[1]*matrix.rows();
+                    //if at the end of a row, jump to the next
                 }
                 else{
                     position -= matrix.strides[0]*(matrix.columns() - 1);
