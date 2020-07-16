@@ -155,6 +155,12 @@ class Mat {
             (*refCount)--;
             errorCheck(*refCount < 0,"Reference counter is negative somehow");
             if(*refCount == 0){
+                if(memory == nullptr){
+                    delete refCount;
+                    delete []dims;
+                    delete []strides;
+                    return;
+                }
                 delete refCount;
                 delete []memory;
             }
@@ -181,7 +187,7 @@ class Mat {
             errorCheck(*refCount < 0,"Reference counter is negative somehow\n");
             if(*refCount == 0){
                 delete refCount;
-                delete[] memory;
+                if(memory != nullptr) delete[] memory;
             }
             delete[] dims;
             delete[] strides;
@@ -394,16 +400,26 @@ class Mat {
             for(size_type i = 0; i > dest.ndims; i++){
                 errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
             }
-            size_t m = 0;
-            size_t n = 0;
-            for(auto i : *this){
-                dest(m,n) = i;
-                n++;
-                if(n == columns()){
-                    n = 0;
-                    m++;
+            if(ndims == 2){
+                size_t m = 0;
+                size_t n = 0;
+                for(auto i : *this){
+                    dest(m,n) = i;
+                    n++;
+                    if(n == columns()){
+                        n = 0;
+                        m++;
+                    }
                 }
             }
+            else if(ndims == 1){
+                size_t n = 0;
+                for(auto i : *this){
+                    dest(n) = i;
+                    n++;
+                }
+            }
+            else errorCheck(true, "whut?");
             return;
         }
         void scalarFill(Type x){
@@ -454,6 +470,43 @@ class Mat {
                 strides[1] = new_dim2;
             }
             return;
+        }
+        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims, size_type* new_dims){
+            Mat<Type> result;
+            delete[] result.dims;
+            delete[] result.strides;
+            delete[] result.memory;
+            result.ndims = new_ndims;
+            result.dims = new size_type[result.ndims];
+            for(int i = 0; i < result.ndims; i++){
+                result.dims[i] = new_dims[i];
+            }
+            result.strides = new size_type[result.ndims];
+            result.strides[0] = 1;
+            if(result.ndims == 2) result.strides[1] = result.dims[1];
+            result.memory = nullptr;
+            result.data = a;
+            return result;
+        }
+        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims, size_type* new_dims, int64_t* ref){
+            Mat<Type> result;
+            delete[] result.dims;
+            delete[] result.strides;
+            delete[] result.memory;
+            delete result.refCount;
+            result.refCount = ref;
+            (*result.refCount)++;
+            result.ndims = new_ndims;
+            result.dims = new size_type[result.ndims];
+            for(int i = 0; i < result.ndims; i++){
+                result.dims[i] = new_dims[i];
+            }
+            result.strides = new size_type[result.ndims];
+            result.strides[0] = 1;
+            if(result.ndims == 2) result.strides[1] = result.dims[1];
+            result.memory = a;
+            result.data = a;
+            return result;
         }
         static Mat zeros(size_type a){
             Mat result(a);

@@ -143,3 +143,9 @@ taking the two middle rows from y and reshaping to a 6x2 matrix
 13, 14
 0, 0
 0, 18
+6 element c-style array wrapped into a 2x3 matrix
+1, 2, 3
+4, 5, 6
+6 element c-style array wrapped into a 2x3 matrix with preset refcount
+1, 2, 3
+4, 5, 6

@@ -164,5 +164,16 @@ int main (){
     fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
     output.print(outFile);
 
+    double e[6] = {1,2,3,4,5,6};
+    size_t shape[2] = {2,3};
+    int64_t counter = 1;
+    Mat<double> wrapper = Mat<double>::wrap(6, e, 2, shape);
+    fprintf(outFile, "6 element c-style array wrapped into a 2x3 matrix\n");
+    wrapper.print(outFile);
+    
+    wrapper = Mat<double>::wrap(6, e, 2, shape, &counter);
+    fprintf(outFile, "6 element c-style array wrapped into a 2x3 matrix with preset refcount\n");
+    wrapper.print(outFile);
+
     return 0;
 }
