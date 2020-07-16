@@ -43,7 +43,7 @@ class Mat {
         }
         iterator end(){
             if(ndims == 2){
-                return iterator(*this, strides[0]*columns()+strides[1]*rows());
+                return iterator(*this, strides[0]*columns() + strides[1]*rows());
             }
             else{
                 return iterator(*this, strides[0]*columns());
@@ -159,14 +159,9 @@ class Mat {
             errorCheck(*refCount < 0,
                 "Reference counter is negative somehow");
             if(*refCount == 0){
-                if(memory == nullptr){
-                    delete refCount;
-                    delete []dims;
-                    delete []strides;
-                    return;
-                }
                 delete refCount;
-                delete []memory;
+                if(memory != nullptr)
+                    delete []memory;
             }
             delete []dims;
             delete []strides;
@@ -187,15 +182,7 @@ class Mat {
             return data[i.position];
         }
         Mat& operator= (const Mat &b){
-            (*refCount)--;
-            errorCheck(*refCount < 0,
-                "Reference counter is negative somehow\n");
-            if(*refCount == 0){
-                delete refCount;
-                if(memory != nullptr) delete[] memory;
-            }
-            delete[] dims;
-            delete[] strides;
+            this->~Mat<Type>();
             refCount = b.refCount;
             (*refCount)++;
             ndims = b.ndims;
@@ -257,7 +244,7 @@ class Mat {
                 Mat<Type> temp(x[0]);
                 result = temp;
                 for(size_type i = 0; i < result.size(); i++){
-                    result(i) = (*f)(operator()(i%columns()),b(i%b.columns()));
+                    result(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
                 }
             }
             delete []x;
@@ -348,10 +335,12 @@ class Mat {
                 "transpose may only be used on 2d matrix");
             errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0],
                 "Matrix size mismatch");
+            if(data == dest.data){
+                this->T();
+                return;
+            }
             errorCheck(memory == dest.memory,
                 "Source and destination matrix share same backing data");
-            errorCheck(data == dest.data,
-                "TODO: call other transpose function");
             if(isContiguous()){
                 for(size_type i=0;i<size();i++){
                     dest(0,i) = operator()(i%rows(),i/rows());
