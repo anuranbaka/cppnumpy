@@ -40,7 +40,7 @@ int main(){
                    0,1,1,1,9,0,0,0,0,
                    0,0,0,0,9,0,0,0,0},9,9);
     FILE* outFile;
-    outFile = fopen("floodOutput.txt","w");
+    outFile = fopen("projects/Flood_Fill/floodOutput.txt","w");
 
     fprintf(outFile,"Map1 before flood fill:\n");
     map1.print(outFile);
@@ -62,26 +62,28 @@ int main(){
     
     start = {4,4};
     floodFillCustom(map2, start, 5, fuzzyFill1);
-
     fprintf(outFile,"Map2 Custom filling center with 5 (threshold 1):\n");
     map2.print(outFile);
 
     start = {4,4};
     floodFillCustom(map2, start, 0, fuzzyFill1);
-
     start = {4,4};
     floodFillCustom(map2, start, 5, fuzzyFill3);
-
     fprintf(outFile,"Map2 reset, then Custom filling center with 5 (threshold 3):\n");
     map2.print(outFile);
 
     fprintf(outFile,"Map3 before flood fill:\n");
     map3.print(outFile);
     
-    start = {2,2};
+    start = {7,2};
     floodFillCustom(map3, start, 5, fuzzyFill1);
+    fprintf(outFile,"Map3 Custom filling lower left corner with 5 (threshold 1):\n");
+    map3.print(outFile);
 
-    fprintf(outFile,"Map3 Custom filling center with 5 (threshold 1):\n");
+    start = {0,6};
+    Mat<int> subMat = map3.roi(7,8);
+    floodFill(subMat, start, 5);
+    fprintf(outFile,"Map3 fill on row 7 starting from column 7:\n");
     map3.print(outFile);
 
     return 0;
