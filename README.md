@@ -100,18 +100,30 @@ The library supports several basic matrix arithmetic operations:
 ```
 #include <Mat.h>
 
-Mat<double> a(3,3) //creates an uninitialized 3x3 matrix of int
-Mat<double> b({1,2,3,4,5,6,7,8},2,4) // creates a 2x4 matrix initialized to the values in curly braces.
-Mat<> c({1,2,3},1,3) // empty <> sets contained type to double by default
+Mat<double> a(3,3)
+//creates an uninitialized 3x3 matrix of int
 
-a.scalarFill(b(0,3)); //fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
+Mat<double> b({1,2,3,4,5,6,7,8},2,4)
+//creates a 2x4 matrix initialized to the values in curly braces.
 
-c = b.t(); //assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
+Mat<> c({1,2,3},1,3)
+//empty <> sets contained type to double by default
 
-Mat<double> subMat = b.roi(1,2,1) //creates a sub-matrix region of interest (start row, end row, start column, end column)
-// this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
+a.scalarFill(b(0,3));
+//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
 
-a = a + subMat; //adds the values in our new submatrix to matrix a, which causes the submatrix to broadcast out to the correct dimensions (3x3)
+c = b.t();
+//assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
 
-a.print(); //prints our new matrix to the console. In this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
+Mat<double> subMat = b.roi(1,2,1)
+//creates a sub-matrix region of interest (start row, end row, start column, end column)
+//this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
+
+a = a + subMat;
+//adds the values in our new submatrix to matrix a
+//this causes the submatrix to broadcast out to the correct dimensions (3x3)
+
+a.print();
+//prints our new matrix to the console
+//in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
 ```
