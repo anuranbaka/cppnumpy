@@ -21,6 +21,7 @@ numbers as plain text, but demonstrates a potential practical use case for the c
 ###### Template parameter "Type" used to signify the element type
 - **(constructor)**: takes an optional initializer list followed by dimensions
   - ` Mat(std::initializer_list<Type>, size_t) `
+  - ` Mat(std::initializer_list<Type>, size_t, size_t) `
   - ` Mat(size_t) `
   - ` Mat(size_t, size_t) `
   - ` Mat(const Mat&) `
