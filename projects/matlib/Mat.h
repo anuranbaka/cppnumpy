@@ -69,7 +69,7 @@ class Mat {
             else return false;
         }
         bool inbounds(size_type a, size_type b){
-            if(a >= 0 && a < columns() && b >= 0 && b < rows()) return true;
+            if(a >= 0 && a < rows() && b >= 0 && b < columns()) return true;
             else return false;
         }
         bool isContiguous(){
