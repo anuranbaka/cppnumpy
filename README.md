@@ -85,7 +85,7 @@ numbers as plain text, but demonstrates a potential practical use case for the c
 - **zeros_like**: returns an array of zeros with the same shape as a given matrix
   - ` Mat zeros_like(const Mat) `
 - **ones**: returns an array of ones in the given shape
-  - ` Mat ones()
+  - ` Mat ones() `
 - **ones_like**: returns an array of ones with the same shape as a given matrix
   - ` Mat ones_like(const Mat) `
 - **empty_like**: returns an empty array with the same shape as a given matrix
