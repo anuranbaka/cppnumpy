@@ -204,13 +204,13 @@ class Mat {
             }
             return *this;
         }
-        Mat operator+(const Mat &b){
+        Mat operator+(const Mat<Type> &b){
             return broadcast(b, Add);
         }
-        Mat operator- (const Mat &b){
+        Mat operator- (const Mat<Type> &b){
             return broadcast(b, Subtract);
         }
-        Mat broadcast(const Mat &b, Type (*f)(Type, Type)){
+        Mat broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
@@ -267,7 +267,7 @@ class Mat {
             }
             return result;
         }
-        Mat operator^ (const Mat &b){
+        Mat operator^ (const Mat<Type> &b){
             errorCheck(ndims != 2 || b.ndims != 2,
                 "Matrix multiply only available on 2d matrices");
             errorCheck(columns() != b.rows(), "Matrix size mismatch");
@@ -336,7 +336,7 @@ class Mat {
             errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0],
                 "Matrix size mismatch");
             if(data == dest.data){
-                this->T();
+                dest = this->T();
                 return;
             }
             errorCheck(memory == dest.memory,
