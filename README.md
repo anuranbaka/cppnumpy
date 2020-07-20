@@ -103,13 +103,14 @@ Mat<double> a(3,3) //creates an uninitialized 3x3 matrix of int
 Mat<double> b({1,2,3,4,5,6,7,8},2,4) // creates a 2x4 matrix initialized to the values in curly braces.
 Mat<> c({1,2,3},1,3) // empty <> sets contained type to double by default
 
-b(0,3); //returns element at the listed coordinates, in this case: 4
+a.scalarFill(b(0,3)); //fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
 
-a.scalarFill(1); //fills matrix with the scalar listed
+c = b.t(); //assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
 
-a + c; //broadcasts the matrix c to size 3x3
+Mat<double> subMat = b.roi(1,2,1) //creates a sub-matrix region of interest (start row, end row, start column, end column)
+// this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
 
-b.t(); //returns a transpose of matrix b
+a = a + subMat; //adds the values in our new submatrix to matrix a, which causes the submatrix to broadcast out to the correct dimensions (3x3)
 
-b.roi(1,2,0,1) //points to sub-matrix region of interest (start column, end column, start row, end row)
+a.print(); //prints our new matrix to the console. In this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
 ```
