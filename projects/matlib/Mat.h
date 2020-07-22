@@ -333,14 +333,14 @@ class Mat {
             }
             return result;
         }
-        void T(Mat& dest){
+        Mat T(Mat& dest){
             errorCheck(ndims != 2,
                 "transpose may only be used on 2d matrix");
             errorCheck(dims[0] != dest.dims[1] || dims[1] != dims[0],
                 "Matrix size mismatch");
             if(data == dest.data){
                 dest = this->T();
-                return;
+                return *this;
             }
             errorCheck(memory == dest.memory,
                 "Source and destination matrix share same backing data");
@@ -356,24 +356,30 @@ class Mat {
                     }
                 }
             }
-            return;
+            return *this;
         }
         Mat T(){
             errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
-            Mat<Type> dest(columns(),rows());
-            if(isContiguous()){
-                for(size_type i=0;i<size();i++){
-                    dest(0,i) = operator()(i%rows(),i/rows());
-                }
-            }
-            else{
+            if(rows() == columns()){
+                Type temp;
                 for(size_type i=0; i<rows(); i++){
                     for(size_type j=0; j<columns(); j++){
-                        dest(i,j) = operator()(j,i);
+                        temp = operator()(i,j);
+                        operator()(i,j) = operator()(j,i);
+                        operator()(j,i) = temp;
                     }
                 }
             }
-            return dest;
+            else if(isContiguous()){
+                Mat<Type> clone(*this);
+                reshape(columns(), rows());
+                for(size_type i = 0; i < rows(); i++){
+                    for(size_type j = 0; j < columns(); j++){
+                        operator()(j,i) = clone(i,j);
+                    }
+                }
+            }
+            return *this;
         }
         Mat t() const{
             errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
