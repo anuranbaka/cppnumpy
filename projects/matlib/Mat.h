@@ -264,20 +264,11 @@ class Mat {
             return result;
         }
         Mat operator- (){
-            Mat<Type> result;
+            Mat<Type> temp({-1},1);
             if(ndims == 2){
-                Mat<Type> temp(rows(), columns());
-                result = temp;
+                temp.reshape(1,1);
             }
-            else{
-                Mat<Type> temp(columns());
-                result = temp;
-            }
-            copy(result);
-            for(auto& i : result){
-                i *= -1;
-            }
-            return result;
+            return broadcast(temp, Multiply);
         }
         Mat operator^ (const Mat<Type> &b){
             errorCheck(ndims != 2 || b.ndims != 2,
