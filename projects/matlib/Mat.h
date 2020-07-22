@@ -10,6 +10,12 @@ template <class Type>
 inline Type Subtract(Type a, Type b){ return a - b; };
 
 template <class Type>
+inline Type Multiply(Type a, Type b){ return a * b; };
+
+template <class Type>
+inline Type Divide(Type a, Type b){ return a / b; };
+
+template <class Type>
 class MatIter;
 
 template <class Type = double>
@@ -207,8 +213,14 @@ class Mat {
         Mat operator+(const Mat<Type> &b){
             return broadcast(b, Add);
         }
-        Mat operator- (const Mat<Type> &b){
+        Mat operator-(const Mat<Type> &b){
             return broadcast(b, Subtract);
+        }
+        Mat operator*(const Mat<Type> &b){
+            return broadcast(b, Multiply);
+        }
+        Mat operator/(const Mat<Type> &b){
+            return broadcast(b, Divide);
         }
         Mat broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
             size_type* x;
