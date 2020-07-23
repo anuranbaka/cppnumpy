@@ -204,25 +204,37 @@ class Mat {
             data = b.data;
             return *this;
         }
-        Mat& operator= (const Type scalar){
+        Mat<Type>& operator= (const Type scalar){
             for(auto& i: *this){
                 i = scalar;
             }
             return *this;
         }
-        Mat operator+(const Mat<Type> &b){
+        Mat<Type> operator+(const Mat<Type> &b){
             return broadcast(b, Add);
         }
-        Mat operator-(const Mat<Type> &b){
+        Mat<Type> operator+(Type b){
+            return broadcast(b, Add);
+        }
+        Mat<Type> operator-(const Mat<Type> &b){
             return broadcast(b, Subtract);
         }
-        Mat operator*(const Mat<Type> &b){
+        Mat<Type> operator-(Type b){
+            return broadcast(b, Subtract);
+        }
+        Mat<Type> operator*(const Mat<Type> &b){
             return broadcast(b, Multiply);
         }
-        Mat operator/(const Mat<Type> &b){
+        Mat<Type> operator*(Type b){
+            return broadcast(b, Multiply);
+        }
+        Mat<Type> operator/(const Mat<Type> &b){
             return broadcast(b, Divide);
         }
-        Mat broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
+        Mat<Type> operator/(Type b){
+            return broadcast(b, Divide);
+        }
+        Mat<Type> broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
@@ -262,6 +274,10 @@ class Mat {
             delete []x;
 
             return result;
+        }
+        Mat broadcast(Type b, Type (*f)(Type, Type)){
+            Mat<Type> temp({b},1,1);
+            return broadcast(temp, *f);
         }
         Mat operator- (){
             Mat<Type> temp({-1},1);
@@ -626,6 +642,20 @@ class Mat {
             }
             return result;
         }
+        static Mat<Type> broadcast(Mat<Type> a, Type b, Type (*f)(Type, Type)){
+            return a.broadcast(b, (*f));
+        }
+        static Mat<Type> broadcast(Type a, Mat<Type> b, Type (*f)(Type, Type)){
+            Mat<Type> temp({a},1,1);
+            return temp.broadcast(b, *f);
+        }
+        static Mat<Type> broadcast(Type a, Type b, Type (*f)(Type, Type)){
+            Mat<Type> temp({a},1,1);
+            return a.broadcast(b, (*f));
+        }
+        static Mat<Type> broadcast(Mat<Type> a, Mat<Type> b, Type (*f)(Type, Type)){
+            return a.broadcast(b, *f);
+        }
 };
 
 template <class Type>
@@ -695,3 +725,20 @@ class MatIter{
             return matrix.data[position];
         }
 };
+
+template<class Type>
+Mat<Type> operator+(Type a, const Mat<Type> &b){
+    return b.broadcast(a, Add);
+}
+template<class Type>
+Mat<Type> operator-(Type a, const Mat<Type> &b){
+    return b.broadcast(a, Subtract);
+}
+template<class Type>
+Mat<Type> operator*(Type a, const Mat<Type> &b){
+    return b.broadcast(a, Multiply);
+}
+template<class Type>
+Mat<Type> operator/(Type a, const Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, Divide);
+}
