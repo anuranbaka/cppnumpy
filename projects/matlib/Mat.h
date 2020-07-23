@@ -16,6 +16,18 @@ template <class Type>
 inline Type Divide(Type a, Type b){ return a / b; };
 
 template <class Type>
+inline bool And(Type a, Type b){ return static_cast<bool>(a) && static_cast<bool>(b); };
+
+template <class Type>
+inline bool Or(Type a, Type b){ return static_cast<bool>(a) || static_cast<bool>(b); };
+
+template <class Type>
+inline bool And(Type a, bool b){ return static_cast<bool>(a) && static_cast<bool>(b); };
+
+template <class Type>
+inline bool Or(Type a, bool b){ return static_cast<bool>(a) || static_cast<bool>(b); };
+
+template <class Type>
 class MatIter;
 
 template <class Type = double>
@@ -234,6 +246,34 @@ class Mat {
         Mat<Type> operator/(Type b){
             return broadcast(b, Divide);
         }
+        template<class Type2>
+        Mat<bool> operator&(const Mat<Type2> &b){
+            return broadcast(b, And);
+        }
+        Mat<bool> operator&(bool b){
+            Mat<bool> temp({b},1,1);
+            return broadcast(b, And);
+        }
+        template<class Type2>
+        Mat<bool> operator|(const Mat<Type2> &b){
+            return broadcast(b, Or);
+        }
+        Mat<bool> operator|(const Mat<bool> &b){
+            return broadcast(b, Or);
+        }
+        Mat<bool> operator|(bool b){
+            Mat<bool> temp({b},1,1);
+            return broadcast(b, Or);
+        }
+        Mat<bool> operator!(){
+            Mat<bool> result(rows(),columns());
+            for(int i = 0; i < result.size(); i++){
+                for(int j = 0; j < result.size(); j++){
+                    result(i,j) = !(static_cast<bool>(operator()(i,j)));
+                }
+            }
+            return result;
+        }
         Mat<Type> broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
@@ -275,7 +315,7 @@ class Mat {
 
             return result;
         }
-        Mat broadcast(Type b, Type (*f)(Type, Type)){
+        Mat<Type> broadcast(Type b, Type (*f)(Type, Type)){
             Mat<Type> temp({b},1,1);
             return broadcast(temp, *f);
         }
@@ -643,18 +683,14 @@ class Mat {
             return result;
         }
         static Mat<Type> broadcast(Mat<Type> a, Type b, Type (*f)(Type, Type)){
-            return a.broadcast(b, (*f));
+            return a.broadcast(b, f);
         }
         static Mat<Type> broadcast(Type a, Mat<Type> b, Type (*f)(Type, Type)){
             Mat<Type> temp({a},1,1);
-            return temp.broadcast(b, *f);
-        }
-        static Mat<Type> broadcast(Type a, Type b, Type (*f)(Type, Type)){
-            Mat<Type> temp({a},1,1);
-            return a.broadcast(b, (*f));
+            return temp.broadcast(b, f);
         }
         static Mat<Type> broadcast(Mat<Type> a, Mat<Type> b, Type (*f)(Type, Type)){
-            return a.broadcast(b, *f);
+            return a.broadcast(b, f);
         }
 };
 
@@ -741,4 +777,12 @@ Mat<Type> operator*(Type a, const Mat<Type> &b){
 template<class Type>
 Mat<Type> operator/(Type a, const Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, Divide);
+}
+template<class Type>
+Mat<bool> operator&(bool a, const Mat<Type> &b){
+    return b.broadcast(a, And);
+}
+template<class Type>
+Mat<bool> operator|(bool a, const Mat<Type> &b){
+    return b.broadcast(a, Or);
 }
