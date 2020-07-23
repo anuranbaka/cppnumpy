@@ -93,6 +93,14 @@ int main (){
     fprintf(outFile, "Set each element of x to a minimum of 4 with broadcast()\n");
     output.print(outFile);
 
+    output = x + 5;
+    fprintf(outFile, "broadcast scalar: x + 5\n");
+    output.print(outFile);
+
+    output = 2520.0 / x;
+    fprintf(outFile, "broadcast scalar: 2520 / x\n");
+    output.print(outFile);
+
     Mat<> a({1,2,3,4,5,6}, 6);
     Mat<> b({3,3,3,3,3,3}, 6);
     Mat<> c({5}, 1);
