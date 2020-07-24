@@ -75,6 +75,20 @@ int main (){
     fprintf(outFile, "x.roi()\n");
     output.print(outFile);
 
+    fprintf(outFile, "m.T()\n");
+    m.T().print(outFile);
+
+    output = Mat<double>::empty_like(m);
+    output.reshape(m.columns(),m.rows());
+    m.T(output);
+    fprintf(outFile, "m.T(output)\n");
+    output.print(outFile);
+
+    x.T();
+    fprintf(outFile, "x.T()\n");
+    x.print(outFile);
+    x.T();
+
     y.roi(1,3,2,5).scalarFill(0);
     fprintf(outFile, "y.roi(1,3,2,5).scalarFill(0)\n");
     y.print(outFile);
