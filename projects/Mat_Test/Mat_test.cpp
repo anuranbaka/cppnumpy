@@ -146,8 +146,24 @@ int main (){
     fprintf(outFile, "matrix a, elements 2 to 4\n");
     output.print(outFile);
 
+    a += b;
+    fprintf(outFile, "a += b\n");
+    a.print(outFile);
+
+    a -= b;
+    fprintf(outFile, "a -= b\n");
+    a.print(outFile);
+
+    a *= 2;
+    fprintf(outFile, "a *= 2\n");
+    a.print(outFile);
+
+    a /= 2;
+    fprintf(outFile, "a /= 2\n");
+    a.print(outFile);
+
     output = 7;
-    fprintf(outFile, "assignment to 7s\n");
+    fprintf(outFile, "assignment of a size 3 matrix to 7s\n");
     output.print(outFile);
 
     output = Mat<>::zeros(8,8);
