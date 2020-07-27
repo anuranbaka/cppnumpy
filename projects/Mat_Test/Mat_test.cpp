@@ -246,5 +246,12 @@ int main (){
     fprintf(outFile, "!boolMat | true\n");
     outBool.print(outFile);
 
+    fprintf(outFile, "Checking if any elements of !boolMat are true:\n");
+    if((!boolMat).any()) fprintf(outFile, "At least one is true!\n");
+    else fprintf(outFile, "Nope, all false\n");
+    fprintf(outFile, "Checking if all elements of y are true:\n");
+    if(y.all()) fprintf(outFile, "All elements are true!\n");
+    else fprintf(outFile, "Nope, at least one is false\n");
+
     return 0;
 }
