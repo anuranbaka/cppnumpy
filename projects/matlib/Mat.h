@@ -15,17 +15,11 @@ inline Type Multiply(Type a, Type b){ return a * b; };
 template <class Type>
 inline Type Divide(Type a, Type b){ return a / b; };
 
-template <class Type>
-inline bool And(Type a, Type b){ return static_cast<bool>(a) && static_cast<bool>(b); };
+template <class Type, class Type2>
+inline bool And(Type a, Type2 b){ return static_cast<bool>(a) && static_cast<bool>(b); };
 
-template <class Type>
-inline bool Or(Type a, Type b){ return static_cast<bool>(a) || static_cast<bool>(b); };
-
-template <class Type>
-inline bool And(Type a, bool b){ return static_cast<bool>(a) && static_cast<bool>(b); };
-
-template <class Type>
-inline bool Or(Type a, bool b){ return static_cast<bool>(a) || static_cast<bool>(b); };
+template <class Type, class Type2>
+inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); };
 
 template <class Type>
 class MatIter;
@@ -41,9 +35,6 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    size_type ndims = 2;
-    size_type* dims;
-    size_type* strides;
     Type* memory; 
     Type* data;
     int64_t* refCount;
@@ -56,6 +47,10 @@ class Mat {
         return;
     }
     public:
+        size_type ndims = 2;
+        size_type* dims;
+        size_type* strides;
+
         iterator begin(){
             return iterator(*this, 0);
         }
@@ -223,58 +218,56 @@ class Mat {
             return *this;
         }
         Mat<Type> operator+(const Mat<Type> &b){
-            return broadcast(b, Add);
+            return broadcast(b, Add<Type>);
         }
         Mat<Type> operator+(Type b){
-            return broadcast(b, Add);
+            return broadcast(b, Add<Type>);
         }
         Mat<Type> operator-(const Mat<Type> &b){
-            return broadcast(b, Subtract);
+            return broadcast(b, Subtract<Type>);
         }
         Mat<Type> operator-(Type b){
-            return broadcast(b, Subtract);
+            return broadcast(b, Subtract<Type>);
         }
         Mat<Type> operator*(const Mat<Type> &b){
-            return broadcast(b, Multiply);
+            return broadcast(b, Multiply<Type>);
         }
         Mat<Type> operator*(Type b){
-            return broadcast(b, Multiply);
+            return broadcast(b, Multiply<Type>);
         }
         Mat<Type> operator/(const Mat<Type> &b){
-            return broadcast(b, Divide);
+            return broadcast(b, Divide<Type>);
         }
         Mat<Type> operator/(Type b){
-            return broadcast(b, Divide);
+            return broadcast(b, Divide<Type>);
         }
         template<class Type2>
         Mat<bool> operator&(const Mat<Type2> &b){
-            return broadcast(b, And);
+            return broadcast(b, And<Type,Type2>);
         }
         Mat<bool> operator&(bool b){
             Mat<bool> temp({b},1,1);
-            return broadcast(b, And);
+            return broadcast(b, And<Type,bool>);
         }
         template<class Type2>
         Mat<bool> operator|(const Mat<Type2> &b){
-            return broadcast(b, Or);
-        }
-        Mat<bool> operator|(const Mat<bool> &b){
-            return broadcast(b, Or);
+            return broadcast(b, Or<Type,Type2>);
         }
         Mat<bool> operator|(bool b){
             Mat<bool> temp({b},1,1);
-            return broadcast(b, Or);
+            return broadcast(b, Or<Type,bool>);
         }
         Mat<bool> operator!(){
             Mat<bool> result(rows(),columns());
-            for(int i = 0; i < result.size(); i++){
-                for(int j = 0; j < result.size(); j++){
+            for(int i = 0; i < result.rows(); i++){
+                for(int j = 0; j < result.columns(); j++){
                     result(i,j) = !(static_cast<bool>(operator()(i,j)));
                 }
             }
             return result;
         }
-        Mat<Type> broadcast(const Mat<Type> &b, Type (*f)(Type, Type)){
+        template<class Type2, class Type3>
+        Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
             size_type* x;
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
@@ -285,9 +278,9 @@ class Mat {
                 if(dims[n] == 1) x[n] = b.dims[n];
                 else x[n] = dims[n];
             }
-            Mat<Type> result;
+            Mat<Type3> result;
             if(ndims == 2){
-                Mat<Type> temp(x[0], x[1]);
+                Mat<Type3> temp(x[0], x[1]);
                 result = temp;
                 size_type resultRow, resultCol, leftRow,
                             leftCol, rightRow, rightCol;
@@ -305,7 +298,7 @@ class Mat {
                 }
             }
             else{
-                Mat<Type> temp(x[0]);
+                Mat<Type3> temp(x[0]);
                 result = temp;
                 for(size_type i = 0; i < result.size(); i++){
                     result(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
@@ -315,8 +308,9 @@ class Mat {
 
             return result;
         }
-        Mat<Type> broadcast(Type b, Type (*f)(Type, Type)){
-            Mat<Type> temp({b},1,1);
+        template<class Type2, class Type3>
+        Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
+            Mat<Type2> temp({b},1,1);
             return broadcast(temp, *f);
         }
         Mat operator- (){
@@ -324,7 +318,7 @@ class Mat {
             if(ndims == 2){
                 temp.reshape(1,1);
             }
-            return broadcast(temp, Multiply);
+            return broadcast(temp, Multiply<Type>);
         }
         Mat operator^ (const Mat<Type> &b){
             errorCheck(ndims != 2 || b.ndims != 2,
@@ -752,25 +746,25 @@ class MatIter{
 
 template<class Type>
 Mat<Type> operator+(Type a, const Mat<Type> &b){
-    return b.broadcast(a, Add);
+    return b.broadcast(a, Add<Type>);
 }
 template<class Type>
 Mat<Type> operator-(Type a, const Mat<Type> &b){
-    return b.broadcast(a, Subtract);
+    return b.broadcast(a, Subtract<Type>);
 }
 template<class Type>
 Mat<Type> operator*(Type a, const Mat<Type> &b){
-    return b.broadcast(a, Multiply);
+    return b.broadcast(a, Multiply<Type>);
 }
 template<class Type>
 Mat<Type> operator/(Type a, const Mat<Type> &b){
-    return Mat<Type>::broadcast(a, b, Divide);
+    return Mat<Type>::broadcast(a, b, Divide<Type>);
 }
 template<class Type>
-Mat<bool> operator&(bool a, const Mat<Type> &b){
-    return b.broadcast(a, And);
+Mat<bool> operator&(bool a, Mat<Type> &b){
+    return b.broadcast(a, And<Type,bool>);
 }
 template<class Type>
-Mat<bool> operator|(bool a, const Mat<Type> &b){
-    return b.broadcast(a, Or);
+Mat<bool> operator|(bool a, Mat<Type> &b){
+    return b.broadcast(a, Or<Type,bool>);
 }

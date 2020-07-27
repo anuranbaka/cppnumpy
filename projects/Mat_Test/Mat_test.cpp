@@ -197,5 +197,38 @@ int main (){
     fprintf(outFile, "6 element c-style array wrapped into a 2x3 matrix with preset refcount\n");
     wrapper.print(outFile);
 
+    Mat<bool> boolMat({true, true, false},1,3);
+    Mat<bool> outBool;
+    fprintf(outFile, "boolMat:\n");
+
+    boolMat.print(outFile);
+    outBool = boolMat & x;
+    fprintf(outFile, "boolMat & matrix x\n");
+    outBool.print(outFile);
+
+    outBool = x & !boolMat;
+    fprintf(outFile, "matrix x & !boolMat\n");
+    outBool.print(outFile);
+
+    outBool = boolMat | !x;
+    fprintf(outFile, "boolMat | !x\n");
+    outBool.print(outFile);
+
+    outBool = x | boolMat;
+    fprintf(outFile, "x | boolMat\n");
+    outBool.print(outFile);
+
+    outBool = true & y;
+    fprintf(outFile, "true & y\n");
+    outBool.print(outFile);
+
+    outBool = !y | false;
+    fprintf(outFile, "!y | false\n");
+    outBool.print(outFile);
+
+    outBool = !boolMat & true;
+    fprintf(outFile, "!boolMat | true\n");
+    outBool.print(outFile);
+
     return 0;
 }

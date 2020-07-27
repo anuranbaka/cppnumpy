@@ -169,3 +169,33 @@ taking the two middle rows from y and reshaping to a 6x2 matrix
 6 element c-style array wrapped into a 2x3 matrix with preset refcount
 1, 2, 3
 4, 5, 6
+boolMat:
+1, 1, 0
+boolMat & matrix x
+1, 1, 0
+1, 1, 0
+1, 1, 0
+matrix x & !boolMat
+0, 0, 1
+0, 0, 1
+0, 0, 1
+boolMat | !x
+1, 1, 0
+1, 1, 0
+1, 1, 0
+x | boolMat
+1, 1, 1
+1, 1, 1
+1, 1, 1
+true & y
+1, 1, 1, 1, 1, 1
+1, 1, 0, 0, 0, 1
+1, 1, 0, 0, 0, 1
+1, 1, 1, 1, 1, 1
+!y | false
+0, 0, 0, 0, 0, 0
+0, 0, 1, 1, 1, 0
+0, 0, 1, 1, 1, 0
+0, 0, 0, 0, 0, 0
+!boolMat | true
+0, 0, 1
