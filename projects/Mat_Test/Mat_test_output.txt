@@ -207,3 +207,7 @@ true & y
 0, 0, 0, 0, 0, 0
 !boolMat | true
 0, 0, 1
+Checking if any elements of !boolMat are true:
+At least one is true!
+Checking if all elements of y are true:
+Nope, at least one is false

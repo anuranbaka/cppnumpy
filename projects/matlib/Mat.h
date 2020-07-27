@@ -290,6 +290,18 @@ class Mat {
             }
             return result;
         }
+        bool all(){
+            for(auto i : *this){
+                if(static_cast<bool>(i) == false) return false;
+            }
+            return true;
+        }
+        bool any(){
+            for(auto i : *this){
+                if(static_cast<bool>(i) == true) return true;
+            }
+            return false;
+        }
         template<class Type2, class Type3>
         Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
             size_type* x;
