@@ -56,44 +56,83 @@ numbers as plain text, but demonstrates a potential practical use case for the c
   - ` Mat& roi(int dim1Start = -1, int dim1End = -1, int dim2Start = -1, int dim2End = -1) `
 ### Modifiers
 - **operator+**: elementwise addition
-  - ` Mat operator+(const Mat<Type>&) `
+  - ` Mat<Type> operator+(const Mat<Type>&) `
+  - ` Mat<Type> operator+(const Type) `
+  - ` Mat<Type> operator+(const Type, const Mat<Type>&) `
+- **operator+=**: elementwise addition and assignment
+  - ` void operator+=(const Mat<Type>&) `
 - **operator-**: elementwise subtraction, or negation when used as unary operator
-  - ` Mat operator-(const Mat<Type>&) `
-  - ` Mat operator-() `
+  - ` Mat<Type> operator-(const Mat<Type>&) `
+  - ` Mat<Type> operator-(const Type) `
+  - ` Mat<Type> operator-(const Type, const Mat<Type>&) `
+  - ` Mat<Type> operator-() `
+- **operator-=**: elementwise subtraction and assignment
+  - ` void operator-(const Mat<Type>&) `
+- **operator\***: elementwise multiplication
+  - ` Mat<Type> operator*(const Mat<Type>&) `
+  - ` Mat<Type> operator*(const Type) `
+  - ` Mat<Type> operator*(const Type, const Mat<Type>&) `
+- **operator\*=**: elementwise multiplication and assignment
+  - ` void operator*=(const Mat<Type>&) `
+- **operator/**: elementwise division
+  - ` Mat<Type> operator/(const Mat<Type>&) `
+  - ` Mat<Type> operator/(const Type) `
+  - ` Mat<Type> operator/(const Type, const Mat<Type>&) `
+- **operator/=**: elementwise division and assignment
+  - ` void operator/=(const Mat<Type>&) `
 - **broadcast**: binary operation which applies a given elementwise function and returns resulting matrix. Imitates NumPy array broadcasting.
-  - ` Mat broadcast(const Mat<Type>&, Type (*f)(Type,Type)) `
-- **operator^**: matrix multiplication
-  - ` Mat operator^(const Mat<Type>&) `
-- **T**: returns transposed matrix if no arguments are given, otherwise stores transpose into given destination matrix
-  - ` Mat T() `
-  - ` void T(Mat&) `
+  - ` Mat<Type3> broadcast(const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
+- **static broadcast**: static version in case matrix must be right operand
+  - ` Mat<Type3> broadcast(Type, const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
+- **operator^**: matrix multiplication (Not XOR!)
+  - ` Mat<Type> operator^(const Mat<Type>&) `
+- **T**: performs hard transpose, storing them in destination matrix if given
+  - ` Mat<Type> T() `
+  - ` Mat<Type> T(Mat&) `
 - **t**: performs soft transpose, leaving the underlying data, and changing only how the matrix accesses elements
   - ` void t() `
 - **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix
-  - ` Mat copy() `
+  - ` Mat<Type> copy() `
   - ` void copy(Mat<Type>&) `
 - **scalarFill**: fills a matrix with a given value
   - ` void scalarFill(Type)  `
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
   - ` void reshape(int = -1) `
   - ` void reshape(int, int) `
+### Boolean Operators
+- **operator&**: elementwise AND
+  - ` Mat<bool> operator&(const Mat<Type2>&) `
+  - ` Mat<bool> operator&(const bool) `
+  - ` Mat<bool> operator&(const bool, const Mat<Type2>&) `
+- **operator|**: elementwise OR
+  - ` Mat<bool> operator|(const Mat<Type2>&) `
+  - ` Mat<bool> operator|(const bool) `
+  - ` Mat<bool> operator|(const bool, const Mat<Type2>&) `
+- **operator!**: elementwise negation
+  - ` Mat<bool> operator!() `
+- **all**: returns true if no element of matrix is false
+  - ` bool all() `
+- **any**: returns true if any element of matrix is true
+  - ` bool any() `
 ### Static Functions
 - **wrap**: returns a matrix that uses a given data pointer and array of dimensions. An internal reference counter is created if none is given.
   - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions) `
   - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions, int64_t* ref_counter) `
 - **zeros**: returns an array of zeros in the given shape
-  - ` Mat zeros() `
+  - ` Mat<Type> zeros() `
 - **zeros_like**: returns an array of zeros with the same shape as a given matrix
-  - ` Mat zeros_like(const Mat) `
+  - ` Mat<Type> zeros_like(const Mat) `
 - **ones**: returns an array of ones in the given shape
-  - ` Mat ones() `
+  - ` Mat<Type> ones() `
 - **ones_like**: returns an array of ones with the same shape as a given matrix
-  - ` Mat ones_like(const Mat) `
+  - ` Mat<Type> ones_like(const Mat) `
 - **empty_like**: returns an empty array with the same shape as a given matrix
-  - ` Mat empty_like(const Mat) `
+  - ` Mat<Type> empty_like(const Mat) `
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
-  - ` Mat eye(size_t) `
-  - ` Mat eye(size_t, size_t, int k = 0) `
+  - ` Mat<Type> eye(size_t) `
+  - ` Mat<Type> eye(size_t, size_t, int k = 0) `
 
 # Usage
 The library supports several basic matrix arithmetic operations:
