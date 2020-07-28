@@ -708,14 +708,24 @@ class Mat {
             }
             return result;
         }
-        static Mat<Type> broadcast(Mat<Type> a, Type b, Type (*f)(Type, Type)){
+        template<class Type2, class Type3>
+        static Mat<Type3> broadcast(Mat<Type>& a, const Type2 b, Type3 (*f)(Type, Type2)){
             return a.broadcast(b, f);
         }
-        static Mat<Type> broadcast(Type a, Mat<Type> b, Type (*f)(Type, Type)){
-            Mat<Type> temp({a},1,1);
-            return temp.broadcast(b, f);
+        template<class Type2, class Type3>
+        static Mat<Type3> broadcast(const Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
+            b.errorCheck(b.ndims > 2, "n-dimensional broadcast not yet implemented.");
+            if(b.ndims == 2){
+                Mat<Type> temp({a},1,1);
+                return temp.broadcast(b, f);
+            }
+            else{
+                Mat<Type> temp({a},1);
+                return temp.broadcast(b, f);
+            }
         }
-        static Mat<Type> broadcast(Mat<Type> a, Mat<Type> b, Type (*f)(Type, Type)){
+        template<class Type2, class Type3>
+        static Mat<Type3> broadcast(Mat<Type>& a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
             return a.broadcast(b, f);
         }
 };
@@ -789,19 +799,19 @@ class MatIter{
 };
 
 template<class Type>
-Mat<Type> operator+(Type a, const Mat<Type> &b){
+Mat<Type> operator+(Type a, Mat<Type> &b){
     return b.broadcast(a, Add<Type>);
 }
 template<class Type>
-Mat<Type> operator-(Type a, const Mat<Type> &b){
+Mat<Type> operator-(Type a, Mat<Type> &b){
     return b.broadcast(a, Subtract<Type>);
 }
 template<class Type>
-Mat<Type> operator*(Type a, const Mat<Type> &b){
+Mat<Type> operator*(Type a, Mat<Type> &b){
     return b.broadcast(a, Multiply<Type>);
 }
 template<class Type>
-Mat<Type> operator/(Type a, const Mat<Type> &b){
+Mat<Type> operator/(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, Divide<Type>);
 }
 template<class Type>

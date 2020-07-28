@@ -166,6 +166,18 @@ int main (){
     fprintf(outFile, "assignment of a size 3 matrix to 7s\n");
     output.print(outFile);
 
+    output = Mat<double>::broadcast(a,b,Max);
+    fprintf(outFile, "broadcast(a,b,Max);\n");
+    output.print(outFile);
+
+    output = Mat<double>::broadcast(a,3.0,Max);
+    fprintf(outFile, "broadcast(a,3,Max);\n");
+    output.print(outFile);
+
+    output = Mat<double>::broadcast(5.0,b,Max);
+    fprintf(outFile, "broadcast(5,b,Max);\n");
+    output.print(outFile);
+
     output = Mat<>::zeros(8,8);
     fprintf(outFile, "8x8 matrix of zeros\n");
     output.print(outFile);
