@@ -1,4 +1,5 @@
 #include "../matlib/Mat.h"
+#include "../Mat_Math/Mat_Math.h"
 #include <fstream>
 
 double Max(double a, double b){
@@ -264,6 +265,26 @@ int main (){
     fprintf(outFile, "Checking if all elements of y are true:\n");
     if(y.all()) fprintf(outFile, "All elements are true!\n");
     else fprintf(outFile, "Nope, at least one is false\n");
+
+    Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
+    fprintf(outFile, "Invertible Matrix:\n");
+    invertible.print(outFile);
+
+    output = inverse(invertible);
+    fprintf(outFile, "inverse of that matrix\n");
+    output.print(outFile);
+
+    Mat<double> hilbert({1.0/1,1.0/2,1.0/3,1.0/4,1.0/5,
+                        1.0/2,1.0/3,1.0/4,1.0/5,1.0/6,
+                        1.0/3,1.0/4,1.0/5,1.0/6,1.0/7,
+                        1.0/4,1.0/5,1.0/6,1.0/7,1.0/8,
+                        1.0/5,1.0/6,1.0/7,1.0/8,1.0/9},5,5);
+    fprintf(outFile, "The dreaded Hilbert matrix:\n");
+    hilbert.print(outFile);
+
+    output = inverse(hilbert);
+    fprintf(outFile, "inverse of the Hilbert matrix\n");
+    output.print(outFile);
 
     return 0;
 }

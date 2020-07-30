@@ -217,3 +217,23 @@ Checking if any elements of !boolMat are true:
 At least one is true!
 Checking if all elements of y are true:
 Nope, at least one is false
+Invertible Matrix:
+3, 0, 2
+2, 0, -2
+0, 1, 1
+inverse of that matrix
+0.2, 0.2, -0
+-0.2, 0.3, 1
+0.2, -0.3, 0
+The dreaded Hilbert matrix:
+1, 0.5, 0.333333, 0.25, 0.2
+0.5, 0.333333, 0.25, 0.2, 0.166667
+0.333333, 0.25, 0.2, 0.166667, 0.142857
+0.25, 0.2, 0.166667, 0.142857, 0.125
+0.2, 0.166667, 0.142857, 0.125, 0.111111
+inverse of the Hilbert matrix
+25, -300, 1050, -1400, 630
+-300, 4800, -18900, 26880, -12600
+1050, -18900, 79380, -117600, 56700
+-1400, 26880, -117600, 179200, -88200
+630, -12600, 56700, -88200, 44100

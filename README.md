@@ -101,6 +101,8 @@ numbers as plain text, but demonstrates a potential practical use case for the c
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
   - ` void reshape(int = -1) `
   - ` void reshape(int, int) `
+- **inverse**: non-member function that takes a mat and returns its inverse
+  - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
 - **operator&**: elementwise AND
   - ` Mat<bool> operator&(const Mat<Type2>&) `

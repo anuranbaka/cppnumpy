@@ -1,6 +1,8 @@
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <initializer_list>
+#include "../Mat_Math/Mat_Math.h"
 using namespace std;
 
 template <class Type>
@@ -39,17 +41,17 @@ class Mat {
     Type* data;
     int64_t* refCount;
 
-    void errorCheck(bool e, const char* message) const{
-        if(e){
-            fprintf(stderr, "%s\n", message);
-            exit(1);
-        }
-        return;
-    }
     public:
         size_type ndims = 2;
         size_type* dims;
         size_type* strides;
+        void errorCheck(bool e, const char* message) const{
+            if(e){
+                fprintf(stderr, "%s\n", message);
+                exit(1);
+            }
+            return;
+        }
 
         iterator begin(){
             return iterator(*this, 0);
