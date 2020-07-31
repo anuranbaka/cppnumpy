@@ -1,9 +1,13 @@
 # CPPNUMPY Matrix Library
 This matrix library header is meant to be compatible with numpy, using a similar
 structure to the numpy array. Functionality includes operations for matrix arithmetic,
-soft transposition, iteration of elements, dimension broadcasting and the designation
-of submatrices in a manner similar to numpy's array slicing. The matrix is initialized,
-stored and printed in row-major order.
+soft transposition, iteration of elements, dimension broadcasting and the designation of
+submatrices in a manner similar to numpy's array slicing. The matrix is initialized, stored
+and printed in row-major order.
+Generally speaking, it functions just like the NumPy array, except for the following three
+changes: the operator "^" is used for matrix multiplication rather than bitwise XOR, "T" is
+used for a hard transpose, while "t" is used for a soft transpose, and due to limitations of
+C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 
 # Installing
 The Mat class and its functions are entirely contained within "projects/matlib/Mat.h"
@@ -116,6 +120,11 @@ numbers as plain text, but demonstrates a potential practical use case for the c
   - ` bool all() `
 - **any**: returns true if any element of matrix is true
   - ` bool any() `
+### Relational Operators
+- **operator==, operator!=, operator<, operator<=, operator>, operator>=**: elementwise relational operators
+  - ` Mat<bool> operator==(const Mat<Type>&) `
+  - ` Mat<bool> operator==(const Type) `
+  - ` Mat<bool> operator==(const Type, const Mat<Type>&) `
 ### Static Functions
 - **wrap**: returns a matrix that uses a given data pointer and array of dimensions. An internal reference counter is created if none is given.
   - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions) `

@@ -264,6 +264,21 @@ int main (){
     fprintf(outFile, "Checking if all elements of y are true:\n");
     if(y.all()) fprintf(outFile, "All elements are true!\n");
     else fprintf(outFile, "Nope, at least one is false\n");
+    fprintf(outFile, "Checking if any elements of x are greater than 4:\n");
+    if((x > 4).any()) fprintf(outFile, "Some are greater!\n");
+    else fprintf(outFile, "Nope, none are\n");
+    fprintf(outFile, "Checking if all elements of y are less than 20:\n");
+    if((y < 20).all()) fprintf(outFile, "All elements are less than 20!\n");
+    else fprintf(outFile, "Nope, at least one is greater\n");
+    fprintf(outFile, "Checking if any elements of y are equal to 3:\n");
+    if((y == 3).any()) fprintf(outFile, "At least one is 3!\n");
+    else fprintf(outFile, "Nope, no 3s here\n");
+    fprintf(outFile, "Checking if all elements in x are not equal to 8:\n");
+    if((x != 8).all()) fprintf(outFile, "Nope, no 8s here\n");
+    else fprintf(outFile, "At least one element is an 8!\n");
+    fprintf(outFile, "Matrix of bools representing all values in y < 5\n");
+    outBool = y < 5;
+    outBool.print(outFile);
 
     return 0;
 }

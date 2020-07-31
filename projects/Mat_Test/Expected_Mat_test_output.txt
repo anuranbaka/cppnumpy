@@ -217,3 +217,17 @@ Checking if any elements of !boolMat are true:
 At least one is true!
 Checking if all elements of y are true:
 Nope, at least one is false
+Checking if any elements of x are greater than 4:
+Some are greater!
+Checking if all elements of y are less than 20:
+Nope, at least one is greater
+Checking if any elements of y are equal to 3:
+At least one is 3!
+Checking if all elements in x are not equal to 8:
+At least one element is an 8!
+Matrix of bools representing all values in y < 5
+1, 1, 1, 1, 0, 0
+0, 0, 1, 1, 1, 0
+0, 0, 1, 1, 1, 0
+0, 0, 0, 0, 0, 0
+

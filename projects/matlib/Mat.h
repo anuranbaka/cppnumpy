@@ -22,6 +22,24 @@ template <class Type, class Type2>
 inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); };
 
 template <class Type>
+inline bool Equality(Type a, Type b){ return a == b; };
+
+template <class Type>
+inline bool Inequality(Type a, Type b){ return a != b; };
+
+template <class Type>
+inline bool LessThan(Type a, Type b){ return a < b; };
+
+template <class Type>
+inline bool LessThanEqual(Type a, Type b){ return a <= b; };
+
+template <class Type>
+inline bool GreaterThan(Type a, Type b){ return a > b; };
+
+template <class Type>
+inline bool GreaterThanEqual(Type a, Type b){ return a >= b; };
+
+template <class Type>
 class MatIter;
 
 template <class Type = double>
@@ -288,6 +306,48 @@ class Mat {
                 }
             }
             return result;
+        }
+        Mat<bool> operator==(const Mat<Type> b){
+            return broadcast(b, Equality<Type>);
+        }
+        Mat<bool> operator==(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, Equality<Type>);
+        }
+        Mat<bool> operator!=(const Mat<Type> b){
+            return broadcast(b, Inequality<Type>);
+        }
+        Mat<bool> operator!=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, Inequality<Type>);
+        }
+        Mat<bool> operator<(const Mat<Type> b){
+            return broadcast(b, LessThan<Type>);
+        }
+        Mat<bool> operator<(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, LessThan<Type>);
+        }
+        Mat<bool> operator<=(const Mat<Type> b){
+            return broadcast(b, LessThanEqual<Type>);
+        }
+        Mat<bool> operator<=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, LessThanEqual<Type>);
+        }
+        Mat<bool> operator>(const Mat<Type> b){
+            return broadcast(b, GreaterThan<Type>);
+        }
+        Mat<bool> operator>(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, GreaterThan<Type>);
+        }
+        Mat<bool> operator>=(const Mat<Type> b){
+            return broadcast(b, GreaterThanEqual<Type>);
+        }
+        Mat<bool> operator>=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, GreaterThanEqual<Type>);
         }
         bool all(){
             for(auto i : *this){
@@ -820,4 +880,28 @@ Mat<bool> operator&(bool a, Mat<Type> &b){
 template<class Type>
 Mat<bool> operator|(bool a, Mat<Type> &b){
     return b.broadcast(a, Or<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator==(Type a, Mat<Type> &b){
+    return b.broadcast(a, Equality<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator!=(Type a, Mat<Type> &b){
+    return b.broadcast(a, Inequality<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator<(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, LessThan<Type>);
+}
+template<class Type>
+Mat<bool> operator<=(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, LessThanEqual<Type>);
+}
+template<class Type>
+Mat<bool> operator>(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, GreaterThan<Type>);
+}
+template<class Type>
+Mat<bool> operator>=(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
 }
