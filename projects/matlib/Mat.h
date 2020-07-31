@@ -35,14 +35,13 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    Type* memory; 
-    Type* data;
-    int64_t* refCount;
-
     public:
         size_type ndims = 2;
         size_type* dims;
         size_type* strides;
+        Type* memory; 
+        Type* data;
+        int64_t* refCount;
         void errorCheck(bool e, const char* message) const{
             if(e){
                 fprintf(stderr, "%s\n", message);
