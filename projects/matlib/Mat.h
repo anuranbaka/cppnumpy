@@ -551,24 +551,26 @@ class Mat {
             }
             return;
         }
-        Mat copy(){
-            Mat<Type> dest;
+        template<class newType>
+        Mat<newType> copy(){
+            Mat<newType> dest;
             if(ndims == 2){
-                Mat<Type> temp(rows(),columns());
+                Mat<newType> temp(rows(),columns());
                 dest = temp;
             }
             else{
-                Mat<Type> temp(columns());
+                Mat<newType> temp(columns());
                 dest = temp;
             }
             size_t n = 0;
             for(auto i : *this){
-                dest.data[n] = i;
+                dest.data[n] = static_cast<newType>(i);
                 n++;
             }
             return dest;
         }
-        void copy(Mat<Type>& dest){
+        template<class newType>
+        void copy(Mat<newType>& dest){
             errorCheck(dest.ndims != ndims,
                 "Matrix dimension mismatch during copy");
             for(size_type i = 0; i > dest.ndims; i++){
@@ -578,7 +580,7 @@ class Mat {
                 size_t m = 0;
                 size_t n = 0;
                 for(auto i : *this){
-                    dest(m,n) = i;
+                    dest(m,n) = static_cast<newType>(i);
                     n++;
                     if(n == columns()){
                         n = 0;
@@ -589,7 +591,7 @@ class Mat {
             else if(ndims == 1){
                 size_t n = 0;
                 for(auto i : *this){
-                    dest(n) = i;
+                    dest(n) = static_cast<newType>(i);
                     n++;
                 }
             }

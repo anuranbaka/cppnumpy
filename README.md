@@ -97,9 +97,9 @@ numbers as plain text, but demonstrates a potential practical use case for the c
   - ` Mat<Type> T(Mat&) `
 - **t**: performs soft transpose, leaving the underlying data, and changing only how the matrix accesses elements
   - ` void t() `
-- **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix
-  - ` Mat<Type> copy() `
-  - ` void copy(Mat<Type>&) `
+- **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix. Optional template argument allows for type casting.
+  - ` Mat<newType> copy<newType>() `
+  - ` void copy(Mat<newType>&) `
 - **scalarFill**: fills a matrix with a given value
   - ` void scalarFill(Type)  `
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
