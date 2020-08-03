@@ -9,17 +9,52 @@ changes: the operator "^" is used for matrix multiplication rather than bitwise 
 used for a hard transpose, while "t" is used for a soft transpose, and due to limitations of
 C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 
+# Usage
+The library supports several basic matrix arithmetic operations:
+```
+#include <Mat.h>
+
+Mat<double> a(3,3)
+//creates an uninitialized 3x3 matrix of int
+
+Mat<double> b({1,2,3,4,5,6,7,8},2,4)
+//creates a 2x4 matrix initialized to the values in curly braces.
+
+Mat<> c({1,2,3},1,3)
+//empty <> sets contained type to double by default
+
+a.scalarFill(b(0,3));
+//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
+
+c = b.t();
+//assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
+
+Mat<double> subMat = b.roi(1,2,1)
+//creates a sub-matrix region of interest (start row, end row, start column, end column)
+//this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
+
+a = a + subMat;
+//adds the values in our new submatrix to matrix a
+//this causes the submatrix to broadcast out to the correct dimensions (3x3)
+
+a.print();
+//prints our new matrix to the console
+//in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
+```
+
 # Installing
 The Mat class and its functions are entirely contained within "projects/matlib/Mat.h"
-header library.
+header library. The other files in the repository are all test/example cases.
 
 # Running Tests/Examples
-Matrix arithmetic is tested in the "projects/Mat_Test/Mat_test.cpp", and demonstrates basic
+Matrix arithmetic is tested in the Mat_test.cpp, and demonstrates basic
 matrix math functions.
 
 Additionally, "projects/Flood Fill/Flood_test" presents an example usage of the Mat class for
 a Flood Fill function. For simplicity's sake the matrix simply handles a matrix of single-digit
 numbers as plain text, but demonstrates a potential practical use case for the class.
+
+Both programs are compiled when running "make" in the base directory.
 
 # Functions
 ###### Template parameter "Type" used to signify the element type
@@ -142,36 +177,3 @@ numbers as plain text, but demonstrates a potential practical use case for the c
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
-
-# Usage
-The library supports several basic matrix arithmetic operations:
-```
-#include <Mat.h>
-
-Mat<double> a(3,3)
-//creates an uninitialized 3x3 matrix of int
-
-Mat<double> b({1,2,3,4,5,6,7,8},2,4)
-//creates a 2x4 matrix initialized to the values in curly braces.
-
-Mat<> c({1,2,3},1,3)
-//empty <> sets contained type to double by default
-
-a.scalarFill(b(0,3));
-//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
-
-c = b.t();
-//assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
-
-Mat<double> subMat = b.roi(1,2,1)
-//creates a sub-matrix region of interest (start row, end row, start column, end column)
-//this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
-
-a = a + subMat;
-//adds the values in our new submatrix to matrix a
-//this causes the submatrix to broadcast out to the correct dimensions (3x3)
-
-a.print();
-//prints our new matrix to the console
-//in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
-```

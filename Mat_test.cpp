@@ -1,4 +1,4 @@
-#include "../matlib/Mat.h"
+#include "projects/matlib/Mat.h"
 #include <fstream>
 
 double Max(double a, double b){
