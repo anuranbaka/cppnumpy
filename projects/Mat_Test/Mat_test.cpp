@@ -270,7 +270,7 @@ int main (){
     fprintf(outFile, "Invertible Matrix:\n");
     invertible.print(outFile);
 
-    output = inverse(invertible);
+    output = inv(invertible);
     fprintf(outFile, "inverse of that matrix\n");
     output.print(outFile);
 
@@ -282,7 +282,7 @@ int main (){
     fprintf(outFile, "The dreaded Hilbert matrix:\n");
     hilbert.print(outFile);
 
-    output = inverse(hilbert);
+    output = inv(hilbert);
     fprintf(outFile, "inverse of the Hilbert matrix\n");
     output.print(outFile);
 

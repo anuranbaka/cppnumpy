@@ -46,12 +46,12 @@ Type minor(const Mat<Type>& mat, size_t x, size_t y){
     return determinant(temp);
 }
 template <class Type>
-Mat<Type> inverse(const Mat<Type>& mat){
+Mat<Type> inv(const Mat<Type>& mat){
     mat.errorCheck(mat.ndims != 2 || mat.rows() != mat.columns(),
         "Matrix dimensions non-invertible");
     Type det = determinant(mat);
     mat.errorCheck(det == 0, "matrix is singular");
     return adjugate(mat)/det;
 }
-template Mat<double> inverse<double>(const Mat<double>& mat);
-template Mat<float> inverse<float>(const Mat<float>& mat);
+template Mat<double> inv<double>(const Mat<double>& mat);
+template Mat<float> inv<float>(const Mat<float>& mat);

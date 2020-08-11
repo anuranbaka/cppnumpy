@@ -13,4 +13,4 @@ template<class Type>
 extern Mat<Type> adjugate(const Mat<Type>&);
 
 template<class Type>
-extern Mat<Type> inverse(const Mat<Type>&);
+extern Mat<Type> inv(const Mat<Type>&);
