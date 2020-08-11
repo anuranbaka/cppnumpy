@@ -60,6 +60,10 @@ int main (){
     fprintf(outFile, "casting matrix x to float using copy()\n");
     outfloat.print(outFile);
 
+    x.copy(outfloat);
+    fprintf(outFile, "casting matrix x to float using copy(dest)\n");
+    outfloat.print(outFile);
+
     output = m.roi(0,2,1,3);
     fprintf(outFile, "m.roi(0,1,1,3)\n");
     output.print(outFile);
@@ -284,6 +288,12 @@ int main (){
     fprintf(outFile, "Matrix of bools representing all values in y < 5\n");
     outBool = y < 5;
     outBool.print(outFile);
+    fprintf(outFile, "Checking if all elements in of an empty matrix are true:\n");
+    if(smallerMat.all()) fprintf(outFile, "Well, nothing is false, so we're good!\n");
+    else fprintf(outFile, "Uh oh, we found something false!\n");
+    fprintf(outFile, "Checking if any elements in an empty matrix are true:\n");
+    if(smallerMat.any()) fprintf(outFile, "Uh oh, we found something true!\n");
+    else fprintf(outFile, "Nope, nothing true here.\n");
 
     return 0;
 }

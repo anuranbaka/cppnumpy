@@ -42,6 +42,10 @@ casting matrix x to float using copy()
 1, 2, 3
 4, 5, 6
 7, 8, 9
+casting matrix x to float using copy(dest)
+1, 2, 3
+4, 5, 6
+7, 8, 9
 m.roi(0,1,1,3)
 2, 3
 6, 7
@@ -234,3 +238,7 @@ Matrix of bools representing all values in y < 5
 0, 0, 1, 1, 1, 0
 0, 0, 1, 1, 1, 0
 0, 0, 0, 0, 0, 0
+Checking if all elements in of an empty matrix are true:
+Well, nothing is false, so we're good!
+Checking if any elements in an empty matrix are true:
+Nope, nothing true here.
