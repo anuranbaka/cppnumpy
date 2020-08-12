@@ -1,21 +1,60 @@
 # CPPNUMPY Matrix Library
 This matrix library header is meant to be compatible with numpy, using a similar
 structure to the numpy array. Functionality includes operations for matrix arithmetic,
-soft transposition, iteration of elements, dimension broadcasting and the designation
-of submatrices in a manner similar to numpy's array slicing. The matrix is initialized,
-stored and printed in row-major order.
+soft transposition, iteration of elements, dimension broadcasting and the designation of
+submatrices in a manner similar to numpy's array slicing. The matrix is initialized, stored
+and printed in row-major order.
+Generally speaking, it functions just like the NumPy array, except for the following three
+changes: the operator "^" is used for matrix multiplication rather than bitwise XOR, "T" is
+used for a hard transpose, while "t" is used for a soft transpose, and due to limitations of
+C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
+
+# Usage
+The library supports several basic matrix arithmetic operations:
+```
+#include <Mat.h>
+
+Mat<double> a(3,3)
+//creates an uninitialized 3x3 matrix of int
+
+Mat<double> b({1,2,3,4,5,6,7,8},2,4)
+//creates a 2x4 matrix initialized to the values in curly braces.
+
+Mat<> c({1,2,3},1,3)
+//empty <> sets contained type to double by default
+
+a.scalarFill(b(0,3));
+//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
+
+c = b.t();
+//assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
+
+Mat<double> subMat = b.roi(1,2,1)
+//creates a sub-matrix region of interest (start row, end row, start column, end column)
+//this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
+
+a = a + subMat;
+//adds the values in our new submatrix to matrix a
+//this causes the submatrix to broadcast out to the correct dimensions (3x3)
+
+a.print();
+//prints our new matrix to the console
+//in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
+```
 
 # Installing
 The Mat class and its functions are entirely contained within "projects/matlib/Mat.h"
-header library.
+header library. The other files in the repository are all test/example cases.
 
 # Running Tests/Examples
-Matrix arithmetic is tested in the "projects/Mat_Test/Mat_test.cpp", and demonstrates basic
+Matrix arithmetic is tested in the Mat_test.cpp, and demonstrates basic
 matrix math functions.
 
 Additionally, "projects/Flood Fill/Flood_test" presents an example usage of the Mat class for
 a Flood Fill function. For simplicity's sake the matrix simply handles a matrix of single-digit
 numbers as plain text, but demonstrates a potential practical use case for the class.
+
+Both programs are compiled when running "make" in the base directory.
 
 # Functions
 ###### Template parameter "Type" used to signify the element type
@@ -93,9 +132,9 @@ numbers as plain text, but demonstrates a potential practical use case for the c
   - ` Mat<Type> T(Mat&) `
 - **t**: performs soft transpose, leaving the underlying data, and changing only how the matrix accesses elements
   - ` void t() `
-- **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix
-  - ` Mat<Type> copy() `
-  - ` void copy(Mat<Type>&) `
+- **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix. Optional template argument allows for type casting.
+  - ` Mat<newType> copy<newType>() `
+  - ` void copy(Mat<newType>&) `
 - **scalarFill**: fills a matrix with a given value
   - ` void scalarFill(Type)  `
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
@@ -118,6 +157,11 @@ numbers as plain text, but demonstrates a potential practical use case for the c
   - ` bool all() `
 - **any**: returns true if any element of matrix is true
   - ` bool any() `
+### Relational Operators
+- **operator==, operator!=, operator<, operator<=, operator>, operator>=**: elementwise relational operators
+  - ` Mat<bool> operator==(const Mat<Type>&) `
+  - ` Mat<bool> operator==(const Type) `
+  - ` Mat<bool> operator==(const Type, const Mat<Type>&) `
 ### Static Functions
 - **wrap**: returns a matrix that uses a given data pointer and array of dimensions. An internal reference counter is created if none is given.
   - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions) `
@@ -135,36 +179,3 @@ numbers as plain text, but demonstrates a potential practical use case for the c
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
-
-# Usage
-The library supports several basic matrix arithmetic operations:
-```
-#include <Mat.h>
-
-Mat<double> a(3,3)
-//creates an uninitialized 3x3 matrix of int
-
-Mat<double> b({1,2,3,4,5,6,7,8},2,4)
-//creates a 2x4 matrix initialized to the values in curly braces.
-
-Mat<> c({1,2,3},1,3)
-//empty <> sets contained type to double by default
-
-a.scalarFill(b(0,3));
-//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
-
-c = b.t();
-//assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
-
-Mat<double> subMat = b.roi(1,2,1)
-//creates a sub-matrix region of interest (start row, end row, start column, end column)
-//this effectively just chops off the first row and column, making a new 1x3 submatrix {6,7,8}
-
-a = a + subMat;
-//adds the values in our new submatrix to matrix a
-//this causes the submatrix to broadcast out to the correct dimensions (3x3)
-
-a.print();
-//prints our new matrix to the console
-//in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
-```

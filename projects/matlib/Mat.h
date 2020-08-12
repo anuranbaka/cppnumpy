@@ -24,6 +24,24 @@ template <class Type, class Type2>
 inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); };
 
 template <class Type>
+inline bool Equality(Type a, Type b){ return a == b; };
+
+template <class Type>
+inline bool Inequality(Type a, Type b){ return a != b; };
+
+template <class Type>
+inline bool LessThan(Type a, Type b){ return a < b; };
+
+template <class Type>
+inline bool LessThanEqual(Type a, Type b){ return a <= b; };
+
+template <class Type>
+inline bool GreaterThan(Type a, Type b){ return a > b; };
+
+template <class Type>
+inline bool GreaterThanEqual(Type a, Type b){ return a >= b; };
+
+template <class Type>
 class MatIter;
 
 template <class Type = double>
@@ -37,14 +55,13 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    Type* memory; 
-    Type* data;
-    int64_t* refCount;
-
     public:
         size_type ndims = 2;
         size_type* dims;
         size_type* strides;
+        Type* memory; 
+        Type* data;
+        int64_t* refCount;
         void errorCheck(bool e, const char* message) const{
             if(e){
                 fprintf(stderr, "%s\n", message);
@@ -292,6 +309,48 @@ class Mat {
             }
             return result;
         }
+        Mat<bool> operator==(const Mat<Type> b){
+            return broadcast(b, Equality<Type>);
+        }
+        Mat<bool> operator==(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, Equality<Type>);
+        }
+        Mat<bool> operator!=(const Mat<Type> b){
+            return broadcast(b, Inequality<Type>);
+        }
+        Mat<bool> operator!=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, Inequality<Type>);
+        }
+        Mat<bool> operator<(const Mat<Type> b){
+            return broadcast(b, LessThan<Type>);
+        }
+        Mat<bool> operator<(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, LessThan<Type>);
+        }
+        Mat<bool> operator<=(const Mat<Type> b){
+            return broadcast(b, LessThanEqual<Type>);
+        }
+        Mat<bool> operator<=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, LessThanEqual<Type>);
+        }
+        Mat<bool> operator>(const Mat<Type> b){
+            return broadcast(b, GreaterThan<Type>);
+        }
+        Mat<bool> operator>(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, GreaterThan<Type>);
+        }
+        Mat<bool> operator>=(const Mat<Type> b){
+            return broadcast(b, GreaterThanEqual<Type>);
+        }
+        Mat<bool> operator>=(const Type b){
+            Mat<Type> temp({b},1,1);
+            return broadcast(b, GreaterThanEqual<Type>);
+        }
         bool all(){
             for(auto i : *this){
                 if(static_cast<bool>(i) == false) return false;
@@ -494,24 +553,26 @@ class Mat {
             }
             return;
         }
-        Mat copy(){
-            Mat<Type> dest;
+        template<class newType>
+        Mat<newType> copy(){
+            Mat<newType> dest;
             if(ndims == 2){
-                Mat<Type> temp(rows(),columns());
+                Mat<newType> temp(rows(),columns());
                 dest = temp;
             }
             else{
-                Mat<Type> temp(columns());
+                Mat<newType> temp(columns());
                 dest = temp;
             }
             size_t n = 0;
             for(auto i : *this){
-                dest.data[n] = i;
+                dest.data[n] = static_cast<newType>(i);
                 n++;
             }
             return dest;
         }
-        void copy(Mat<Type>& dest){
+        template<class newType>
+        void copy(Mat<newType>& dest){
             errorCheck(dest.ndims != ndims,
                 "Matrix dimension mismatch during copy");
             for(size_type i = 0; i > dest.ndims; i++){
@@ -521,7 +582,7 @@ class Mat {
                 size_t m = 0;
                 size_t n = 0;
                 for(auto i : *this){
-                    dest(m,n) = i;
+                    dest(m,n) = static_cast<newType>(i);
                     n++;
                     if(n == columns()){
                         n = 0;
@@ -532,7 +593,7 @@ class Mat {
             else if(ndims == 1){
                 size_t n = 0;
                 for(auto i : *this){
-                    dest(n) = i;
+                    dest(n) = static_cast<newType>(i);
                     n++;
                 }
             }
@@ -823,4 +884,28 @@ Mat<bool> operator&(bool a, Mat<Type> &b){
 template<class Type>
 Mat<bool> operator|(bool a, Mat<Type> &b){
     return b.broadcast(a, Or<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator==(Type a, Mat<Type> &b){
+    return b.broadcast(a, Equality<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator!=(Type a, Mat<Type> &b){
+    return b.broadcast(a, Inequality<Type,bool>);
+}
+template<class Type>
+Mat<bool> operator<(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, LessThan<Type>);
+}
+template<class Type>
+Mat<bool> operator<=(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, LessThanEqual<Type>);
+}
+template<class Type>
+Mat<bool> operator>(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, GreaterThan<Type>);
+}
+template<class Type>
+Mat<bool> operator>=(Type a, Mat<Type> &b){
+    return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
 }

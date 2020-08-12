@@ -38,6 +38,14 @@ matrix multiplication n ^ x
 m.copy(newMat)
 1, 2, 3, 4
 5, 6, 7, 8
+casting matrix x to float using copy()
+1, 2, 3
+4, 5, 6
+7, 8, 9
+casting matrix x to float using copy(dest)
+1, 2, 3
+4, 5, 6
+7, 8, 9
 m.roi(0,1,1,3)
 2, 3
 6, 7
@@ -217,6 +225,23 @@ Checking if any elements of !boolMat are true:
 At least one is true!
 Checking if all elements of y are true:
 Nope, at least one is false
+Checking if any elements of x are greater than 4:
+Some are greater!
+Checking if all elements of y are less than 20:
+Nope, at least one is greater
+Checking if any elements of y are equal to 3:
+At least one is 3!
+Checking if all elements in x are not equal to 8:
+At least one element is an 8!
+Matrix of bools representing all values in y < 5
+1, 1, 1, 1, 0, 0
+0, 0, 1, 1, 1, 0
+0, 0, 1, 1, 1, 0
+0, 0, 0, 0, 0, 0
+Checking if all elements in of an empty matrix are true:
+Well, nothing is false, so we're good!
+Checking if any elements in an empty matrix are true:
+Nope, nothing true here.
 Invertible Matrix:
 3, 0, 2
 2, 0, -2

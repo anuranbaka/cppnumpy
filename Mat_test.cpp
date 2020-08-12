@@ -1,5 +1,5 @@
-#include "../matlib/Mat.h"
-#include "../Mat_Math/Mat_Math.h"
+#include "projects/Mat_Math/Mat_Math.h"
+#include "projects/matlib/Mat.h"
 #include <fstream>
 
 double Max(double a, double b){
@@ -55,6 +55,15 @@ int main (){
     m.copy(newMat);
     fprintf(outFile, "m.copy(newMat)\n");
     newMat.print(outFile);
+
+    Mat<float> outfloat;
+    outfloat = x.copy<float>();
+    fprintf(outFile, "casting matrix x to float using copy()\n");
+    outfloat.print(outFile);
+
+    x.copy(outfloat);
+    fprintf(outFile, "casting matrix x to float using copy(dest)\n");
+    outfloat.print(outFile);
 
     output = m.roi(0,2,1,3);
     fprintf(outFile, "m.roi(0,1,1,3)\n");
@@ -265,6 +274,27 @@ int main (){
     fprintf(outFile, "Checking if all elements of y are true:\n");
     if(y.all()) fprintf(outFile, "All elements are true!\n");
     else fprintf(outFile, "Nope, at least one is false\n");
+    fprintf(outFile, "Checking if any elements of x are greater than 4:\n");
+    if((x > 4).any()) fprintf(outFile, "Some are greater!\n");
+    else fprintf(outFile, "Nope, none are\n");
+    fprintf(outFile, "Checking if all elements of y are less than 20:\n");
+    if((y < 20).all()) fprintf(outFile, "All elements are less than 20!\n");
+    else fprintf(outFile, "Nope, at least one is greater\n");
+    fprintf(outFile, "Checking if any elements of y are equal to 3:\n");
+    if((y == 3).any()) fprintf(outFile, "At least one is 3!\n");
+    else fprintf(outFile, "Nope, no 3s here\n");
+    fprintf(outFile, "Checking if all elements in x are not equal to 8:\n");
+    if((x != 8).all()) fprintf(outFile, "Nope, no 8s here\n");
+    else fprintf(outFile, "At least one element is an 8!\n");
+    fprintf(outFile, "Matrix of bools representing all values in y < 5\n");
+    outBool = y < 5;
+    outBool.print(outFile);
+    fprintf(outFile, "Checking if all elements in of an empty matrix are true:\n");
+    if(smallerMat.all()) fprintf(outFile, "Well, nothing is false, so we're good!\n");
+    else fprintf(outFile, "Uh oh, we found something false!\n");
+    fprintf(outFile, "Checking if any elements in an empty matrix are true:\n");
+    if(smallerMat.any()) fprintf(outFile, "Uh oh, we found something true!\n");
+    else fprintf(outFile, "Nope, nothing true here.\n");
 
     Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
     fprintf(outFile, "Invertible Matrix:\n");

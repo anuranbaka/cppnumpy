@@ -25,7 +25,7 @@
             "command": "make",
             "args": [],
             "options": {
-                "cwd": "/home/flametail9/cppnumpy/projects"
+                "cwd": "/home/flametail9/cppnumpy"
             },
             "problemMatcher": [
                 "$gcc"
