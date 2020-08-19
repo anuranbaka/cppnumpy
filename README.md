@@ -43,18 +43,21 @@ a.print();
 ```
 
 # Installing
-The Mat class and its functions are entirely contained within "projects/matlib/Mat.h"
-header library. The other files in the repository are all test/example cases.
+The Mat class and its basic functions are contained within "projects/matlib/Mat.h"
+header library. Additionally, a basic implementation of a matrix inverse is provided, by linking
+"projects/Mat_Math/inverse.cpp". Alternatively, the library can link to Lapack to run the operation
+by linking "projects/Mat_Math/inverseLapack.cpp".
 
 # Running Tests/Examples
 Matrix arithmetic is tested in the Mat_test.cpp, and demonstrates basic
-matrix math functions.
+matrix math functions as well as the not-so-basic matrix inverse.
 
 Additionally, "projects/Flood Fill/Flood_test" presents an example usage of the Mat class for
 a Flood Fill function. For simplicity's sake the matrix simply handles a matrix of single-digit
 numbers as plain text, but demonstrates a potential practical use case for the class.
 
-Both programs are compiled when running "make" in the base directory.
+Both programs are compiled when running "make" in the base directory. If "useLapack=true" is specified
+in the make statement, the code will link to Lapack and use that instead.
 
 # Functions
 ###### Template parameter "Type" used to signify the element type
@@ -179,3 +182,6 @@ Both programs are compiled when running "make" in the base directory.
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
+### Additional Non-member Functions
+- **inv()**: returns inverse of the given matrix which uses a stable, basic implementation or imports from Lapack
+  -  ` Mat<Type> inv(Mat<Type>) `
