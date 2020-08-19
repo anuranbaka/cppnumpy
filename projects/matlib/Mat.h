@@ -104,7 +104,7 @@ class Mat {
             if(a >= 0 && a < rows() && b >= 0 && b < columns()) return true;
             else return false;
         }
-        bool isContiguous(){
+        bool isContiguous() const{
             if(strides[0] != 1) return false;
             if(ndims == 2 && strides[1] != dims[1]) return false;
             else if(ndims > 2) errorCheck(true,
@@ -553,8 +553,8 @@ class Mat {
             }
             return;
         }
-        template<class newType>
-        Mat<newType> copy(){
+        template<class newType = Type>
+        Mat<newType> copy_(){
             Mat<newType> dest;
             if(ndims == 2){
                 Mat<newType> temp(rows(),columns());
@@ -570,6 +570,11 @@ class Mat {
                 n++;
             }
             return dest;
+        }
+        template<class newType = Type>
+        Mat<newType> copy() const{
+            Mat* temp = const_cast<Mat*>(this);
+            return temp->copy_<newType>();
         }
         template<class newType>
         void copy(Mat<newType>& dest){
