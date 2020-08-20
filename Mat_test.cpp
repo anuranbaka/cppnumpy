@@ -56,9 +56,13 @@ int main (){
     fprintf(outFile, "m.copy(newMat)\n");
     newMat.print(outFile);
 
+    output = y.copy();
+    fprintf(outFile, "y.copy()\n");
+    output.print(outFile);
+
     Mat<float> outfloat;
     outfloat = x.copy<float>();
-    fprintf(outFile, "casting matrix x to float using copy()\n");
+    fprintf(outFile, "casting matrix x to float using copy<float>()\n");
     outfloat.print(outFile);
 
     x.copy(outfloat);
@@ -300,9 +304,13 @@ int main (){
     fprintf(outFile, "Invertible Matrix:\n");
     invertible.print(outFile);
 
-    output = inv(invertible);
-    fprintf(outFile, "inverse of that matrix\n");
-    output.print(outFile);
+    output = invertible^inv(invertible);
+    fprintf(outFile, "multiplied by its inverse\n");
+    if((output > Mat<>::eye(output.columns()) - 1e-15).all() && (output < Mat<>::eye(output.columns()) + 1e-15).all()){
+        Mat<>::eye(output.columns()).print(outFile);
+    }
+    else
+        output.print(outFile);
 
     Mat<double> hilbert({1.0/1,1.0/2,1.0/3,1.0/4,1.0/5,
                         1.0/2,1.0/3,1.0/4,1.0/5,1.0/6,

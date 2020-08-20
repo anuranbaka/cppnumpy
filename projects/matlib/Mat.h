@@ -43,12 +43,16 @@ inline bool GreaterThanEqual(Type a, Type b){ return a >= b; };
 
 template <class Type>
 class MatIter;
+template <class Type>
+class Const_MatIter;
 
 template <class Type = double>
 class Mat {
     friend class MatIter<Type>;
+    friend class Const_MatIter<Type>;
 
     typedef MatIter<Type> iterator;
+    typedef Const_MatIter<Type> const_iterator;
     typedef ptrdiff_t difference_type;
     typedef size_t size_type;
     typedef Type value_type;
@@ -79,6 +83,17 @@ class Mat {
             }
             else{
                 return iterator(*this, strides[0]*columns());
+            }
+        }
+        const_iterator begin() const{
+            return const_iterator(*this, 0);
+        }
+        const_iterator end() const{
+            if(ndims == 2){
+                return const_iterator(*this, strides[0]*columns() + strides[1]*rows());
+            }
+            else{
+                return const_iterator(*this, strides[0]*columns());
             }
         }
         size_type size() const{
@@ -554,7 +569,7 @@ class Mat {
             return;
         }
         template<class newType = Type>
-        Mat<newType> copy_(){
+        Mat<newType> copy() const{
             Mat<newType> dest;
             if(ndims == 2){
                 Mat<newType> temp(rows(),columns());
@@ -571,11 +586,10 @@ class Mat {
             }
             return dest;
         }
-        template<class newType = Type>
-        Mat<newType> copy() const{
+        /*Mat<newType> copy() const{
             Mat* temp = const_cast<Mat*>(this);
             return temp->copy_<newType>();
-        }
+        }*/
         template<class newType>
         void copy(Mat<newType>& dest){
             errorCheck(dest.ndims != ndims,
@@ -841,6 +855,74 @@ class MatIter{
         }
         MatIter operator++(int){
             MatIter<Type> clone(*this);
+            size_t offset = matrix.strides[0]*(matrix.columns()-1);
+            if(matrix.ndims == 1){
+                if(position >= matrix.columns()-1) position = matrix.columns();
+            }
+            else if((position-offset)%matrix.strides[1] == 0
+                        && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0]
+                                + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns()
+                                + matrix.strides[1]*matrix.rows();
+                    //if at the end of a row, jump to the next
+                }
+                else{
+                    position -= matrix.strides[0]*(matrix.columns() - 1);
+                    position += matrix.strides[1];
+                }
+            }
+            else position += matrix.strides[0];
+            return clone;
+        }
+        Type & operator*(){
+            return matrix.data[position];
+        }
+};
+
+template <class Type>
+class Const_MatIter{
+    public:
+        const Mat<Type>& matrix;
+        size_t position;
+        Const_MatIter(const Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
+        
+        bool operator==(Const_MatIter b){
+            matrix.errorCheck(matrix.data != b.matrix.data,
+                "Comparison between iterators of different matrices");
+            if(position == b.position) return true;
+            else return false;
+        }
+        bool operator!=(Const_MatIter b){
+            matrix.errorCheck(matrix.data != b.matrix.data,
+                "Comparison between iterators of different matrices");
+            if(position != b.position) return true;
+            else return false;
+        }
+        Const_MatIter& operator++(){
+            size_t offset = matrix.strides[0]*(matrix.columns()-1);
+            if(matrix.ndims == 1){
+                if(position >= matrix.columns()-1) position = matrix.columns();
+                else position += matrix.strides[0];
+            }
+            else if((position - offset) % matrix.strides[1] == 0
+                        && position >= offset){
+                if(position >= (matrix.columns()-1)*matrix.strides[0]
+                                + (matrix.rows()-1)*matrix.strides[1]){
+                    position = matrix.strides[0]*matrix.columns()
+                                + matrix.strides[1]*matrix.rows();
+                    //if at the end of a row, jump to the next
+                }
+                else{
+                    position -= matrix.strides[0]*(matrix.columns() - 1);
+                    position += matrix.strides[1];
+                }
+            }
+            else position += matrix.strides[0];
+            return *this;
+        }
+        Const_MatIter operator++(int){
+            Const_MatIter<Type> clone(*this);
             size_t offset = matrix.strides[0]*(matrix.columns()-1);
             if(matrix.ndims == 1){
                 if(position >= matrix.columns()-1) position = matrix.columns();
