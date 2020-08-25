@@ -38,7 +38,12 @@ matrix multiplication n ^ x
 m.copy(newMat)
 1, 2, 3, 4
 5, 6, 7, 8
-casting matrix x to float using copy()
+y.copy()
+1, 2, 3, 4, 5, 6
+7, 8, 9, 10, 11, 12
+13, 14, 15, 16, 17, 18
+19, 20, 21, 22, 23, 24
+casting matrix x to float using copy<float>()
 1, 2, 3
 4, 5, 6
 7, 8, 9
@@ -246,10 +251,10 @@ Invertible Matrix:
 3, 0, 2
 2, 0, -2
 0, 1, 1
-inverse of that matrix
-0.2, 0.2, -0
--0.2, 0.3, 1
-0.2, -0.3, 0
+multiplied by its inverse
+1, 0, 0
+0, 1, 0
+0, 0, 1
 The dreaded Hilbert matrix:
 1, 0.5, 0.333333, 0.25, 0.2
 0.5, 0.333333, 0.25, 0.2, 0.166667
