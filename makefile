@@ -7,18 +7,18 @@ all: Mat_test Flood_test
 install: all #We don't install this. Just build it.
 
 clean:
-	rm ./projects/Mat_Math/*.o Mat_test Flood_test
+	rm ./lib/*.o ./bin/*
 
-projects/Mat_Math/inverseLapack.o: projects/Mat_Math/inverseLapack.cpp
-	g++ -g --std=c++11 -O3 projects/Mat_Math/inverseLapack.cpp -c -o projects/Mat_Math/inverseLapack.o
+lib/inverseLapack.o: lib/inverseLapack.cpp
+	g++ -g --std=c++11 -O3 src/inverseLapack.cpp -c -o lib/inverseLapack.o
 
 ifeq ($(useLapack),true)
-Mat_test: Mat_test.cpp projects/matlib/Mat.h projects/Mat_Math/inverseLapack.o
-	g++ -g --std=c++11 -O3 projects/Mat_Math/inverseLapack.o Mat_test.cpp -o Mat_test $(lapackLink) 
+Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h src/inverseLapack.o
+	g++ -g --std=c++11 -O3 src/inverseLapack.o Mat_test/Mat_test.cpp -o bin/Mat_test $(lapackLink)
 else	
-Mat_test: Mat_test.cpp projects/matlib/Mat.h projects/Mat_Math/inverse.o
-	g++ -g --std=c++11 -O3 projects/Mat_Math/inverse.o Mat_test.cpp -o Mat_test
+Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h src/inverse.o
+	g++ -g --std=c++11 -O3 src/inverse.o Mat_test/Mat_test.cpp -o bin/Mat_test
 endif
 
-Flood_test: projects/Flood_Fill/Flood_test.cpp projects/Flood_Fill/floodFill.h projects/matlib/Mat.h
-	g++ -g --std=c++11 -O3 projects/Flood_Fill/Flood_test.cpp -o Flood_test
+Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
+	g++ -g --std=c++11 -O3 Flood_Fill/Flood_test.cpp -o bin/Flood_test

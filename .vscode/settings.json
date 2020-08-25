@@ -11,5 +11,4 @@
         "initializer_list": "cpp",
         "fstream": "cpp"
     },
-    "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "../matlib/Mat.h"
+#include "Mat.h"
 
 template<class Type>
 class Mat;

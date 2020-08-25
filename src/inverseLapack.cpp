@@ -1,4 +1,4 @@
-#include "Mat_Math.h"
+#include "../include/Mat_Math.h"
 extern "C"{
     #include <clapack.h>
 }

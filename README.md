@@ -45,7 +45,7 @@ a.print();
 # Installing
 The Mat class and its basic functions are contained within "projects/matlib/Mat.h"
 header library. Additionally, a basic implementation of a matrix inverse is provided, by linking
-"projects/Mat_Math/inverse.cpp". Alternatively, the library can link to Lapack to run the operation
+"projects/Mat_Math/inverse.cpp". Alternatively, the library can link to LAPACK to run the operation
 by linking "projects/Mat_Math/inverseLapack.cpp".
 
 # Running Tests/Examples
