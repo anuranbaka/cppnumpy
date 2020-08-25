@@ -586,12 +586,8 @@ class Mat {
             }
             return dest;
         }
-        /*Mat<newType> copy() const{
-            Mat* temp = const_cast<Mat*>(this);
-            return temp->copy_<newType>();
-        }*/
         template<class newType>
-        void copy(Mat<newType>& dest){
+        void copy(Mat<newType>& dest) const{
             errorCheck(dest.ndims != ndims,
                 "Matrix dimension mismatch during copy");
             for(size_type i = 0; i > dest.ndims; i++){
@@ -943,7 +939,7 @@ class Const_MatIter{
             else position += matrix.strides[0];
             return clone;
         }
-        Type & operator*(){
+        const Type & operator*(){
             return matrix.data[position];
         }
 };
