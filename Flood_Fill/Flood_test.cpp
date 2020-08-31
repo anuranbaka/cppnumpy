@@ -99,7 +99,7 @@ int main(){
                    0,1,1,1,9,0,0,0,0,
                    0,0,0,0,9,0,0,0,0},9,9);
     FILE* outFile;
-    outFile = fopen("projects/Flood_Fill/floodOutput.txt","w");
+    outFile = fopen("Flood_Fill/floodOutput.txt","w");
 
     fprintf(outFile,"Map1 before flood fill:\n");
     map1.print(outFile);
