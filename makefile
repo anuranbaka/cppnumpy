@@ -4,20 +4,27 @@ lapackLink = `pkg-config blas lapack --cflags --libs`
 
 all: Mat_test Flood_test
 
-install: all #We don't install this. Just build it.
+install: all
+	install -d $(DESTDIR)$(PREFIX)/lib/
+	install lib/lib* $(PREFIX)/lib
+	install -d $(DESTDIR)$(PREFIX)/include/
+	install include/* $(PREFIX)/include
 
 clean:
 	rm ./lib/*.o ./bin/*
 
-lib/inverseLapack.o: lib/inverseLapack.cpp
-	g++ -g --std=c++11 -O3 src/inverseLapack.cpp -c -o lib/inverseLapack.o
+bin/libinverseLapack.so: src/inverseLapack.cpp
+	g++ -g --std=c++11 -O3 -fPIC src/inverseLapack.cpp -shared -o lib/libinverseLapack.so
+
+bin/libinverse.so: src/inverse.cpp
+	g++ -g --std=c++11 -O3 -fPIC src/inverse.cpp -shared -o lib/libinverse.so
 
 ifeq ($(useLapack),true)
-Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h src/inverseLapack.o
-	g++ -g --std=c++11 -O3 src/inverseLapack.o Mat_test/Mat_test.cpp -o bin/Mat_test $(lapackLink)
+Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h lib/libinverseLapack.so
+	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp -Llib/ -linverseLapack -o bin/Mat_test $(lapackLink)
 else	
-Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h src/inverse.o
-	g++ -g --std=c++11 -O3 src/inverse.o Mat_test/Mat_test.cpp -o bin/Mat_test
+Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h lib/libinverse.so
+	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp -Llib/ -linverse -o bin/Mat_test
 endif
 
 Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
