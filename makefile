@@ -2,6 +2,8 @@ useLapack = false
 
 lapackLink = `pkg-config blas lapack --cflags --libs`
 
+LDFLAGS = '-Wl,-rpath,$$ORIGIN/../lib' -Llib/
+
 all: Mat_test Flood_test
 
 install: all
@@ -21,10 +23,10 @@ bin/libinverse.so: src/inverse.cpp
 
 ifeq ($(useLapack),true)
 Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h lib/libinverseLapack.so
-	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp -Llib/ -linverseLapack -o bin/Mat_test $(lapackLink)
+	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp $(LDFLAGS) -linverseLapack -o bin/Mat_test $(lapackLink)
 else	
 Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h lib/libinverse.so
-	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp -Llib/ -linverse -o bin/Mat_test
+	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp $(LDFLAGS) -linverse -o bin/Mat_test
 endif
 
 Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
