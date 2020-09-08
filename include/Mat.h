@@ -99,7 +99,7 @@ class Mat {
         size_type size() const{
             if(ndims == 0) return 0;
             size_type result = dims[0];
-            for(int i = 1; i < ndims; i++){
+            for(size_type i = 1; i < ndims; i++){
                 result *= dims[i];
             }
             return result;
@@ -191,11 +191,11 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
@@ -649,7 +649,7 @@ class Mat {
                 "only one argument of reshape can be -1");
             if(new_dim1 == -1) new_dim1 = size()/new_dim2;
             else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-            else errorCheck(size() != new_dim1 * new_dim2,
+            else errorCheck(static_cast<int>(size()) != new_dim1 * new_dim2,
                     "new shape size mismatch");
 
             if(ndims == 2){
