@@ -234,11 +234,11 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
@@ -626,7 +626,7 @@ class Mat {
             errorCheck(new_dim1 < -1,
                 "matrix cannot have negative dimensions");
             if(new_dim1 == -1) new_dim1 = size();
-            else errorCheck(size() != new_dim1, "new shape size mismatch");
+            else errorCheck(size() != static_cast<size_type>(new_dim1), "new shape size mismatch");
 
             if(ndims == 1) return;
             else{
