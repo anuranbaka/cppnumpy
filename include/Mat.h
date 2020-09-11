@@ -317,8 +317,8 @@ class Mat {
         }
         Mat<bool> operator!(){
             Mat<bool> result(rows(),columns());
-            for(int i = 0; i < result.rows(); i++){
-                for(int j = 0; j < result.columns(); j++){
+            for(size_type i = 0; i < result.rows(); i++){
+                for(size_type j = 0; j < result.columns(); j++){
                     result(i,j) = !(static_cast<bool>(operator()(i,j)));
                 }
             }
@@ -678,7 +678,7 @@ class Mat {
             delete[] result.memory;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(int i = 0; i < result.ndims; i++){
+            for(size_type i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
             }
             result.strides = new size_type[result.ndims];
@@ -699,7 +699,7 @@ class Mat {
             (*result.refCount)++;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(int i = 0; i < result.ndims; i++){
+            for(size_type i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
             }
             result.strides = new size_type[result.ndims];
