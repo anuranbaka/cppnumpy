@@ -245,7 +245,7 @@ class Mat {
             data = b.data;
             return *this;
         }
-        Mat<Type>& operator= (const Type scalar){
+        Mat<Type>& operator= (Type scalar){
             for(auto& i: *this){
                 i = scalar;
             }
@@ -254,56 +254,56 @@ class Mat {
         Mat<Type> operator+(const Mat<Type> &b){
             return broadcast(b, Add<Type>);
         }
-        Mat<Type> operator+(const Type b){
+        Mat<Type> operator+(Type b){
             return broadcast(b, Add<Type>);
         }
         void operator +=(const Mat<Type> &b){
             *this = broadcast(b, Add<Type>);
         }
-        void operator +=(const Type &b){
+        void operator +=(Type b){
             *this = broadcast(b, Add<Type>);
         }
         Mat<Type> operator-(const Mat<Type> &b){
             return broadcast(b, Subtract<Type>);
         }
-        Mat<Type> operator-(const Type b){
+        Mat<Type> operator-(Type b){
             return broadcast(b, Subtract<Type>);
         }
         void operator -=(const Mat<Type> &b){
             *this = broadcast(b, Subtract<Type>);
         }
-        void operator -=(const Type &b){
+        void operator -=(Type b){
             *this = broadcast(b, Subtract<Type>);
         }
         Mat<Type> operator*(const Mat<Type> &b){
             return broadcast(b, Multiply<Type>);
         }
-        Mat<Type> operator*(const Type b){
+        Mat<Type> operator*(Type b){
             return broadcast(b, Multiply<Type>);
         }
         void operator *=(const Mat<Type> &b){
             *this = broadcast(b, Multiply<Type>);
         }
-        void operator *=(const Type &b){
+        void operator *=(Type b){
             *this = broadcast(b, Multiply<Type>);
         }
         Mat<Type> operator/(const Mat<Type> &b){
             return broadcast(b, Divide<Type>);
         }
-        Mat<Type> operator/(const Type b){
+        Mat<Type> operator/(Type b){
             return broadcast(b, Divide<Type>);
         }
         void operator /=(const Mat<Type> &b){
             *this = broadcast(b, Divide<Type>);
         }
-        void operator /=(const Type &b){
+        void operator /=(Type b){
             *this = broadcast(b, Divide<Type>);
         }
         template<class Type2>
         Mat<bool> operator&(const Mat<Type2> &b){
             return broadcast(b, And<Type,Type2>);
         }
-        Mat<bool> operator&(const bool b){
+        Mat<bool> operator&(bool b){
             Mat<bool> temp({b},1,1);
             return broadcast(b, And<Type,bool>);
         }
@@ -311,7 +311,7 @@ class Mat {
         Mat<bool> operator|(const Mat<Type2> &b){
             return broadcast(b, Or<Type,Type2>);
         }
-        Mat<bool> operator|(const bool b){
+        Mat<bool> operator|(bool b){
             Mat<bool> temp({b},1,1);
             return broadcast(b, Or<Type,bool>);
         }
@@ -327,42 +327,42 @@ class Mat {
         Mat<bool> operator==(const Mat<Type> b){
             return broadcast(b, Equality<Type>);
         }
-        Mat<bool> operator==(const Type b){
+        Mat<bool> operator==(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, Equality<Type>);
         }
         Mat<bool> operator!=(const Mat<Type> b){
             return broadcast(b, Inequality<Type>);
         }
-        Mat<bool> operator!=(const Type b){
+        Mat<bool> operator!=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, Inequality<Type>);
         }
         Mat<bool> operator<(const Mat<Type> b){
             return broadcast(b, LessThan<Type>);
         }
-        Mat<bool> operator<(const Type b){
+        Mat<bool> operator<(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, LessThan<Type>);
         }
         Mat<bool> operator<=(const Mat<Type> b){
             return broadcast(b, LessThanEqual<Type>);
         }
-        Mat<bool> operator<=(const Type b){
+        Mat<bool> operator<=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, LessThanEqual<Type>);
         }
         Mat<bool> operator>(const Mat<Type> b){
             return broadcast(b, GreaterThan<Type>);
         }
-        Mat<bool> operator>(const Type b){
+        Mat<bool> operator>(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, GreaterThan<Type>);
         }
         Mat<bool> operator>=(const Mat<Type> b){
             return broadcast(b, GreaterThanEqual<Type>);
         }
-        Mat<bool> operator>=(const Type b){
+        Mat<bool> operator>=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, GreaterThanEqual<Type>);
         }
@@ -787,11 +787,11 @@ class Mat {
             return result;
         }
         template<class Type2, class Type3>
-        static Mat<Type3> broadcast(Mat<Type>& a, const Type2 b, Type3 (*f)(Type, Type2)){
+        static Mat<Type3> broadcast(Mat<Type>& a, Type2 b, Type3 (*f)(Type, Type2)){
             return a.broadcast(b, f);
         }
         template<class Type2, class Type3>
-        static Mat<Type3> broadcast(const Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
+        static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
             b.errorCheck(b.ndims > 2, "n-dimensional broadcast not yet implemented.");
             if(b.ndims == 2){
                 Mat<Type> temp({a},1,1);
