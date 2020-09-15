@@ -950,7 +950,7 @@ Mat<Type> operator+(Type a, Mat<Type> &b){
 }
 template<class Type>
 Mat<Type> operator-(Type a, Mat<Type> &b){
-    return b.broadcast(a, Subtract<Type>);
+    return Mat<Type>::broadcast(a, b, Subtract<Type>);
 }
 template<class Type>
 Mat<Type> operator*(Type a, Mat<Type> &b){

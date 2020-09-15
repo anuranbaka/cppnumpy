@@ -125,6 +125,10 @@ int main (){
     fprintf(outFile, "broadcast scalar: x + 5\n");
     output.print(outFile);
 
+    output = 10.0 - x;
+    fprintf(outFile, "broadcast scalar: 10 - x\n");
+    output.print(outFile);
+
     output = 2520.0 / x;
     fprintf(outFile, "broadcast scalar: 2520 / x\n");
     output.print(outFile);
