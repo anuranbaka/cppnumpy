@@ -4,7 +4,7 @@ lapackLink = `pkg-config blas lapack --cflags --libs`
 
 LDFLAGS = '-Wl,-rpath,$$ORIGIN/../lib' -Llib/
 
-all: Mat_test Flood_test
+all: Mat_test Flood_test Mat_Pybind
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -31,3 +31,7 @@ endif
 
 Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
 	g++ -g --std=c++11 -O3 Flood_Fill/Flood_test.cpp -o bin/Flood_test
+	
+Mat_Pybind: Mat_test/Mat_Pybind.cpp
+	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include `python3 -m pybind11 --includes` Mat_test/Mat_Pybind.cpp -o Mat_test/Mat_Pybind`python3-config --extension-suffix`
+	
