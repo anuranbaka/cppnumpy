@@ -649,7 +649,8 @@ class Mat {
                 "only one argument of reshape can be -1");
             if(new_dim1 == -1) new_dim1 = size()/new_dim2;
             else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-            else errorCheck(static_cast<int>(size()) != new_dim1 * new_dim2,
+            else errorCheck(size() !=
+                    static_cast<size_type>(new_dim1) * static_cast<size_type>(new_dim2),
                     "new shape size mismatch");
 
             if(ndims == 2){
