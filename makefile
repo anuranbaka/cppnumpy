@@ -8,7 +8,7 @@ PYTHON_INCLUDES = `python3 -m pybind11 --includes`
 
 NUMPY_INCLUDES = `python3 -c 'import numpy; print(numpy.get_include())'`
 
-all: Mat_test Flood_test Mat_Pybind
+all: Mat_test Flood_Fill Mat_Pybind
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -33,8 +33,8 @@ Mat_test: Mat_test/Mat_test.cpp include/Mat.h include/Mat_Math.h lib/libinverse.
 	g++ -g --std=c++11 -O3 Mat_test/Mat_test.cpp $(LDFLAGS) -linverse -o bin/Mat_test
 endif
 
-Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
-	g++ -g --std=c++11 -O3 Flood_Fill/Flood_test.cpp -o bin/Flood_test
+Flood_Fill: Flood_Fill/Flood_Fill.cpp include/Mat.h
+	g++ -g --std=c++11 -O3 Flood_Fill/Flood_Fill.cpp -o bin/Flood_Fill
 	
 Mat_Pybind: Pybind/Mat_Pybind.cpp
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_Pybind.cpp -o Pybind/Mat_Pybind`python3-config --extension-suffix`

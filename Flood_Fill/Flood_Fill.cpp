@@ -1,14 +1,12 @@
-#include "../include/Mat.h"
-#include <vector>
-using namespace std;
+#include "Flood_Fill.h"
 
 template <class T>
-void floodFill(Mat<T>& image, vector<size_t> start, T color, int connectivity = 4){
+void floodFill(Mat<T>& image, vector<size_t> start, T color, int connectivity){
     floodHelper(image, start, image(start[0],start[1]), color, connectivity); 
 }
 
 template <class T>
-void floodHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, int connectivity = 4){
+void floodHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, int connectivity){
     if(image(start[0],start[1]) == new_color) return;
     if(connectivity != 4 && connectivity != 8){
         fprintf(stderr, "%s", "connectivity must equal 4 or 8");
