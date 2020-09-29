@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <Mat.h>
+#include "../Numpy/Matmodule.h"
 
 namespace py = pybind11;
 
@@ -99,4 +100,9 @@ PYBIND11_MODULE (Mat_Pybind, m){
         .def("empty_like", &Mat<double>::empty_like)
         .def("eye", py::overload_cast<size_t>(&Mat<double>::eye), "returns a 1d identity matrix")
         .def("eye", py::overload_cast<size_t, size_t, int>(&Mat<double>::eye), "returns a 2d identity matrix");
+    m.def("buildMat", []( py::handle obj){
+        //check that it's an array
+        PyArrayObject* a = reinterpret_cast<PyArrayObject*>(obj.ptr());
+        return build_Mat<double>(a);
+    });
 }

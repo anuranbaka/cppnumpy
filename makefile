@@ -4,6 +4,10 @@ lapackLink = `pkg-config blas lapack --cflags --libs`
 
 LDFLAGS = '-Wl,-rpath,$$ORIGIN/../lib' -Llib/
 
+PYTHON_INCLUDES = `python3 -m pybind11 --includes` 
+
+NUMPY_INCLUDES = `python3 -c 'import numpy; print(numpy.get_include())'`
+
 all: Mat_test Flood_test Mat_Pybind
 
 install: all
@@ -32,6 +36,6 @@ endif
 Flood_test: Flood_Fill/Flood_test.cpp include/Mat.h
 	g++ -g --std=c++11 -O3 Flood_Fill/Flood_test.cpp -o bin/Flood_test
 	
-Mat_Pybind: Mat_test/Mat_Pybind.cpp
-	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include `python3 -m pybind11 --includes` Mat_test/Mat_Pybind.cpp -o Mat_test/Mat_Pybind`python3-config --extension-suffix`
+Mat_Pybind: Pybind/Mat_Pybind.cpp
+	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_Pybind.cpp -o Pybind/Mat_Pybind`python3-config --extension-suffix`
 	
