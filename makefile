@@ -35,7 +35,10 @@ endif
 
 Flood_Fill: Flood_Fill/Flood_Fill.cpp include/Mat.h
 	g++ -g --std=c++11 -O3 Flood_Fill/Flood_Fill.cpp -o bin/Flood_Fill
+
+Flood_Pybind: Mat_Pybind Flood_Fill
+	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Flood_Fill/Flood_Fill.cpp Pybind/Flood_Fill_Pybind.cpp -o Python/Flood_Pybind`python3-config --extension-suffix`
 	
-Mat_Pybind: Pybind/Mat_Pybind.cpp
-	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_Pybind.cpp -o Pybind/Mat_Pybind`python3-config --extension-suffix`
+Mat_Pybind: Pybind/Mat_Pybind.cpp include/Mat.h
+	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_Pybind.cpp -o Python/Mat_Pybind`python3-config --extension-suffix`
 	

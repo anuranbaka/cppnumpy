@@ -2,12 +2,12 @@
 #include <Mat.h>
 #include "../Numpy/Matmodule.h"
 
-namespace py = pybind11;
-
 template <class Type>
 inline Type TrueDiv(Type a, Type b){ return static_cast<double>(a) / static_cast<double>(b); };
 template <class Type>
 inline Type FloorDiv(Type a, Type b){ return floor(a / b); };
+
+namespace py = pybind11;
 
 PYBIND11_MODULE (Mat_Pybind, m){
     py::class_<Mat<double>>(m, "Mat")

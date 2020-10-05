@@ -11,10 +11,9 @@ Mat<Type> build_2d_Mat_from_args(Type *data, long int *rows, long int *columns) 
     Mat<Type> result(*rows, *columns);
     for(int i = 0; i < *rows; i++){
         for(int j = 0; j < *columns; j++){
-            result(i,j) = data[(i*(*columns))*j];
+            result(i,j) = data[(i*(*columns))+j];
         }
     }
-    result.print();
 
     return result;
 }
