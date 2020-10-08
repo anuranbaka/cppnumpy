@@ -47,6 +47,13 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "complex": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "iostream": "cpp",
+        "valarray": "cpp",
+        "variant": "cpp"
     },
 }
