@@ -1,6 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <Mat.h>
-#include "../Numpy/Matmodule.h"
+#include <Matmodule.h>
 
 template <class Type>
 inline Type TrueDiv(Type a, Type b){ return static_cast<double>(a) / static_cast<double>(b); };
