@@ -98,7 +98,7 @@ void declare_debug(py::module &m, const std::string &typestr){
     .def("eye", py::overload_cast<size_t, size_t, int>(&Mat<T>::eye), "returns a 2d identity matrix");
 }
 
-PYBIND11_MODULE (Mat_Pybind, m){
+PYBIND11_MODULE (Mat_Debug, m){
     declare_debug<bool>(m, "_bool");
     declare_debug<short int>(m, "_short_int");
     declare_debug<unsigned short int>(m, "_unsigned_short_int");

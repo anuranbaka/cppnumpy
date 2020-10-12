@@ -47,4 +47,8 @@ Mat_Pybind: Python/Mat_Pybind$(PY_SUFFIX)
 
 Python/Mat_Pybind$(PY_SUFFIX): Pybind/Mat_Pybind.cpp include/Mat.h include/Matmodule.h
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_Pybind.cpp -o Python/Mat_Pybind$(PY_SUFFIX)
+
+Mat_Debug: Python/Mat_Debug$(PY_SUFFIX)
+Python/Mat_Debug$(PY_SUFFIX): Pybind/Mat_debug_bindings.cpp include/Mat.h include/Matmodule.h
+	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) Pybind/Mat_debug_bindings.cpp -o Python/Mat_Debug$(PY_SUFFIX)
 	
