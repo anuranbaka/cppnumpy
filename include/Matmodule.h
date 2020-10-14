@@ -28,15 +28,23 @@ Mat<Type> build_1d_Mat_from_args(Type *data, long int *columns) {
 }
 
 template<class Type>
-Mat<Type> build_Mat(PyArrayObject *array){
-    if(PyArray_ITEMSIZE(array) != sizeof(Type))
-        printf("itemsize mismatch");
-    if(PyArray_NDIM(array) == 1)
-        return build_1d_Mat_from_args<Type>((Type*)PyArray_DATA(array), PyArray_DIMS(array));
-    else if(PyArray_NDIM(array) == 2)
-        return build_2d_Mat_from_args<Type>((Type*)PyArray_DATA(array), PyArray_DIMS(array), PyArray_DIMS(array)+1);
+bool build_Mat(PyArrayObject *array, Mat<Type> new_mat){
+    if(PyArray_ITEMSIZE(array) != sizeof(Type)){
+        printf("itemsize mismatch\n");
+        fflush(stdout);
+        return false;
+    }
+    if(PyArray_NDIM(array) == 1){
+        new_mat = build_1d_Mat_from_args<Type>((Type*)PyArray_DATA(array), PyArray_DIMS(array));
+        return true;
+    }
+    else if(PyArray_NDIM(array) == 2){
+        new_mat = build_2d_Mat_from_args<Type>((Type*)PyArray_DATA(array), PyArray_DIMS(array), PyArray_DIMS(array)+1);
+        return true;
+    }
     else{
-        printf("n-dimensional array not yet supported");
-        return Mat<Type>::eye(0);
+        printf("n-dimensional array not yet supported\n");
+        fflush(stdout);
+        return false;
     }
 }
