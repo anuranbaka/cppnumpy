@@ -28,7 +28,7 @@ Mat<Type> build_1d_Mat_from_args(Type *data, long int *columns) {
 }
 
 template<class Type>
-bool build_Mat(PyArrayObject *array, Mat<Type> new_mat){
+bool build_Mat(PyArrayObject *array, Mat<Type>& new_mat){
     if(PyArray_ITEMSIZE(array) != sizeof(Type)){
         printf("itemsize mismatch\n");
         fflush(stdout);

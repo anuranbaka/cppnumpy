@@ -3,12 +3,6 @@
 #include <vector>
 
 template <class T>
-void floodFill(Mat<T>& image, vector<size_t> start, T color, int connectivity = 4){
-    floodHelper(image, start, image(start[0],start[1]), color, connectivity); 
-}
-//template void floodFill<double>(Mat<double>& image, vector<size_t> start, double color, int connectivity);
-
-template <class T>
 void floodHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, int connectivity){
     if(image(start[0],start[1]) == new_color) return;
     if(connectivity != 4 && connectivity != 8){
@@ -34,9 +28,10 @@ void floodHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_colo
 }
 
 template <class T>
-void floodFillCustom(Mat<T> image, vector<size_t> start, T color, bool (*fillFunction)(T, T), int connectivity = 4){
-    floodCustomHelper(image, start, image(start[0],start[1]), color, fillFunction, connectivity);
+void floodFill(Mat<T>& image, vector<size_t> start, T color, int connectivity = 4){
+    floodHelper<T>(image, start, image(start[0],start[1]), color, connectivity);
 }
+
 template <class T>
 void floodCustomHelper(Mat<T>& image, vector<size_t> start, T target_color, T new_color, bool (*fillFunction)(T, T), int connectivity = 4){
     if(image(start[0],start[1]) == new_color) return;
@@ -60,4 +55,9 @@ void floodCustomHelper(Mat<T>& image, vector<size_t> start, T target_color, T ne
         }
     }
     return;
+}
+
+template <class T>
+void floodFillCustom(Mat<T> image, vector<size_t> start, T color, bool (*fillFunction)(T, T), int connectivity = 4){
+    floodCustomHelper(image, start, image(start[0],start[1]), color, fillFunction, connectivity);
 }

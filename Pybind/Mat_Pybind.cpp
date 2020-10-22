@@ -1,6 +1,4 @@
-#include <pybind11/pybind11.h>
-#include <Mat.h>
-#include <Matmodule.h>
+#include <Mat_Pybind.h>
 
 template <class Type>
 inline Type TrueDiv(Type a, Type b){ return static_cast<double>(a) / static_cast<double>(b); };
@@ -9,24 +7,17 @@ inline Type FloorDiv(Type a, Type b){ return floor(a / b); };
 
 namespace py = pybind11;
 
-int init_numpy(){
-     import_array1(0); // PyError if not successful
-     return 1;
-}
-
-const static int numpy_initialized =  init_numpy();
-
 template <class T>
 void declare_mat(py::module &m, const std::string &typestr){
     m.def(("buildMat" + typestr).c_str(), []( py::handle obj){
-        fflush(stdout);
         if(!PyArray_Check(obj.ptr())){
-            fflush(stdout);
             PyErr_SetString(PyExc_TypeError, "object is not an array");
             return Mat<T>::eye(0);
         }
         PyArrayObject* a = reinterpret_cast<PyArrayObject*>(obj.ptr());
-        return build_Mat<T>(a);
+        Mat<T> new_mat;
+        build_Mat<T>(a, new_mat);
+        return new_mat;
     });
 }
 
