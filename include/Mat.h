@@ -51,21 +51,24 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
-    typedef MatIter<Type> iterator;
-    typedef Const_MatIter<Type> const_iterator;
-    typedef ptrdiff_t difference_type;
-    typedef size_t size_type;
-    typedef Type value_type;
-    typedef Type * pointer;
-    typedef Type & reference;
-
     public:
-        size_type ndims = 2;
+        typedef MatIter<Type> iterator;
+        typedef Const_MatIter<Type> const_iterator;
+        typedef ptrdiff_t difference_type;
+        typedef size_t size_type;
+        typedef Type value_type;
+        typedef Type * pointer;
+        typedef Type & reference;
+
+        long ndims = 2;
         size_type* dims;
         size_type* strides;
         Type* memory; 
         Type* data;
         int64_t* refCount;
+        void* customTypeData = NULL;
+        void (*customDestructor)(Mat<Type>*, void*) = 0;
+
         void errorCheck(bool e, const char* message) const{
             if(e){
                 fprintf(stderr, "%s\n", message);
@@ -99,7 +102,7 @@ class Mat {
         size_type size() const{
             if(ndims == 0) return 0;
             size_type result = dims[0];
-            for(size_type i = 1; i < ndims; i++){
+            for(long i = 1; i < ndims; i++){
                 result *= dims[i];
             }
             return result;
@@ -191,17 +194,25 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(size_type i = 0; i < ndims; i++){
+            for(long i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(size_type i = 0; i < ndims; i++){
+            for(long i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
             data = b.data;
+            customDestructor = b.customDestructor;
+            customTypeData = b.customTypeData;
         }
         ~Mat(){
+            if(customDestructor){
+                delete []dims;
+                delete []strides;
+                customDestructor(this, customTypeData);
+                return;
+            }
             (*refCount)--;
             errorCheck(*refCount < 0,
                 "Reference counter is negative somehow");
@@ -234,15 +245,17 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(size_type i = 0; i < ndims; i++){
+            for(long i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(size_type i = 0; i < ndims; i++){
+            for(long i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
             data = b.data;
+            customDestructor = b.customDestructor;
+            customTypeData = b.customTypeData;
             return *this;
         }
         Mat<Type>& operator= (Type scalar){
@@ -384,7 +397,7 @@ class Mat {
             if(ndims >= b.ndims) x = new size_type[ndims];
             else x = new size_type[b.ndims];
 
-            for(size_type n = 0; n < ndims; n++){
+            for(long n = 0; n < ndims; n++){
                 errorCheck(dims[n] != 1 && dims[n] != b.dims[n] &&
                     b.dims[n] != 1, "frames are not aligned");
                 if(dims[n] == 1) x[n] = b.dims[n];
@@ -590,7 +603,7 @@ class Mat {
         void copy(Mat<newType>& dest) const{
             errorCheck(dest.ndims != ndims,
                 "Matrix dimension mismatch during copy");
-            for(size_type i = 0; i > dest.ndims; i++){
+            for(long i = 0; i > dest.ndims; i++){
                 errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
             }
             if(ndims == 2){
@@ -670,26 +683,27 @@ class Mat {
             }
             return;
         }
-        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims,
-                                size_type* new_dims){
+        static Mat<Type> wrap(Type* data, long new_ndims,
+                                size_type* new_dims, size_type* strides){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
             delete[] result.memory;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(size_type i = 0; i < result.ndims; i++){
+            for(long i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
             }
             result.strides = new size_type[result.ndims];
             result.strides[0] = 1;
             if(result.ndims == 2) result.strides[1] = result.dims[1];
             result.memory = nullptr;
-            result.data = a;
+            result.data = data;
             return result;
         }
-        static Mat<Type> wrap(size_type size, Type* a, size_type new_ndims,
-                                size_type* new_dims, int64_t* ref){
+        static Mat<Type> wrap(Type* data, long new_ndims,
+                                size_type* new_dims, size_type* new_strides, 
+                                int64_t* ref, void (*destructor)(Mat<Type>*, void*), void* arr){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
@@ -699,14 +713,15 @@ class Mat {
             (*result.refCount)++;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(size_type i = 0; i < result.ndims; i++){
-                result.dims[i] = new_dims[i];
-            }
             result.strides = new size_type[result.ndims];
-            result.strides[0] = 1;
-            if(result.ndims == 2) result.strides[1] = result.dims[1];
-            result.memory = a;
-            result.data = a;
+            for(long i = 0; i < result.ndims; i++){
+                result.dims[i] = new_dims[i];
+                result.strides[i] = new_strides[i];
+            }
+            result.memory = nullptr;
+            result.data = data;
+            result.customTypeData = arr;
+            result.customDestructor = destructor;
             return result;
         }
         static Mat zeros(size_type a){
