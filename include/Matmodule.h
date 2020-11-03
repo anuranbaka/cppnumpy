@@ -28,54 +28,6 @@ int getTypenum(){
     return -1;
 }
 
-template<class T>
-Mat<T> build_2d_Mat_from_args(T *data, long int *rows, long int *columns) {
-    //arguments should be a (ndarray.data, ndarray.shape[0], ndarray.shape[1])
-
-    Mat<T> result(*rows, *columns);
-    for(int i = 0; i < *rows; i++){
-        for(int j = 0; j < *columns; j++){
-            result(i,j) = data[(i*(*columns))+j];
-        }
-    }
-
-    return result;
-}
-
-template<class T>
-Mat<T> build_1d_Mat_from_args(T *data, long int *columns) {
-    //arguments should be a (ndarray.data, ndarray.shape[0])
-    Mat<T> result(*columns);
-    for(int j = 0; j < *columns; j++){
-        result(j) = data[j];
-    }
-    return result;
-}
-
-template<class T>
-bool build_Mat(PyArrayObject *array, Mat<T>& new_mat){
-    if(PyArray_ITEMSIZE(array) != sizeof(T)){
-        printf("itemsize mismatch\n");
-        fflush(stdout);
-        return false;
-    }
-    if(PyArray_NDIM(array) == 1){
-        new_mat = build_1d_Mat_from_args<T>((T*)PyArray_DATA(array),
-                                            PyArray_DIMS(array));
-        return true;
-    }
-    else if(PyArray_NDIM(array) == 2){
-        new_mat = build_2d_Mat_from_args<T>((T*)PyArray_DATA(array),
-                                            PyArray_DIMS(array), PyArray_DIMS(array)+1);
-        return true;
-    }
-    else{
-        printf("n-dimensional array not yet supported\n");
-        fflush(stdout);
-        return false;
-    }
-}
-
 template <class T>
 void destructor_wrapper(PyObject* o){
     void* ptr = PyCapsule_GetPointer(o, MAT_NAME);
