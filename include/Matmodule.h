@@ -10,14 +10,14 @@ int getTypenum(){
     if(std::is_same<T, bool>::value) return NPY_BOOL;
     if(std::is_same<T, signed char>::value) return NPY_BYTE;
     if(std::is_same<T, unsigned char>::value) return NPY_UBYTE;
-    if(std::is_same<T, short int>::value) return NPY_SHORT;
-    if(std::is_same<T, unsigned short int>::value) return NPY_USHORT;
-    if(std::is_same<T, int>::value) return NPY_INT;
-    if(std::is_same<T, unsigned int>::value) return NPY_UINT;
-    if(std::is_same<T, long>::value) return NPY_LONG;
-    if(std::is_same<T, unsigned long>::value) return NPY_ULONG;
-    if(std::is_same<T, long long>::value) return NPY_LONGLONG;
-    if(std::is_same<T, unsigned long long>::value) return NPY_ULONGLONG;
+    if(std::is_same<T, int16_t>::value) return NPY_SHORT;
+    if(std::is_same<T, uint16_t>::value) return NPY_USHORT;
+    if(std::is_same<T, int32_t>::value) return NPY_INT;
+    if(std::is_same<T, uint32_t>::value) return NPY_UINT;
+    if(std::is_same<T, long long>::value ||
+        std::is_same<T, int64_t>::value) return NPY_LONGLONG;
+    if(std::is_same<T, unsigned long long>::value ||
+        std::is_same<T, uint64_t>::value) return NPY_ULONGLONG;
     if(std::is_same<T, float>::value) return NPY_FLOAT;
     if(std::is_same<T, double>::value) return NPY_DOUBLE;
     if(std::is_same<T, char>::value){
@@ -25,6 +25,7 @@ int getTypenum(){
         if(test - (T)1 > 0) return NPY_UBYTE;
         else return NPY_BYTE;
     }
+    return -1;
 }
 
 template<class T>
