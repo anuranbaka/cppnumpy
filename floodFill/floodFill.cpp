@@ -1,4 +1,4 @@
-#include "Flood_Fill.h"
+#include "floodFill.h"
 
 bool fuzzyFill1(int current_color, int target_color){
     if(current_color >= target_color - 1 && current_color <= target_color + 1) return true;
@@ -38,7 +38,7 @@ int main(){
                    0,1,1,1,9,0,0,0,0,
                    0,0,0,0,9,0,0,0,0},9,9);
     FILE* outFile;
-    outFile = fopen("Flood_Fill/floodOutput.txt","w");
+    outFile = fopen("floodFill/floodOutput.txt","w");
 
     fprintf(outFile,"Map1 before flood fill:\n");
     map1.print(outFile);

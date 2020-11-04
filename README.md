@@ -45,14 +45,14 @@ a.print();
 # Installing
 The Mat class and its basic functions are contained within "projects/matlib/Mat.h"
 header library. Additionally, a basic implementation of a matrix inverse is provided, by linking
-"projects/Mat_Math/inverse.cpp". Alternatively, the library can link to LAPACK to run the operation
-by linking "projects/Mat_Math/inverseLapack.cpp".
+"projects/matMath/matMath.cpp". Alternatively, the library can link to LAPACK to run the operation
+by linking "projects/matMath/matMathLapack.cpp".
 
 # Running Tests/Examples
-Matrix arithmetic is tested in the Mat_test.cpp, and demonstrates basic
+Matrix arithmetic is tested in the matTest.cpp, and demonstrates basic
 matrix math functions as well as the not-so-basic matrix inverse.
 
-Additionally, "projects/Flood Fill/Flood_test" presents an example usage of the Mat class for
+Additionally, "projects/Flood Fill/floodTest" presents an example usage of the Mat class for
 a Flood Fill function. For simplicity's sake the matrix simply handles a matrix of single-digit
 numbers as plain text, but demonstrates a potential practical use case for the class.
 

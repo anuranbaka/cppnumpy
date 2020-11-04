@@ -1,6 +1,6 @@
 import numpy as np
-import Flood_Pybind as flood
-import Mat_Pybind as Mat
+import FloodPybind as flood
+import matPybind as Mat
 def fuzzyFill1(a, b):
     if(a >= b - 1 and a <= b + 1):
         return True
