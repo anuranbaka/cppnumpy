@@ -99,7 +99,7 @@ class Mat {
         size_type size() const{
             if(ndims == 0) return 0;
             size_type result = dims[0];
-            for(int i = 1; i < ndims; i++){
+            for(size_type i = 1; i < ndims; i++){
                 result *= dims[i];
             }
             return result;
@@ -191,11 +191,11 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
@@ -234,18 +234,18 @@ class Mat {
             (*refCount)++;
             ndims = b.ndims;
             dims = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 dims[i] = b.dims[i];
             }
             strides = new size_type[ndims];
-            for(int i = 0; i < ndims; i++){
+            for(size_type i = 0; i < ndims; i++){
                 strides[i] = b.strides[i];
             }
             memory = b.memory;
             data = b.data;
             return *this;
         }
-        Mat<Type>& operator= (const Type scalar){
+        Mat<Type>& operator= (Type scalar){
             for(auto& i: *this){
                 i = scalar;
             }
@@ -254,56 +254,56 @@ class Mat {
         Mat<Type> operator+(const Mat<Type> &b){
             return broadcast(b, Add<Type>);
         }
-        Mat<Type> operator+(const Type b){
+        Mat<Type> operator+(Type b){
             return broadcast(b, Add<Type>);
         }
         void operator +=(const Mat<Type> &b){
             *this = broadcast(b, Add<Type>);
         }
-        void operator +=(const Type &b){
+        void operator +=(Type b){
             *this = broadcast(b, Add<Type>);
         }
         Mat<Type> operator-(const Mat<Type> &b){
             return broadcast(b, Subtract<Type>);
         }
-        Mat<Type> operator-(const Type b){
+        Mat<Type> operator-(Type b){
             return broadcast(b, Subtract<Type>);
         }
         void operator -=(const Mat<Type> &b){
             *this = broadcast(b, Subtract<Type>);
         }
-        void operator -=(const Type &b){
+        void operator -=(Type b){
             *this = broadcast(b, Subtract<Type>);
         }
         Mat<Type> operator*(const Mat<Type> &b){
             return broadcast(b, Multiply<Type>);
         }
-        Mat<Type> operator*(const Type b){
+        Mat<Type> operator*(Type b){
             return broadcast(b, Multiply<Type>);
         }
         void operator *=(const Mat<Type> &b){
             *this = broadcast(b, Multiply<Type>);
         }
-        void operator *=(const Type &b){
+        void operator *=(Type b){
             *this = broadcast(b, Multiply<Type>);
         }
         Mat<Type> operator/(const Mat<Type> &b){
             return broadcast(b, Divide<Type>);
         }
-        Mat<Type> operator/(const Type b){
+        Mat<Type> operator/(Type b){
             return broadcast(b, Divide<Type>);
         }
         void operator /=(const Mat<Type> &b){
             *this = broadcast(b, Divide<Type>);
         }
-        void operator /=(const Type &b){
+        void operator /=(Type b){
             *this = broadcast(b, Divide<Type>);
         }
         template<class Type2>
         Mat<bool> operator&(const Mat<Type2> &b){
             return broadcast(b, And<Type,Type2>);
         }
-        Mat<bool> operator&(const bool b){
+        Mat<bool> operator&(bool b){
             Mat<bool> temp({b},1,1);
             return broadcast(b, And<Type,bool>);
         }
@@ -311,14 +311,14 @@ class Mat {
         Mat<bool> operator|(const Mat<Type2> &b){
             return broadcast(b, Or<Type,Type2>);
         }
-        Mat<bool> operator|(const bool b){
+        Mat<bool> operator|(bool b){
             Mat<bool> temp({b},1,1);
             return broadcast(b, Or<Type,bool>);
         }
         Mat<bool> operator!(){
             Mat<bool> result(rows(),columns());
-            for(int i = 0; i < result.rows(); i++){
-                for(int j = 0; j < result.columns(); j++){
+            for(size_type i = 0; i < result.rows(); i++){
+                for(size_type j = 0; j < result.columns(); j++){
                     result(i,j) = !(static_cast<bool>(operator()(i,j)));
                 }
             }
@@ -327,42 +327,42 @@ class Mat {
         Mat<bool> operator==(const Mat<Type> b){
             return broadcast(b, Equality<Type>);
         }
-        Mat<bool> operator==(const Type b){
+        Mat<bool> operator==(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, Equality<Type>);
         }
         Mat<bool> operator!=(const Mat<Type> b){
             return broadcast(b, Inequality<Type>);
         }
-        Mat<bool> operator!=(const Type b){
+        Mat<bool> operator!=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, Inequality<Type>);
         }
         Mat<bool> operator<(const Mat<Type> b){
             return broadcast(b, LessThan<Type>);
         }
-        Mat<bool> operator<(const Type b){
+        Mat<bool> operator<(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, LessThan<Type>);
         }
         Mat<bool> operator<=(const Mat<Type> b){
             return broadcast(b, LessThanEqual<Type>);
         }
-        Mat<bool> operator<=(const Type b){
+        Mat<bool> operator<=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, LessThanEqual<Type>);
         }
         Mat<bool> operator>(const Mat<Type> b){
             return broadcast(b, GreaterThan<Type>);
         }
-        Mat<bool> operator>(const Type b){
+        Mat<bool> operator>(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, GreaterThan<Type>);
         }
         Mat<bool> operator>=(const Mat<Type> b){
             return broadcast(b, GreaterThanEqual<Type>);
         }
-        Mat<bool> operator>=(const Type b){
+        Mat<bool> operator>=(Type b){
             Mat<Type> temp({b},1,1);
             return broadcast(b, GreaterThanEqual<Type>);
         }
@@ -626,7 +626,7 @@ class Mat {
             errorCheck(new_dim1 < -1,
                 "matrix cannot have negative dimensions");
             if(new_dim1 == -1) new_dim1 = size();
-            else errorCheck(size() != new_dim1, "new shape size mismatch");
+            else errorCheck(size() != static_cast<size_type>(new_dim1), "new shape size mismatch");
 
             if(ndims == 1) return;
             else{
@@ -649,7 +649,8 @@ class Mat {
                 "only one argument of reshape can be -1");
             if(new_dim1 == -1) new_dim1 = size()/new_dim2;
             else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-            else errorCheck(size() != new_dim1 * new_dim2,
+            else errorCheck(size() !=
+                    static_cast<size_type>(new_dim1) * static_cast<size_type>(new_dim2),
                     "new shape size mismatch");
 
             if(ndims == 2){
@@ -678,7 +679,7 @@ class Mat {
             delete[] result.memory;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(int i = 0; i < result.ndims; i++){
+            for(size_type i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
             }
             result.strides = new size_type[result.ndims];
@@ -699,7 +700,7 @@ class Mat {
             (*result.refCount)++;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
-            for(int i = 0; i < result.ndims; i++){
+            for(size_type i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
             }
             result.strides = new size_type[result.ndims];
@@ -787,11 +788,11 @@ class Mat {
             return result;
         }
         template<class Type2, class Type3>
-        static Mat<Type3> broadcast(Mat<Type>& a, const Type2 b, Type3 (*f)(Type, Type2)){
+        static Mat<Type3> broadcast(Mat<Type>& a, Type2 b, Type3 (*f)(Type, Type2)){
             return a.broadcast(b, f);
         }
         template<class Type2, class Type3>
-        static Mat<Type3> broadcast(const Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
+        static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
             b.errorCheck(b.ndims > 2, "n-dimensional broadcast not yet implemented.");
             if(b.ndims == 2){
                 Mat<Type> temp({a},1,1);
@@ -950,7 +951,7 @@ Mat<Type> operator+(Type a, Mat<Type> &b){
 }
 template<class Type>
 Mat<Type> operator-(Type a, Mat<Type> &b){
-    return b.broadcast(a, Subtract<Type>);
+    return Mat<Type>::broadcast(a, b, Subtract<Type>);
 }
 template<class Type>
 Mat<Type> operator*(Type a, Mat<Type> &b){
