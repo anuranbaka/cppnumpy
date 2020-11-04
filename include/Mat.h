@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <initializer_list>
-#include "Mat_Math.h"
+#include "matMath.h"
 using namespace std;
 
 template <class Type>
