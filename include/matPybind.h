@@ -29,6 +29,7 @@ namespace pybind11 { namespace detail {
                 throw py::error_already_set();
                 return PyErr_Occurred();
             }
+            PyArrayObject* arr = (PyArrayObject*) src.ptr();
             if(getTypenum<T>() == -1){
                 static char* tName = []{static char tName[255];
                 snprintf(tName, 255, "Conversion to C++ Mat type %s unsupported",
@@ -40,8 +41,7 @@ namespace pybind11 { namespace detail {
             if(!PyArray_EquivTypenums(getTypenum<T>(), PyArray_TYPE(arr))){
                 return PyErr_Occurred();
             }
-            PyArrayObject* arr = (PyArrayObject*) src.ptr();
-            value = wrap_numpy<T>(src.ptr());
+            value = wrap_numpy<T>(arr);
             return !PyErr_Occurred();
         }
 
