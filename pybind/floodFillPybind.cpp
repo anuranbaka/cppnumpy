@@ -3,40 +3,34 @@
 #include <matPybind.h> //allows conversion of pyarray->Mat
 #include <pybind11/stl.h> //allows conversion of std::vector
 
-template<class T>
-void floodFillPy(Mat<T>& image, vector<size_t> start, T color, int connectivity = 4){
-    floodFill(image, start, color, connectivity);
-    return;
-}
-
-PYBIND11_MODULE(FloodPybind, m){
+PYBIND11_MODULE(floodPybind, m){
     m.doc() = "performs floodFill in c++";
-    m.def("floodFill", &floodFillPy<bool>,
+    m.def("floodFill", &floodFill<bool>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<short>,
+    m.def("floodFill", &floodFill<short>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<unsigned short>,
+    m.def("floodFill", &floodFill<unsigned short>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<int>,
+    m.def("floodFill", &floodFill<int>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<unsigned int>,
+    m.def("floodFill", &floodFill<unsigned int>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<long>,
+    m.def("floodFill", &floodFill<long>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<unsigned long>,
+    m.def("floodFill", &floodFill<unsigned long>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<long long>,
+    m.def("floodFill", &floodFill<long long>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<unsigned long long>,
+    m.def("floodFill", &floodFill<unsigned long long>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<signed char>,
+    m.def("floodFill", &floodFill<signed char>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<unsigned char>,
+    m.def("floodFill", &floodFill<unsigned char>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<char>,
+    m.def("floodFill", &floodFill<char>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<float>,
+    m.def("floodFill", &floodFill<float>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<double>,
+    m.def("floodFill", &floodFill<double>,
         "performs floodFill on a given point in a matrix");
 }
