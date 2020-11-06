@@ -43,10 +43,6 @@ floodFill: floodFill/floodFill.cpp include/Mat.h
 floodPybind: include/matPybind.h floodFill
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)
 
-#matPybind: python/matPybind$(PY_SUFFIX)
-#python/matPybind$(PY_SUFFIX): pybind/matPybind.cpp include/Mat.h include/pythonAPI.h
-#	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matPybind.cpp -o python/matPybind$(PY_SUFFIX)
-
 matDebug: python/matDebug$(PY_SUFFIX)
 python/matDebug$(PY_SUFFIX): pybind/matDebugBindings.cpp include/Mat.h include/pythonAPI.h
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matDebugBindings.cpp -o python/matDebug$(PY_SUFFIX)

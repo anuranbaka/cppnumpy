@@ -24,10 +24,14 @@ namespace pybind11 { namespace detail {
         PYBIND11_TYPE_CASTER(Mat<T>, _("Mat<T>"));
 
         bool load(handle src, bool) {
-            PyArrayObject* arr = (PyArrayObject*) src.ptr();
+            if(!PyArray_Check(src.ptr())){
+                PyErr_SetString(PyExc_TypeError, "source handle is not an array");
+                throw py::error_already_set();
+                return PyErr_Occurred();
+            }
             if(getTypenum<T>() == -1){
                 static char* tName = []{static char tName[255];
-                snprintf(tName, 255, "Type '%s' unsupported",
+                snprintf(tName, 255, "Conversion to C++ Mat type %s unsupported",
                         DEMANGLE_TYPEID_NAME(T));return tName;}();
                 PyErr_SetString(PyExc_TypeError, tName);
                 throw py::error_already_set();
@@ -36,6 +40,7 @@ namespace pybind11 { namespace detail {
             if(!PyArray_EquivTypenums(getTypenum<T>(), PyArray_TYPE(arr))){
                 return PyErr_Occurred();
             }
+            PyArrayObject* arr = (PyArrayObject*) src.ptr();
             value = wrap_numpy<T>(src.ptr());
             return !PyErr_Occurred();
         }

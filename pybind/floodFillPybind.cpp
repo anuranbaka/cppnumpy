@@ -1,8 +1,7 @@
-#include "../floodFill/floodFill.h" //header containing code to be bound
+#include <floodFill.h> //header containing code to be bound
 #include <pybind11/pybind11.h> //pybind11 
 #include <matPybind.h> //allows conversion of pyarray->Mat
 #include <pybind11/stl.h> //allows conversion of std::vector
-#include <pybind11/functional.h> //allows passing of function pointers
 
 template<class T>
 void floodFillPy(Mat<T>& image, vector<size_t> start, T color, int connectivity = 4){
@@ -38,5 +37,6 @@ PYBIND11_MODULE(FloodPybind, m){
         "performs floodFill on a given point in a matrix");
     m.def("floodFill", &floodFillPy<float>,
         "performs floodFill on a given point in a matrix");
-    m.def("floodFill", &floodFillPy<double>);
+    m.def("floodFill", &floodFillPy<double>,
+        "performs floodFill on a given point in a matrix");
 }

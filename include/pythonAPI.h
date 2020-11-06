@@ -29,14 +29,14 @@ int getTypenum(){
 }
 
 template <class T>
-void destructor_wrapper(PyObject* o){
+static void destructor_wrapper(PyObject* o){
     void* ptr = PyCapsule_GetPointer(o, MAT_NAME);
     Mat<T>* m = (Mat<T>*)ptr;
     delete m;
 }
 
 template<class T>
-void NumpyDestructor(Mat<T>* mat, void* data){
+static void NumpyDestructor(Mat<T>* mat, void* data){
     Py_DECREF((PyObject*)data);
 }
 
@@ -46,7 +46,7 @@ PyObject* wrap_mat(Mat<T>& cmat){
     PyObject* capsule = PyCapsule_New(temp, MAT_NAME, destructor_wrapper<T>);
     int writeFlag = 0;
     if(!is_const<T>()) writeFlag = NPY_ARRAY_WRITEABLE;
-    npy_intp* py_strides = new npy_intp[cmat.ndims];
+    npy_intp py_strides[cmat.ndims];
     for(long i = 0; i < cmat.ndims; i++){
         py_strides[i] = cmat.strides[i]*sizeof(T);
     }
@@ -61,17 +61,12 @@ PyObject* wrap_mat(Mat<T>& cmat){
     PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(out),
                     NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_ALIGNED);
     PyArray_SetBaseObject(reinterpret_cast<PyArrayObject*>(out), capsule);
-    delete[] py_strides;
     return out;
 }
 
 template<class T>
-Mat<T> wrap_numpy(PyObject* arrIn){
-    if(!PyArray_Check(arrIn)){
-        PyErr_SetString(PyExc_TypeError, "source handle is not an array");
-        return Mat<T>::zeros(0);
-    }
-    PyArrayObject* arr = (PyArrayObject*) arrIn;
+Mat<T> wrap_numpy(PyArrayObject* arr){
+    PyObject* arrBase = (PyObject*)arr;
     long nd = PyArray_NDIM(arr);
     size_t* mat_strides = new size_t[nd];
     for(long i = 0; i < nd; i++){
@@ -82,10 +77,10 @@ Mat<T> wrap_numpy(PyObject* arrIn){
         PyArray_NDIM(arr),
         reinterpret_cast<typename Mat<T>::size_type*>(PyArray_DIMS(arr)),
         mat_strides,
-        &Py_REFCNT(arrIn),
+        &Py_REFCNT(arrBase),
         NumpyDestructor<T>,
-        arrIn);
+        arrBase);
     delete[] mat_strides;
-    Py_INCREF(arrIn);
+    Py_INCREF(arrBase);
     return out;
 }
