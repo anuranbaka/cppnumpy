@@ -47,3 +47,5 @@ matDebug: python/matDebug$(PY_SUFFIX)
 python/matDebug$(PY_SUFFIX): pybind/matDebugBindings.cpp include/Mat.h include/pythonAPI.h
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matDebugBindings.cpp -o python/matDebug$(PY_SUFFIX)
 	
+pyCapsuleTest: include/matPybind.h pybind/pyCapsuleTest.cpp
+	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/pyCapsuleTest.cpp -o python/pyCapsuleTest$(PY_SUFFIX)
