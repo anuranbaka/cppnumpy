@@ -2,44 +2,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <initializer_list>
-#include "matMath.h"
+#include <matMath.h>
 using namespace std;
 
 template <class Type>
-inline Type Add(Type a, Type b){ return a + b; };
+inline Type Add(Type a, Type b){ return a + b; }
 
 template <class Type>
-inline Type Subtract(Type a, Type b){ return a - b; };
+inline Type Subtract(Type a, Type b){ return a - b; }
 
 template <class Type>
-inline Type Multiply(Type a, Type b){ return a * b; };
+inline Type Multiply(Type a, Type b){ return a * b; }
 
 template <class Type>
-inline Type Divide(Type a, Type b){ return a / b; };
+inline Type Divide(Type a, Type b){ return a / b; }
 
 template <class Type, class Type2>
-inline bool And(Type a, Type2 b){ return static_cast<bool>(a) && static_cast<bool>(b); };
+inline bool And(Type a, Type2 b){ return static_cast<bool>(a) && static_cast<bool>(b); }
 
 template <class Type, class Type2>
-inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); };
+inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); }
 
 template <class Type>
-inline bool Equality(Type a, Type b){ return a == b; };
+inline bool Equality(Type a, Type b){ return a == b; }
 
 template <class Type>
-inline bool Inequality(Type a, Type b){ return a != b; };
+inline bool Inequality(Type a, Type b){ return a != b; }
 
 template <class Type>
-inline bool LessThan(Type a, Type b){ return a < b; };
+inline bool LessThan(Type a, Type b){ return a < b; }
 
 template <class Type>
-inline bool LessThanEqual(Type a, Type b){ return a <= b; };
+inline bool LessThanEqual(Type a, Type b){ return a <= b; }
 
 template <class Type>
-inline bool GreaterThan(Type a, Type b){ return a > b; };
+inline bool GreaterThan(Type a, Type b){ return a > b; }
 
 template <class Type>
-inline bool GreaterThanEqual(Type a, Type b){ return a >= b; };
+inline bool GreaterThanEqual(Type a, Type b){ return a >= b; }
 
 template <class Type>
 class MatIter;
@@ -218,7 +218,7 @@ class Mat {
                 "Reference counter is negative somehow");
             if(*refCount == 0){
                 delete refCount;
-                if(memory != nullptr)
+                if(customTypeData == NULL)
                     delete []memory;
             }
             delete []dims;
@@ -271,10 +271,10 @@ class Mat {
             return broadcast(b, Add<Type>);
         }
         void operator +=(const Mat<Type> &b){
-            *this = broadcast(b, Add<Type>);
+            broadcast(b, Add<Type>, *this);
         }
         void operator +=(Type b){
-            *this = broadcast(b, Add<Type>);
+            broadcast(b, Add<Type>, *this);
         }
         Mat<Type> operator-(const Mat<Type> &b){
             return broadcast(b, Subtract<Type>);
@@ -283,10 +283,10 @@ class Mat {
             return broadcast(b, Subtract<Type>);
         }
         void operator -=(const Mat<Type> &b){
-            *this = broadcast(b, Subtract<Type>);
+            broadcast(b, Subtract<Type>, *this);
         }
         void operator -=(Type b){
-            *this = broadcast(b, Subtract<Type>);
+            broadcast(b, Subtract<Type>, *this);
         }
         Mat<Type> operator*(const Mat<Type> &b){
             return broadcast(b, Multiply<Type>);
@@ -295,10 +295,10 @@ class Mat {
             return broadcast(b, Multiply<Type>);
         }
         void operator *=(const Mat<Type> &b){
-            *this = broadcast(b, Multiply<Type>);
+            broadcast(b, Multiply<Type>, *this);
         }
         void operator *=(Type b){
-            *this = broadcast(b, Multiply<Type>);
+            broadcast(b, Multiply<Type>, *this);
         }
         Mat<Type> operator/(const Mat<Type> &b){
             return broadcast(b, Divide<Type>);
@@ -307,10 +307,10 @@ class Mat {
             return broadcast(b, Divide<Type>);
         }
         void operator /=(const Mat<Type> &b){
-            *this = broadcast(b, Divide<Type>);
+            broadcast(b, Divide<Type>, *this);
         }
         void operator /=(Type b){
-            *this = broadcast(b, Divide<Type>);
+            broadcast(b, Divide<Type>, *this);
         }
         template<class Type2>
         Mat<bool> operator&(const Mat<Type2> &b){
@@ -393,45 +393,64 @@ class Mat {
         }
         template<class Type2, class Type3>
         Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
-            size_type* x;
-            if(ndims >= b.ndims) x = new size_type[ndims];
-            else x = new size_type[b.ndims];
-
-            for(long n = 0; n < ndims; n++){
-                errorCheck(dims[n] != 1 && dims[n] != b.dims[n] &&
-                    b.dims[n] != 1, "frames are not aligned");
-                if(dims[n] == 1) x[n] = b.dims[n];
-                else x[n] = dims[n];
-            }
-            Mat<Type3> result;
             if(ndims == 2){
-                Mat<Type3> temp(x[0], x[1]);
-                result = temp;
+                int r,c;
+                if(dims[0] >= b.dims[0]) r = dims[0];
+                else r = b.dims[0];
+                if(dims[1] >= b.dims[1]) c = dims[1];
+                else c = b.dims[1];
+                Mat<Type3> out(r,c);
+                broadcast(b, f, out);
+                return out;
+            }
+            else if(ndims == 1){
+                int c;
+                if(dims[0] >= b.dims[0]) c = dims[0];
+                else c = b.dims[0];
+                Mat<Type3> out(c);
+                broadcast(b, f, out);
+                return out;
+            }
+            else errorCheck(true, "n-dimensional broadcast not yet implemented");
+            return Mat<Type3>::zeros(0);
+        }
+        template<class Type2, class Type3>
+        void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
+            for(long n = 0; n < ndims; n++){
+                if(dims[n] > b.dims[n]){
+                    errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
+                                "frames not aligned");
+                }
+                else if(dims[n] < b.dims[n]){
+                    errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
+                                "frames not aligned");
+                }
+                else{
+                    errorCheck(out.dims[n] != dims[n],
+                                "broadcast output matrix frame misaligned");
+                }
+            }
+            if(ndims == 2){
                 size_type resultRow, resultCol, leftRow,
                             leftCol, rightRow, rightCol;
-                for(size_type i = 0; i < result.size(); i++){
-                    resultRow = i/result.columns();
-                    resultCol = i%result.columns();
-                    leftRow = i/result.columns()%rows();
+                for(size_type i = 0; i < out.size(); i++){
+                    resultRow = i/out.columns();
+                    resultCol = i%out.columns();
+                    leftRow = i/out.columns()%rows();
                     leftCol = i%columns();
-                    rightRow = i/result.columns()%b.rows();
+                    rightRow = i/out.columns()%b.rows();
                     rightCol = i%b.columns();
 
-                    result(resultRow, resultCol) =
+                    out(resultRow, resultCol) =
                         (*f)(operator()(leftRow, leftCol),
                             b(rightRow, rightCol));
                 }
             }
             else{
-                Mat<Type3> temp(x[0]);
-                result = temp;
-                for(size_type i = 0; i < result.size(); i++){
-                    result(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
+                for(size_type i = 0; i < out.size(); i++){
+                    out(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
                 }
             }
-            delete []x;
-
-            return result;
         }
         template<class Type2, class Type3>
         Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
@@ -444,6 +463,19 @@ class Mat {
             else{
                 Mat<Type2> temp({b},1);
                 return broadcast(temp, *f);
+            }
+        }
+        template<class Type2, class Type3>
+        void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
+            errorCheck(ndims > 2,
+                "broadcast of 3 or more dimensions not yet implemented");
+            if(ndims == 2){
+                Mat<Type2> temp({b},1,1);
+                return broadcast(temp, *f, out);
+            }
+            else{
+                Mat<Type2> temp({b},1);
+                return broadcast(temp, *f, out);
             }
         }
         Mat operator- (){
@@ -700,7 +732,8 @@ class Mat {
                 result.strides[0] = 1;
                 if(result.ndims == 2) result.strides[1] = result.dims[1];
             }
-            result.memory = nullptr;
+            result.customTypeData = data;
+            result.memory = data;
             result.data = data;
             return result;
         }
@@ -721,7 +754,7 @@ class Mat {
                 result.dims[i] = new_dims[i];
                 result.strides[i] = new_strides[i];
             }
-            result.memory = nullptr;
+            result.memory = data;
             result.data = data;
             result.customTypeData = arr;
             result.customDestructor = destructor;

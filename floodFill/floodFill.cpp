@@ -1,4 +1,4 @@
-#include "floodFill.h"
+#include <floodFill.h>
 
 bool fuzzyFill1(int current_color, int target_color){
     if(current_color >= target_color - 1 && current_color <= target_color + 1) return true;

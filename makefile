@@ -4,17 +4,19 @@ lapackLink = `pkg-config blas lapack --cflags --libs`
 
 LDFLAGS = '-Wl,-rpath,$$ORIGIN/../lib' -Llib/
 
+INCLUDES = include
+
 PYTHON_INCLUDES = `python3 -m pybind11 --includes` 
 
 NUMPY_INCLUDES = `python3 -c 'import numpy; print(numpy.get_include())'`
 
 PY_SUFFIX := $(shell python3-config --extension-suffix)
 
-DEBUG_FLAGS = -g -Wall -Wextra
+DEBUG_FLAGS = -g -Wall -Wextra -pedantic
 
 all: matTest floodPybind
 
-install: all
+install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install lib/lib* $(PREFIX)/lib
 	install -d $(DESTDIR)$(PREFIX)/include/
@@ -31,14 +33,14 @@ lib/libInverse.so: src/matMath.cpp
 
 ifeq ($(useLapack),true)
 matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so
-	g++ $(DEBUG_FLAGS) --std=c++11 -O3 matTest/matTest.cpp $(LDFLAGS) -lInverseLapack -o bin/matTest $(lapackLink)
+	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverseLapack -o bin/matTest $(lapackLink)
 else	
 matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so
-	g++ $(DEBUG_FLAGS) --std=c++11 -O3 matTest/matTest.cpp $(LDFLAGS) -lInverse -o bin/matTest
+	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverse -o bin/matTest
 endif
 
 floodFill: floodFill/floodFill.cpp include/Mat.h
-	g++ $(DEBUG_FLAGS) --std=c++11 -O3 floodFill/floodFill.cpp -o bin/floodFill
+	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 
 floodPybind: include/matPybind.h floodFill
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)

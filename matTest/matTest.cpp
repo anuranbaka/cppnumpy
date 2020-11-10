@@ -1,11 +1,11 @@
-#include "../include/matMath.h"
-#include "../include/Mat.h"
+#include <matMath.h>
+#include <Mat.h>
 #include <fstream>
 
 double Max(double a, double b){
         if(a > b) return a;
         else return b;
-};
+}
 
 int main (){
     Mat<double> m({1,2,3,4,5,6,7,8},2,4);
@@ -164,6 +164,10 @@ int main (){
     fprintf(outFile, "matrix a, elements 2 to 4\n");
     output.print(outFile);
 
+    output = 7;
+    fprintf(outFile, "assignment of those elements to 7s\n");
+    a.print(outFile);
+
     a += b;
     fprintf(outFile, "a += b\n");
     a.print(outFile);
@@ -179,10 +183,6 @@ int main (){
     a /= 2;
     fprintf(outFile, "a /= 2\n");
     a.print(outFile);
-
-    output = 7;
-    fprintf(outFile, "assignment of a size 3 matrix to 7s\n");
-    output.print(outFile);
 
     output = Mat<double>::broadcast(a,b,Max);
     fprintf(outFile, "broadcast(a,b,Max);\n");
@@ -232,10 +232,13 @@ int main (){
     fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
     output.print(outFile);
 
-    double e[6] = {1,2,3,4,5,6};
-    size_t shape[2] = {2,3};
+    double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    size_t shape[2] = {3,5};
     Mat<double> wrapper = Mat<double>::wrap(e, 2, shape);
-    fprintf(outFile, "6 element c-style array wrapped into a 2x3 matrix\n");
+    fprintf(outFile, "15 element c-style array wrapped into a 3x5 matrix\n");
+    wrapper.print(outFile);
+    wrapper.roi(0,3,1,4) *= 2;
+    fprintf(outFile, "doubling the center 3 columns\n");
     wrapper.print(outFile);
 
     Mat<bool> boolMat({true, true, false},1,3);
