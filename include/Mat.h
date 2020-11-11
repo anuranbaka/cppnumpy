@@ -685,19 +685,22 @@ class Mat {
             return;
         }
         static Mat<Type> wrap(Type* data, long new_ndims,
-                                size_type* new_dims, size_type* strides){
+                                size_type* new_dims, size_type* strides = NULL){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
             delete[] result.memory;
             result.ndims = new_ndims;
             result.dims = new size_type[result.ndims];
+            result.strides = new size_type[result.ndims];
             for(long i = 0; i < result.ndims; i++){
                 result.dims[i] = new_dims[i];
+                if(strides != NULL) result.strides[i] = strides[i];
             }
-            result.strides = new size_type[result.ndims];
-            result.strides[0] = 1;
-            if(result.ndims == 2) result.strides[1] = result.dims[1];
+            if(strides == NULL){
+                result.strides[0] = 1;
+                if(result.ndims == 2) result.strides[1] = result.dims[1];
+            }
             result.memory = nullptr;
             result.data = data;
             return result;

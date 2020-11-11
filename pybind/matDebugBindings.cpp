@@ -84,8 +84,7 @@ void declare_debug(py::module &m, const std::string &typestr){
     .def("scalarFill", &Mat<T>::scalarFill)
     .def("reshape", py::overload_cast<int>(&Mat<T>::reshape), "change matrix dimensions")
     .def("reshape", py::overload_cast<int, int>(&Mat<T>::reshape), "change matrix dimensions")
-    .def("wrap", py::overload_cast<size_t, T*, size_t, size_t*>(&Mat<T>::wrap), "use matrix to wrap other container")
-    .def("wrap", py::overload_cast<size_t, T*, size_t, size_t*, int64_t*>(&Mat<T>::wrap), "use matrix to wrap other container")
+    .def("wrap", py::overload_cast<T*, long, size_t*, size_t*>(&Mat<T>::wrap), "use matrix to wrap other container")
     //convenience functions
     .def("zeros", py::overload_cast<size_t>(&Mat<T>::zeros), "returns a 1d matrix of zeros")
     .def("zeros", py::overload_cast<size_t, size_t>(&Mat<T>::zeros), "returns a 2d matrix of zeros")
