@@ -1,5 +1,8 @@
+Release ver. ALPHA 1.0
+
+
 # CPPNUMPY Matrix Library
-This python-compatible matrix header library was built using a similar structure to the numpy array. The library includes built-in operations for matrix arithmetic, transposition, iteration of elements, dimension broadcasting and the designation of submatrices in a manner similar to numpy's array slicing. The matrix is initialized, stored and printed in row-major order. Most notably the library contains a type-caster using Pybind11 to allow functions written in C/C++ to be easily performed on a NumPy array.
+This python-compatible matrix header library was built using a similar structure to the NumPy array. The library includes built-in operations for matrix arithmetic, transposition, iteration of elements, dimension broadcasting and the designation of submatrices in a manner similar to NumPy's array slicing. The matrix is initialized, stored and printed in row-major order. Most notably the library contains a type-caster using Pybind11 to allow functions written in C/C++ to be easily performed on a NumPy array.
 Generally speaking, it functions just like the NumPy array, except for the following changes:
 - The operator "^" is used for matrix multiplication rather than bitwise XOR
 - "T" is used for a hard transpose, while "t" is used for a soft transpose
@@ -49,7 +52,7 @@ PYBIND11_MODULE(sample, m){
   m.def("func", &func, "perfoms func on the given array")
   }
 ```
-This allows your C++ functions to be called using a numpy array as shown in the following python code:
+This allows your C++ functions to be called using a NumPy array as shown in the following Python code:
 ```
 import numpy as np
 import sample
@@ -133,13 +136,13 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **operator/=**: elementwise division and assignment
   - ` void operator/=(const Mat<Type>&) `
 - **broadcast**: binary operation which applies a given elementwise function and returns resulting matrix. Can be done in-place by adding an output Mat.
-  - ` Mat<Type3> broadcast(const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
-  - ` void broadcast(const Mat<Type2>&, Type3 (*f)(Type,Type2), Mat<Type3>) `
-  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
-  - ` void broadcast(Type2, Type3 (*f)(Type,Type2), Mat<Type3>) `
+  - ` Mat<Type3> broadcast(const Mat<Type2> &operand, Type3 (*function)(Type,Type2)) `
+  - ` void broadcast(const Mat<Type2> &operand, Type3 (*function)(Type,Type2), Mat<Type3> output) `
+  - ` Mat<Type3> broadcast(Type2 operand, Type3 (*function)(Type,Type2)) `
+  - ` void broadcast(Type2 operand, Type3 (*function)(Type,Type2), Mat<Type3> output) `
 - **static broadcast**: static version in case matrix must be right operand
-  - ` Mat<Type3> broadcast(Type, const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
-  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type left_operand, const Mat<Type2>& right_operand, Type3 (*function)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type2 operand, Type3 (*function)(Type,Type2)) `
 - **operator^**: matrix multiplication (Not XOR!)
   - ` Mat<Type> operator^(const Mat<Type>&) `
 - **T**: performs hard transpose, storing them in destination matrix if given
@@ -155,7 +158,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
   - ` void reshape(int = -1) `
   - ` void reshape(int, int) `
-- **inverse**: non-member function that takes a mat and returns its inverse
+- **inverse**: non-member function that takes a matrix and returns its inverse
   - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
 - **operator&**: elementwise AND
