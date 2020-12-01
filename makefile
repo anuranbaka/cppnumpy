@@ -26,10 +26,10 @@ clean:
 	rm ./lib/*.so ./bin/* python/*.so
 
 lib/libInverseLapack.so: src/matMathLapack.cpp
-	g++ -g --std=c++11 -O3 -fPIC src/matMathLapack.cpp -shared -o lib/libInverseLapack.so
+	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack.so
 
 lib/libInverse.so: src/matMath.cpp
-	g++ -g --std=c++11 -O3 -fPIC src/matMath.cpp -shared -o lib/libInverse.so
+	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse.so
 
 ifeq ($(useLapack),true)
 matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so

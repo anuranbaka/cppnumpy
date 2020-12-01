@@ -1,4 +1,4 @@
-#include "../include/matMath.h"
+#include <matMath.h>
 
 template<class Type>
 Type determinant(const Mat<Type>& mat){
