@@ -1,13 +1,14 @@
+Release ver. ALPHA 1.0 11/12/2020
+
+
 # CPPNUMPY Matrix Library
-This matrix library header is meant to be compatible with numpy, using a similar
-structure to the numpy array. Functionality includes operations for matrix arithmetic,
-soft transposition, iteration of elements, dimension broadcasting and the designation of
-submatrices in a manner similar to numpy's array slicing. The matrix is initialized, stored
-and printed in row-major order.
-Generally speaking, it functions just like the NumPy array, except for the following three
-changes: the operator "^" is used for matrix multiplication rather than bitwise XOR, "T" is
-used for a hard transpose, while "t" is used for a soft transpose, and due to limitations of
-C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
+This python-compatible matrix header library was built using a similar structure to the NumPy array. The library includes built-in operations for matrix arithmetic, transposition, iteration of elements, dimension broadcasting and the designation of submatrices in a manner similar to NumPy's array slicing. The matrix is initialized, stored and printed in row-major order. Most notably the library contains a type-caster using Pybind11 to allow functions written in C/C++ to be easily performed on a NumPy array.
+Generally speaking, it functions just like the NumPy array, except for the following changes:
+- The operator "^" is used for matrix multiplication rather than bitwise XOR
+- "T" is used for a hard transpose, while "t" is used for a soft transpose
+- Due to limitations of C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
+- Array broadcasting is implemented as a function taking a function pointer
+- N-dimensional arrays are not yet supported
 
 # Usage
 The library supports several basic matrix arithmetic operations:
@@ -24,7 +25,8 @@ Mat<> c({1,2,3},1,3)
 //empty <> sets contained type to double by default
 
 a.scalarFill(b(0,3));
-//fills matrix with the scalar listed, in this case it's an element of b at coordinates (0,3) -> 4
+//indexing is done using '()' so b(0,3) is the element of b at coordinates (0,3) -> 4
+//basic convenience functions such as scalarFill can fill a matrix with a given value
 
 c = b.t();
 //assigns a transpose of matrix b to matrix c. Note that the dimensions don't need to match!
@@ -41,23 +43,34 @@ a.print();
 //prints our new matrix to the console
 //in this case we'll see the following 3x3 matrix: {10,11,12,10,11,12,10,11,12}
 ```
+The following example uses Pybind11 to create a module that can be called from Python:
+```
+#include <sample.h> //your code is included here
+#include <matPybind.h> //allows automatic conversion of Mat <-> np.array (dependent on pybind11)
+
+PYBIND11_MODULE(sample, m){
+  m.def("func", &func, "perfoms func on the given array")
+  }
+```
+This allows your C++ functions to be called using a NumPy array as shown in the following Python code:
+```
+import numpy as np
+import sample
+map = np.array([[1,2,3]
+               ,[4,5,6]])
+s.func(map)
+print(map)
+```
 
 # Installing
-The Mat class and its basic functions are contained within "projects/matlib/Mat.h"
-header library. Additionally, a basic implementation of a matrix inverse is provided, by linking
-"projects/matMath/matMath.cpp". Alternatively, the library can link to LAPACK to run the operation
-by linking "projects/matMath/matMathLapack.cpp".
+The project is built using make. Running "make install" will copy the relevant header files into the default include path. <Mat.h> contains the matrix header and its basic functions, while <matPybind.h> contains the type-caster that allows automatic conversion to/from a NumPy array.
 
 # Running Tests/Examples
-Matrix arithmetic is tested in the matTest.cpp, and demonstrates basic
-matrix math functions as well as the not-so-basic matrix inverse.
+Matrix arithmetic is tested in the matTest.cpp, and demonstrates basic matrix math functions as well as the not-so-basic matrix inverse.
 
-Additionally, "projects/Flood Fill/floodTest" presents an example usage of the Mat class for
-a Flood Fill function. For simplicity's sake the matrix simply handles a matrix of single-digit
-numbers as plain text, but demonstrates a potential practical use case for the class.
+Additionally, "floodFill.cpp" presents an example usage of the Mat class for a Flood Fill function. For simplicity's sake, the matrix simply handles a matrix of single-digit numbers as plain text, but demonstrates a potential practical use case for the class.
 
-Both programs are compiled when running "make" in the base directory. If "useLapack=true" is specified
-in the make statement, the code will link to Lapack and use that instead.
+Both programs are compiled when running "make" in the base directory. If "useLapack=true" is specified in the make statement, the code will link to Lapack and use that instead.
 
 # Functions
 ###### Template parameter "Type" used to signify the element type
@@ -122,12 +135,14 @@ in the make statement, the code will link to Lapack and use that instead.
   - ` Mat<Type> operator/(const Type, const Mat<Type>&) `
 - **operator/=**: elementwise division and assignment
   - ` void operator/=(const Mat<Type>&) `
-- **broadcast**: binary operation which applies a given elementwise function and returns resulting matrix. Imitates NumPy array broadcasting.
-  - ` Mat<Type3> broadcast(const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
-  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
+- **broadcast**: binary operation which applies a given elementwise function and returns resulting matrix. Can be done in-place by adding an output Mat.
+  - ` Mat<Type3> broadcast(const Mat<Type2> &operand, Type3 (*function)(Type,Type2)) `
+  - ` void broadcast(const Mat<Type2> &operand, Type3 (*function)(Type,Type2), Mat<Type3> output) `
+  - ` Mat<Type3> broadcast(Type2 operand, Type3 (*function)(Type,Type2)) `
+  - ` void broadcast(Type2 operand, Type3 (*function)(Type,Type2), Mat<Type3> output) `
 - **static broadcast**: static version in case matrix must be right operand
-  - ` Mat<Type3> broadcast(Type, const Mat<Type2>&, Type3 (*f)(Type,Type2)) `
-  - ` Mat<Type3> broadcast(Type2, Type3 (*f)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type left_operand, const Mat<Type2>& right_operand, Type3 (*function)(Type,Type2)) `
+  - ` Mat<Type3> broadcast(Type2 operand, Type3 (*function)(Type,Type2)) `
 - **operator^**: matrix multiplication (Not XOR!)
   - ` Mat<Type> operator^(const Mat<Type>&) `
 - **T**: performs hard transpose, storing them in destination matrix if given
@@ -143,7 +158,7 @@ in the make statement, the code will link to Lapack and use that instead.
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
   - ` void reshape(int = -1) `
   - ` void reshape(int, int) `
-- **inverse**: non-member function that takes a mat and returns its inverse
+- **inverse**: non-member function that takes a matrix and returns its inverse
   - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
 - **operator&**: elementwise AND
@@ -166,9 +181,9 @@ in the make statement, the code will link to Lapack and use that instead.
   - ` Mat<bool> operator==(const Type) `
   - ` Mat<bool> operator==(const Type, const Mat<Type>&) `
 ### Static Functions
-- **wrap**: returns a matrix that uses a given data pointer and array of dimensions. An internal reference counter is created if none is given.
-  - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions) `
-  - ` Mat<Type> wrap(size_t size, Type* data, size_type number_of_dimensions, size_type* dimensions, int64_t* ref_counter) `
+- **wrap**: returns a matrix that uses a given data pointer and array of dimensions. A reference counter, custom destructor and pointer to the external container can be used to wrap arbitrary reference counted containers.
+  - ` Mat<Type> wrap(Type* data, long number_of_dimensions, size_type* dimensions, size_type* strides = NULL) `
+  - ` Mat<Type> wrap(Type* data, long number_of_dimensions, size_type* dimensions, size_type* strides, int64_t* ref_counter, void (*destructor), void* arr) `
 - **zeros**: returns an array of zeros in the given shape
   - ` Mat<Type> zeros() `
 - **zeros_like**: returns an array of zeros with the same shape as a given matrix
