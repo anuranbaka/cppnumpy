@@ -65,7 +65,7 @@ class Mat {
         size_type* strides;
         Type* memory; 
         Type* data;
-        int64_t* refCount;
+        int32_t* refCount;
         void* customTypeData = NULL;
         void (*customDestructor)(Mat<Type>*, void*) = 0;
 
@@ -130,7 +130,7 @@ class Mat {
             return true;
         }
         Mat(size_type a = 1){
-            refCount = new int64_t;
+            refCount = new int32_t;
             *refCount = 1;
             ndims = 1;
             dims = new size_type[ndims];
@@ -141,7 +141,7 @@ class Mat {
             data = memory;
         }
         Mat(size_type a, size_type b){
-            refCount = new int64_t;
+            refCount = new int32_t;
             *refCount = 1;
             dims = new size_type[ndims];
             dims[0] = a;
@@ -153,7 +153,7 @@ class Mat {
             data = memory;
         }
         Mat(std::initializer_list<Type> list, size_type a){
-            refCount = new int64_t;
+            refCount = new int32_t;
             *refCount = 1;
             ndims = 1;
             dims = new size_type[ndims];
@@ -171,7 +171,7 @@ class Mat {
             }
         }
         Mat(std::initializer_list<Type> list, size_type a, size_type b){
-            refCount = new int64_t;
+            refCount = new int32_t;
             *refCount = 1;
             dims = new size_type[ndims];
             dims[0] = a;
@@ -741,6 +741,29 @@ class Mat {
         static Mat<Type> wrap(Type* data, long new_ndims,
                                 size_type* new_dims, size_type* new_strides, 
                                 int64_t* ref, void (*destructor)(Mat<Type>*, void*), void* arr){
+            Mat<Type> result;
+            delete[] result.dims;
+            delete[] result.strides;
+            delete[] result.memory;
+            delete result.refCount;
+            result.refCount = reinterpret_cast<int32_t*>(ref);
+            (*result.refCount)++;
+            result.ndims = new_ndims;
+            result.dims = new size_type[result.ndims];
+            result.strides = new size_type[result.ndims];
+            for(long i = 0; i < result.ndims; i++){
+                result.dims[i] = new_dims[i];
+                result.strides[i] = new_strides[i];
+            }
+            result.memory = data;
+            result.data = data;
+            result.customTypeData = arr;
+            result.customDestructor = destructor;
+            return result;
+        }
+        static Mat<Type> wrap(Type* data, long new_ndims,
+                                size_type* new_dims, size_type* new_strides, 
+                                int32_t* ref, void (*destructor)(Mat<Type>*, void*), void* arr){
             Mat<Type> result;
             delete[] result.dims;
             delete[] result.strides;
