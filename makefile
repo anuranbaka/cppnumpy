@@ -1,5 +1,7 @@
 useLapack = false
 
+sim32bit = false
+
 lapackLink = `pkg-config blas lapack --cflags --libs`
 
 LDFLAGS = '-Wl,-rpath,$$ORIGIN/../lib' -Llib/
@@ -31,6 +33,21 @@ lib/libInverseLapack.so: src/matMathLapack.cpp
 lib/libInverse.so: src/matMath.cpp
 	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse.so
 
+lib/libInverseLapack32.so: src/matMathLapack.cpp
+	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack32.so
+
+lib/libInverse32.so: src/matMath.cpp
+	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse32.so
+
+ifeq ($(sim32bit),true)
+ifeq ($(useLapack),true)
+matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so
+	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverseLapack32 -o bin/matTest $(lapackLink)
+else	
+matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse32.so
+	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverse32 -o bin/matTest
+endif
+else
 ifeq ($(useLapack),true)
 matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverseLapack -o bin/matTest $(lapackLink)
@@ -38,6 +55,8 @@ else
 matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverse -o bin/matTest
 endif
+endif
+
 
 floodFill: floodFill/floodFill.cpp include/Mat.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
