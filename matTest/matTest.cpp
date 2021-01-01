@@ -88,6 +88,17 @@ int main (){
     output = x.roi();
     fprintf(outFile, "x.roi()\n");
     output.print(outFile);
+    
+    Mat<bool> mask({true, true, false, true,
+                    false, true, false, false}, 2, 4);
+    output = m.i(mask);
+    fprintf(outFile, "fancy indexing to mask just elements 0,1,3,5 of matrix m\n");
+    output.print(outFile);
+
+    Mat<int> index({1,3}, 2);
+    output = m.i(index);
+    fprintf(outFile, "fancy indexing to get just columns 1 and 3 of matrix m\n");
+    output.print(outFile);
 
     fprintf(outFile, "m.T()\n");
     m.T().print(outFile);
@@ -183,6 +194,10 @@ int main (){
     a /= 2;
     fprintf(outFile, "a /= 2\n");
     a.print(outFile);
+
+    output = a.i(index);
+    fprintf(outFile, "fancy indexing to get just columns 1 and 3 of matrix a\n");
+    output.print(outFile);
 
     output = Mat<double>::broadcast(a,b,Max);
     fprintf(outFile, "broadcast(a,b,Max);\n");
