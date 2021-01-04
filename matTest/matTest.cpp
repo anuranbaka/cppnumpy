@@ -95,7 +95,7 @@ int main (){
     fprintf(outFile, "fancy indexing to mask just elements 0,1,3,5 of matrix m\n");
     output.print(outFile);
 
-    Mat<int> index({1,3}, 2);
+    Mat<int> index({1,3});
     output = y.i(index);
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
