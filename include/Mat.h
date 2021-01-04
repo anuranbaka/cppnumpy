@@ -55,6 +55,9 @@ class Mat {
     Mat<Type> imask(Mat<bool> mask);
     template<class Type2>
     Mat<Type> inum(Mat<Type2> indices);
+    void itomask(Mat<bool> mask, Mat<Type> out);
+    template<class Type2>
+    void itonum(Mat<Type2> indices, Mat<Type> out);
 
     public:
         typedef MatIter<Type> iterator;
@@ -559,6 +562,13 @@ class Mat {
         template<typename Type2>
         Mat<Type> i(Mat<Type2> s, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
             return inum(s);
+        }
+        void ito(Mat<bool> s, Mat<Type> out){
+            return itomask(s);
+        }
+        template<typename Type2>
+        void ito(Mat<Type2> s, Mat<Type> out, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
+            return itonum(s);
         }
         Mat T(Mat& dest){
             errorCheck(ndims != 2,
@@ -1120,6 +1130,52 @@ Mat<Type> Mat<Type>::inum(Mat<Type2> indices){
             out(i) = operator()(indices(i));
         }
         return out;
+    }
+    else{
+        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
+        return Mat<Type>::zeros(0);
+    }
+}
+template<class Type>
+void Mat<Type>::itomask(Mat<bool> mask, Mat<Type> out){
+    errorCheck(mask.rows() != rows(),
+        "Matrix shape mismatch in call to i()");
+    errorCheck(ndims == 2 && mask.columns() != columns(),
+        "Matrix shape mismatch in call to i()");
+    Mat<Type>::size_type newSize = 0;
+    for(auto i : mask){
+        if(i) newSize++;
+    }
+    if(out.size() == newSize){
+        out.reshape(newSize);
+    }
+    iterator j = begin();
+    Mat<bool>::iterator k = mask.begin();
+    for(auto& i : out){
+        while(*k == false){ j++; k++; }
+        i = *j;
+        j++; k++;
+    }
+    return;
+}
+template<class Type>
+template<class Type2>
+void Mat<Type>::itonum(Mat<Type2> indices, Mat<Type> out){
+    errorCheck(indices.ndims != 1,
+        "Index list should be 1 dimension");
+    if(ndims == 2){
+        for(size_type i = 0; i < indices.columns(); i++){
+            for(size_type j = 0; j < rows(); j++){
+                out(j,i) = operator()(j,indices(i));
+            }
+        }
+        return;
+    }
+    else if(ndims == 1){
+        for(size_type i = 0; i < indices.columns(); i++){
+            out(i) = operator()(indices(i));
+        }
+        return;
     }
     else{
         errorCheck(true, "n-dimensional fancy indexing not yet implemented");
