@@ -160,13 +160,13 @@ class Mat {
             memory = new Type[a*b];
             data = memory;
         }
-        Mat(std::initializer_list<Type> list, size_type a){
+        Mat(std::initializer_list<Type> list, size_type a = 0){
             refCount = new int32_t;
             *refCount = 1;
             ndims = 1;
             dims = new size_type[ndims];
-            dims[0] = a;
-            errorCheck(list.size() != a,
+            dims[0] = list.size();
+            errorCheck(a != 0 && list.size() != a,
                 "Initializer list size inconsistent with dimensions");
             strides = new size_type[ndims];
             strides[0] = 1;
