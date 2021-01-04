@@ -1116,16 +1116,16 @@ Mat<Type> Mat<Type>::inum(Mat<Type2> indices){
     errorCheck(indices.ndims != 1,
         "Index list should be 1 dimension");
     if(ndims == 2){
-        Mat<Type> out(rows(), indices.columns());
-        for(size_type i = 0; i < indices.columns(); i++){
-            for(size_type j = 0; j < rows(); j++){
-                out(j,i) = operator()(j,indices(i));
+        Mat<Type> out(indices.size(), columns());
+        for(size_type i = 0; i < indices.size(); i++){
+            for(size_type j = 0; j < columns(); j++){
+                out(i,j) = operator()(indices(i),j);
             }
         }
         return out;
     }
     else if(ndims == 1){
-        Mat<Type> out(indices.columns());
+        Mat<Type> out(indices.size());
         for(size_type i = 0; i < indices.columns(); i++){
             out(i) = operator()(indices(i));
         }

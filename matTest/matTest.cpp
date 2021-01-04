@@ -96,8 +96,8 @@ int main (){
     output.print(outFile);
 
     Mat<int> index({1,3}, 2);
-    output = m.i(index);
-    fprintf(outFile, "fancy indexing to get just columns 1 and 3 of matrix m\n");
+    output = y.i(index);
+    fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
 
     fprintf(outFile, "m.T()\n");
