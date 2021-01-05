@@ -100,6 +100,14 @@ int main (){
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
 
+    m.ito(mask, output);
+    fprintf(outFile, "applying the mask using ito\n");
+    output.print(outFile);
+
+    y.ito(index, output);
+    fprintf(outFile, "applying the indexing using ito\n");
+    output.print(outFile);
+
     fprintf(outFile, "m.T()\n");
     m.T().print(outFile);
 

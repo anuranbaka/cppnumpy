@@ -52,12 +52,10 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
-    Mat<Type> imask(Mat<bool> mask);
+    Mat<Type> imask(Mat<bool> &mask);
     template<class Type2>
-    Mat<Type> inum(Mat<Type2> indices);
-    void itomask(Mat<bool> mask, Mat<Type> out);
-    template<class Type2>
-    void itonum(Mat<Type2> indices, Mat<Type> out);
+    Mat<Type> inum(Mat<Type2> &indices);
+    void itomask(Mat<bool> &mask, Mat<Type> &out);
 
     public:
         typedef MatIter<Type> iterator;
@@ -556,19 +554,35 @@ class Mat {
             }
             return result;
         }
-        Mat<Type> i(Mat<bool> s){
+        Mat<Type> i(Mat<bool> &s){
             return imask(s);
         }
         template<typename Type2>
-        Mat<Type> i(Mat<Type2> s, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
+        Mat<Type> i(Mat<Type2> &s, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
             return inum(s);
         }
-        void ito(Mat<bool> s, Mat<Type> out){
-            return itomask(s);
+        void ito(Mat<bool> &s, Mat<Type> &out){
+            itomask(s, out);
+            return;
         }
         template<typename Type2>
-        void ito(Mat<Type2> s, Mat<Type> out, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
-            return itonum(s);
+        void ito(Mat<Type2> &s, Mat<Type> &out, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
+            errorCheck(s.ndims != 1,
+                "Index list should be 1 dimension");
+            if(ndims == 2){
+                Mat<Type> temp(s.size(), columns());
+                out = temp;
+            }
+            else if(ndims == 1){
+                Mat<Type> temp(s.size());
+                out = temp;
+            }
+            else{
+                errorCheck(true, "n-dimensional indexing not yet implemented\n");
+                return;
+            }
+            out = inum(s);
+            return;
         }
         Mat T(Mat& dest){
             errorCheck(ndims != 2,
@@ -1090,7 +1104,7 @@ Mat<bool> operator>=(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
 }
 template<class Type>
-Mat<Type> Mat<Type>::imask(Mat<bool> mask){
+Mat<Type> Mat<Type>::imask(Mat<bool> &mask){
     errorCheck(mask.rows() != rows(),
         "Matrix shape mismatch in call to i()");
     errorCheck(ndims == 2 && mask.columns() != columns(),
@@ -1112,9 +1126,7 @@ Mat<Type> Mat<Type>::imask(Mat<bool> mask){
 }
 template<class Type>
 template<class Type2>
-Mat<Type> Mat<Type>::inum(Mat<Type2> indices){
-    errorCheck(indices.ndims != 1,
-        "Index list should be 1 dimension");
+Mat<Type> Mat<Type>::inum(Mat<Type2> &indices){
     if(ndims == 2){
         Mat<Type> out(indices.size(), columns());
         for(size_type i = 0; i < indices.size(); i++){
@@ -1137,7 +1149,7 @@ Mat<Type> Mat<Type>::inum(Mat<Type2> indices){
     }
 }
 template<class Type>
-void Mat<Type>::itomask(Mat<bool> mask, Mat<Type> out){
+void Mat<Type>::itomask(Mat<bool> &mask, Mat<Type> &out){
     errorCheck(mask.rows() != rows(),
         "Matrix shape mismatch in call to i()");
     errorCheck(ndims == 2 && mask.columns() != columns(),
@@ -1146,9 +1158,8 @@ void Mat<Type>::itomask(Mat<bool> mask, Mat<Type> out){
     for(auto i : mask){
         if(i) newSize++;
     }
-    if(out.size() == newSize){
-        out.reshape(newSize);
-    }
+    Mat<Type> temp(newSize);
+    out = temp;
     iterator j = begin();
     Mat<bool>::iterator k = mask.begin();
     for(auto& i : out){
@@ -1157,28 +1168,4 @@ void Mat<Type>::itomask(Mat<bool> mask, Mat<Type> out){
         j++; k++;
     }
     return;
-}
-template<class Type>
-template<class Type2>
-void Mat<Type>::itonum(Mat<Type2> indices, Mat<Type> out){
-    errorCheck(indices.ndims != 1,
-        "Index list should be 1 dimension");
-    if(ndims == 2){
-        for(size_type i = 0; i < indices.columns(); i++){
-            for(size_type j = 0; j < rows(); j++){
-                out(j,i) = operator()(j,indices(i));
-            }
-        }
-        return;
-    }
-    else if(ndims == 1){
-        for(size_type i = 0; i < indices.columns(); i++){
-            out(i) = operator()(indices(i));
-        }
-        return;
-    }
-    else{
-        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
-        return Mat<Type>::zeros(0);
-    }
 }
