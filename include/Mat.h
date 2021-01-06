@@ -1116,7 +1116,7 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
     }
     else if(ndims == 1){
         Mat<Type> out(indices.size());
-        for(size_type i = 0; i < indices.columns(); i++){
+        for(size_type i = 0; i < indices.size(); i++){
             out(i) = operator()(indices(i));
         }
         return out;
@@ -1129,15 +1129,19 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
 template<class Type>
 void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     errorCheck(mask.rows() != rows(),
-        "Matrix shape mismatch in call to i()");
+        "Incorrect number of rows in mask in call to i()");
     errorCheck(ndims == 2 && mask.columns() != columns(),
-        "Matrix shape mismatch in call to i()");
+        "Incorrect number of columns in mask in call to i()");
+    errorCheck(out.ndims != 1,
+                "output of ito function must be 1-dimensional");
     Mat<Type>::size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
     }
-    Mat<Type> temp(newSize);
-    out = temp;
+    errorCheck(out.size() < newSize, "insufficient space in output matrix");
+    if(out.size() > newSize){
+        out = out.roi(0,newSize);
+    }
     iterator j = begin();
     Mat<bool>::iterator k = mask.begin();
     for(auto& i : out){
@@ -1153,18 +1157,28 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
     errorCheck(indices.ndims != 1,
         "Index list should be 1 dimension");
+    errorCheck(out.ndims != ndims,
+        "inconsistent number of dimensions in output matrix in call to ito");
+    errorCheck(out.columns() != indices.size,
+        "output matrix shape mismatch - incorrect number of columns");
+    errorCheck(ndims > 1, out.rows() != indices.size,
+        "output matrix shape mismatch - incorrect number of rows");
     if(ndims == 2){
-        Mat<Type> temp(indices.size(), columns());
-        out = temp;
-    }
-    else if(ndims == 1){
-        Mat<Type> temp(indices.size());
-        out = temp;
-    }
-    else{
-        errorCheck(true, "n-dimensional indexing not yet implemented\n");
+        for(size_type i = 0; i < indices.size(); i++){
+            for(size_type j = 0; j < columns(); j++){
+                out(i,j) = operator()(indices(i),j);
+            }
+        }
         return;
     }
-    out = i(indices);
-    return;
+    else if(ndims == 1){
+        for(size_type i = 0; i < indices.size(); i++){
+            out(i) = operator()(indices(i));
+        }
+        return;
+    }
+    else{
+        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
+        return;
+    }
 }
