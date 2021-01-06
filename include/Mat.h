@@ -52,11 +52,6 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
-    Mat<Type> imask(Mat<bool> &mask);
-    template<class Type2>
-    Mat<Type> inum(Mat<Type2> &indices);
-    void itomask(Mat<bool> &mask, Mat<Type> &out);
-
     public:
         typedef MatIter<Type> iterator;
         typedef Const_MatIter<Type> const_iterator;
@@ -554,36 +549,17 @@ class Mat {
             }
             return result;
         }
-        Mat<Type> i(Mat<bool> &s){
-            return imask(s);
-        }
+        //i has 4 versions depending on whether the given parameter is a boolean
+        //mask or a list of indices. The default parameter in the indexed version
+        //simply causes substitution to fail when a floating point matrix is passed.
+        Mat<Type> i(Mat<bool> &mask);
         template<typename Type2>
-        Mat<Type> i(Mat<Type2> &s, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
-            return inum(s);
-        }
-        void ito(Mat<bool> &s, Mat<Type> &out){
-            itomask(s, out);
-            return;
-        }
+        Mat<Type> i(Mat<Type2> &indices,
+                    typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
+        void ito(Mat<bool> &mask, Mat<Type> &out);
         template<typename Type2>
-        void ito(Mat<Type2> &s, Mat<Type> &out, typename std::enable_if<std::is_integral<Type2>::value>::type* = 0){
-            errorCheck(s.ndims != 1,
-                "Index list should be 1 dimension");
-            if(ndims == 2){
-                Mat<Type> temp(s.size(), columns());
-                out = temp;
-            }
-            else if(ndims == 1){
-                Mat<Type> temp(s.size());
-                out = temp;
-            }
-            else{
-                errorCheck(true, "n-dimensional indexing not yet implemented\n");
-                return;
-            }
-            out = inum(s);
-            return;
-        }
+        void ito(Mat<Type2> &indices, Mat<Type> &out,
+                    typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
         Mat T(Mat& dest){
             errorCheck(ndims != 2,
                 "transpose may only be used on 2d matrix");
@@ -707,7 +683,8 @@ class Mat {
             errorCheck(new_dim1 < -1,
                 "matrix cannot have negative dimensions");
             if(new_dim1 == -1) new_dim1 = size();
-            else errorCheck(size() != static_cast<size_type>(new_dim1), "new shape size mismatch");
+            else errorCheck(size() != static_cast<size_type>(new_dim1),
+                            "new shape size mismatch");
 
             if(ndims == 1) return;
             else{
@@ -1104,7 +1081,7 @@ Mat<bool> operator>=(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
 }
 template<class Type>
-Mat<Type> Mat<Type>::imask(Mat<bool> &mask){
+Mat<Type> Mat<Type>::i(Mat<bool> &mask){
     errorCheck(mask.rows() != rows(),
         "Matrix shape mismatch in call to i()");
     errorCheck(ndims == 2 && mask.columns() != columns(),
@@ -1126,7 +1103,8 @@ Mat<Type> Mat<Type>::imask(Mat<bool> &mask){
 }
 template<class Type>
 template<class Type2>
-Mat<Type> Mat<Type>::inum(Mat<Type2> &indices){
+Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
+                typename std::enable_if<std::is_integral<Type2>::value>::type*){
     if(ndims == 2){
         Mat<Type> out(indices.size(), columns());
         for(size_type i = 0; i < indices.size(); i++){
@@ -1149,7 +1127,7 @@ Mat<Type> Mat<Type>::inum(Mat<Type2> &indices){
     }
 }
 template<class Type>
-void Mat<Type>::itomask(Mat<bool> &mask, Mat<Type> &out){
+void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     errorCheck(mask.rows() != rows(),
         "Matrix shape mismatch in call to i()");
     errorCheck(ndims == 2 && mask.columns() != columns(),
@@ -1167,5 +1145,26 @@ void Mat<Type>::itomask(Mat<bool> &mask, Mat<Type> &out){
         i = *j;
         j++; k++;
     }
+    return;
+}
+template<class Type>
+template<class Type2>
+void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
+                typename std::enable_if<std::is_integral<Type2>::value>::type*){
+    errorCheck(indices.ndims != 1,
+        "Index list should be 1 dimension");
+    if(ndims == 2){
+        Mat<Type> temp(indices.size(), columns());
+        out = temp;
+    }
+    else if(ndims == 1){
+        Mat<Type> temp(indices.size());
+        out = temp;
+    }
+    else{
+        errorCheck(true, "n-dimensional indexing not yet implemented\n");
+        return;
+    }
+    out = i(indices);
     return;
 }
