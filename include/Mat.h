@@ -1159,10 +1159,14 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
         "Index list should be 1 dimension");
     errorCheck(out.ndims != ndims,
         "inconsistent number of dimensions in output matrix in call to ito");
-    errorCheck(out.columns() != indices.size,
+    errorCheck(ndims == 1 && out.columns() != indices.size(),
         "output matrix shape mismatch - incorrect number of columns");
-    errorCheck(ndims > 1, out.rows() != indices.size,
-        "output matrix shape mismatch - incorrect number of rows");
+    if(ndims > 1){
+        errorCheck(out.columns() != columns(),
+            "output matrix shape mismatch - incorrect number of columns");
+        errorCheck(out.rows() != indices.size(),
+            "output matrix shape mismatch - incorrect number of rows");
+    }
     if(ndims == 2){
         for(size_type i = 0; i < indices.size(); i++){
             for(size_type j = 0; j < columns(); j++){

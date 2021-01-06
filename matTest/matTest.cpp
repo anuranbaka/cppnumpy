@@ -95,15 +95,17 @@ int main (){
     fprintf(outFile, "fancy indexing to mask just elements 0,1,3,5 of matrix m\n");
     output.print(outFile);
 
+    output.scalarFill(false);
+    m.ito(mask, output);
+    fprintf(outFile, "applying the mask using ito\n");
+    output.print(outFile);
+
     Mat<int> index({1,3});
     output = y.i(index);
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
 
-    m.ito(mask, output);
-    fprintf(outFile, "applying the mask using ito\n");
-    output.print(outFile);
-
+    output.scalarFill(0);
     y.ito(index, output);
     fprintf(outFile, "applying the indexing using ito\n");
     output.print(outFile);
@@ -204,7 +206,12 @@ int main (){
     a.print(outFile);
 
     output = a.i(index);
-    fprintf(outFile, "fancy indexing to get just columns 1 and 3 of matrix a\n");
+    fprintf(outFile, "fancy indexing to get just elements 1 and 3 of matrix a\n");
+    output.print(outFile);
+
+    output.scalarFill(0);
+    a.ito(index, output);
+    fprintf(outFile, "and again using ito\n");
     output.print(outFile);
 
     output = Mat<double>::broadcast(a,b,Max);
