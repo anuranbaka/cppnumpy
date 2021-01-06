@@ -1092,12 +1092,13 @@ Mat<Type> Mat<Type>::i(Mat<bool> &mask){
     }
     Mat<Type> out(newSize);
 
-    iterator j = begin();
-    Mat<bool>::iterator k = mask.begin();
-    for(auto& i : out){
-        while(*k == false){ j++; k++; }
-        i = *j;
-        j++; k++;
+    Mat<bool>::iterator j = mask.begin();
+    iterator k = out.begin();
+    for(iterator i = begin(); i != end(); ++i, ++j){
+        if(*j){
+            *k = *i;
+            ++k;
+        }
     }
     return out;
 }
@@ -1142,12 +1143,13 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
-    iterator j = begin();
-    Mat<bool>::iterator k = mask.begin();
-    for(auto& i : out){
-        while(*k == false){ j++; k++; }
-        i = *j;
-        j++; k++;
+    Mat<bool>::iterator j = mask.begin();
+    iterator k = out.begin();
+    for(iterator i = begin(); i != end(); ++i, ++j){
+        if(*j){
+            *k = *i;
+            ++k;
+        }
     }
     return;
 }
