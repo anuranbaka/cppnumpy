@@ -549,7 +549,7 @@ class Mat {
             }
             return result;
         }
-        //i has 4 versions depending on whether the given parameter is a boolean
+        //.i() has 4 versions depending on whether the given parameter is a boolean
         //mask or a list of indices. The default parameter in the indexed version
         //simply causes substitution to fail when a floating point matrix is passed.
         Mat<Type> i(Mat<bool> &mask);
