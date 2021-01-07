@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <initializer_list>
 #include <matMath.h>
+#include <type_traits>
 using namespace std;
 
 template <class Type>
@@ -152,13 +153,13 @@ class Mat {
             memory = new Type[a*b];
             data = memory;
         }
-        Mat(std::initializer_list<Type> list, size_type a){
+        Mat(std::initializer_list<Type> list, size_type a = 0){
             refCount = new int32_t;
             *refCount = 1;
             ndims = 1;
             dims = new size_type[ndims];
-            dims[0] = a;
-            errorCheck(list.size() != a,
+            dims[0] = list.size();
+            errorCheck(a != 0 && list.size() != a,
                 "Initializer list size inconsistent with dimensions");
             strides = new size_type[ndims];
             strides[0] = 1;
@@ -548,6 +549,17 @@ class Mat {
             }
             return result;
         }
+        //.i() has 4 versions depending on whether the given parameter is a boolean
+        //mask or a list of indices. The default parameter in the indexed version
+        //simply causes substitution to fail when a floating point matrix is passed.
+        Mat<Type> i(Mat<bool> &mask);
+        template<typename Type2>
+        Mat<Type> i(Mat<Type2> &indices,
+                    typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
+        void ito(Mat<bool> &mask, Mat<Type> &out);
+        template<typename Type2>
+        void ito(Mat<Type2> &indices, Mat<Type> &out,
+                    typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
         Mat T(Mat& dest){
             errorCheck(ndims != 2,
                 "transpose may only be used on 2d matrix");
@@ -671,7 +683,8 @@ class Mat {
             errorCheck(new_dim1 < -1,
                 "matrix cannot have negative dimensions");
             if(new_dim1 == -1) new_dim1 = size();
-            else errorCheck(size() != static_cast<size_type>(new_dim1), "new shape size mismatch");
+            else errorCheck(size() != static_cast<size_type>(new_dim1),
+                            "new shape size mismatch");
 
             if(ndims == 1) return;
             else{
@@ -1066,4 +1079,112 @@ Mat<bool> operator>(Type a, Mat<Type> &b){
 template<class Type>
 Mat<bool> operator>=(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
+}
+template<class Type>
+Mat<Type> Mat<Type>::i(Mat<bool> &mask){
+    errorCheck(mask.rows() != rows(),
+        "Matrix shape mismatch in call to i()");
+    errorCheck(ndims == 2 && mask.columns() != columns(),
+        "Matrix shape mismatch in call to i()");
+    size_type newSize = 0;
+    for(auto i : mask){
+        if(i) newSize++;
+    }
+    Mat<Type> out(newSize);
+
+    Mat<bool>::iterator j = mask.begin();
+    iterator k = out.begin();
+    for(iterator i = begin(); i != end(); ++i, ++j){
+        if(*j){
+            *k = *i;
+            ++k;
+        }
+    }
+    return out;
+}
+template<class Type>
+template<class Type2>
+Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
+                typename std::enable_if<std::is_integral<Type2>::value>::type*){
+    if(ndims == 2){
+        Mat<Type> out(indices.size(), columns());
+        for(size_type i = 0; i < indices.size(); i++){
+            for(size_type j = 0; j < columns(); j++){
+                out(i,j) = operator()(indices(i),j);
+            }
+        }
+        return out;
+    }
+    else if(ndims == 1){
+        Mat<Type> out(indices.size());
+        for(size_type i = 0; i < indices.size(); i++){
+            out(i) = operator()(indices(i));
+        }
+        return out;
+    }
+    else{
+        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
+        return Mat<Type>::zeros(0);
+    }
+}
+template<class Type>
+void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
+    errorCheck(mask.rows() != rows(),
+        "Incorrect number of rows in mask in call to i()");
+    errorCheck(ndims == 2 && mask.columns() != columns(),
+        "Incorrect number of columns in mask in call to i()");
+    errorCheck(out.ndims != 1,
+                "output of ito function must be 1-dimensional");
+    Mat<Type>::size_type newSize = 0;
+    for(auto i : mask){
+        if(i) newSize++;
+    }
+    errorCheck(out.size() < newSize, "insufficient space in output matrix");
+    if(out.size() > newSize){
+        out = out.roi(0,newSize);
+    }
+    Mat<bool>::iterator j = mask.begin();
+    iterator k = out.begin();
+    for(iterator i = begin(); i != end(); ++i, ++j){
+        if(*j){
+            *k = *i;
+            ++k;
+        }
+    }
+    return;
+}
+template<class Type>
+template<class Type2>
+void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
+                typename std::enable_if<std::is_integral<Type2>::value>::type*){
+    errorCheck(indices.ndims != 1,
+        "Index list should be 1 dimension");
+    errorCheck(out.ndims != ndims,
+        "inconsistent number of dimensions in output matrix in call to ito");
+    errorCheck(ndims == 1 && out.columns() != indices.size(),
+        "output matrix shape mismatch - incorrect number of columns");
+    if(ndims > 1){
+        errorCheck(out.columns() != columns(),
+            "output matrix shape mismatch - incorrect number of columns");
+        errorCheck(out.rows() != indices.size(),
+            "output matrix shape mismatch - incorrect number of rows");
+    }
+    if(ndims == 2){
+        for(size_type i = 0; i < indices.size(); i++){
+            for(size_type j = 0; j < columns(); j++){
+                out(i,j) = operator()(indices(i),j);
+            }
+        }
+        return;
+    }
+    else if(ndims == 1){
+        for(size_type i = 0; i < indices.size(); i++){
+            out(i) = operator()(indices(i));
+        }
+        return;
+    }
+    else{
+        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
+        return;
+    }
 }

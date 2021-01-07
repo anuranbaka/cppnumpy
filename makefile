@@ -16,7 +16,7 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic
 
-all: matTest floodPybind
+all: bin/matTest floodPybind
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -41,32 +41,33 @@ lib/libInverse32.so: src/matMath.cpp
 
 ifeq ($(sim32bit),true)
 ifeq ($(useLapack),true)
-matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverseLapack32 -o bin/matTest $(lapackLink)
 else	
-matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse32.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse32.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverse32 -o bin/matTest
 endif
 else
 ifeq ($(useLapack),true)
-matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverseLapack -o bin/matTest $(lapackLink)
 else	
-matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverse -o bin/matTest
 endif
 endif
 
 
-floodFill: floodFill/floodFill.cpp include/Mat.h
+bin/floodFill: floodFill/floodFill.cpp include/Mat.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 
-floodPybind: include/matPybind.h floodFill
+floodPybind: python/floodPybind$(PY_SUFFIX)
+python/floodPybind$(PY_SUFFIX): include/matPybind.h bin/floodFill
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)
 
 matDebug: python/matDebug$(PY_SUFFIX)
 python/matDebug$(PY_SUFFIX): pybind/matDebugBindings.cpp include/Mat.h include/pythonAPI.h
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matDebugBindings.cpp -o python/matDebug$(PY_SUFFIX)
 	
-pyCapsuleTest: include/matPybind.h pybind/pyCapsuleTest.cpp
+python/pyCapsuleTest: include/matPybind.h pybind/pyCapsuleTest.cpp
 	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/pyCapsuleTest.cpp -o python/pyCapsuleTest$(PY_SUFFIX)

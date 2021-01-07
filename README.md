@@ -1,4 +1,4 @@
-Release ver. ALPHA 1.0 11/12/2020
+Release ver. ALPHA 1.1 11/12/2020
 
 
 # CPPNUMPY Matrix Library
@@ -109,6 +109,12 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Type operator()(size_t, size_t) `
 - **roi** specifies a region of interest and returns a submatrix of a given shape. -1 signifies "to the beginning/end of the dimension"
   - ` Mat& roi(int dim1Start = -1, int dim1End = -1, int dim2Start = -1, int dim2End = -1) `
+- **i** takes either a boolean mask or list of indices and returns a matrix containing only the specified elements
+  - ` Mat<Type> i(Mat<bool> mask)
+  - ` Mat<Type> i(Mat<IntegralType> indices)
+- **ito** performs the same function as "i" but with an output parameter.
+  - ` Mat<Type> i(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, a region of interest will be stored.
+  - ` Mat<Type> i(Mat<IntegralType> indices, Mat<Type> out)
 ### Modifiers
 - **operator+**: elementwise addition
   - ` Mat<Type> operator+(const Mat<Type>&) `
