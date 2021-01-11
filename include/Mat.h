@@ -84,12 +84,11 @@ class Mat {
     }
 
     iterator end(){
-        if(ndims == 2){
-            return iterator(*this, strides[0]*columns() + strides[1]*rows());
+        size_type pos = 0;
+        for(long i = 0, j = ndims - 1; i < ndims; i++, j--){
+            pos += strides[i]*dims[j];
         }
-        else{
-            return iterator(*this, strides[0]*columns());
-        }
+        return iterator(*this, pos);
     }
 
     const_iterator begin() const{
@@ -97,12 +96,11 @@ class Mat {
     }
 
     const_iterator end() const{
-        if(ndims == 2){
-            return const_iterator(*this, strides[0]*columns() + strides[1]*rows());
+        size_type pos = 0;
+        for(long i = 0, j = ndims - 1; i < ndims; i++, j--){
+            pos += strides[i]*dims[j];
         }
-        else{
-            return const_iterator(*this, strides[0]*columns());
-        }
+        return const_iterator(*this, pos);
     }
 
     size_type size() const{
