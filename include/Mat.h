@@ -132,10 +132,11 @@ class Mat {
     }
 
     bool isContiguous() const{
-        if(strides[0] != 1) return false;
-        if(ndims == 2 && strides[1] != dims[1]) return false;
-        else if(ndims > 2) errorCheck(true,
-            "n-dimensional contiguity check not yet implemented.");
+        size_type check = 1;
+        for(long i = 1, j = ndims - 1; i < ndims; i++, j--){
+            check *= dims[j];
+            if(strides[i] != check) return false;
+        }
         return true;
     }
 
