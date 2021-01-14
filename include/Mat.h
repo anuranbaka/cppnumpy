@@ -121,14 +121,13 @@ class Mat {
         return this->dims[ndims - 1];
     }
 
-    bool inbounds(size_type a){
-        if(a >= 0 && a < columns()) return true;
-        else return false;
-    }
-
-    bool inbounds(size_type a, size_type b){
-        if(a >= 0 && a < rows() && b >= 0 && b < columns()) return true;
-        else return false;
+    template<typename... arg>
+    bool inbounds(const arg... ind){
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        for(int i = 0; i < ndims; i++){
+            if(temp[i] >= dims[i] || temp[i] < 0) return false;
+        }
+        return true;
     }
 
     bool isContiguous() const{
