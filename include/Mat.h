@@ -140,42 +140,59 @@ class Mat {
         return true;
     }
 
-    Mat(size_type a = 1){
+    Mat(){
         refCount = new int32_t;
         *refCount = 1;
+
         ndims = 1;
         dims = new size_type[ndims];
-        dims[0] = a;
+        dims[0] = 1;
+
         strides = new size_type[ndims];
         strides[0] = 1;
-        memory = new Type[a];
+
+        memory = new Type[1];
         data = memory;
     }
 
-    Mat(size_type a, size_type b){
+    template<typename... arg>
+    Mat(const arg... ind){
         refCount = new int32_t;
         *refCount = 1;
+
+        ndims = sizeof...(arg);
+        errorCheck(ndims > 32, "Mat constructed with too many arguments");
+
         dims = new size_type[ndims];
-        dims[0] = a;
-        dims[1] = b;
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        for(long i = 0; i < ndims; i++){
+            dims[i] = temp[i];
+        }
+
         strides = new size_type[ndims];
-        strides[0] = 1;
-        strides[1] = b;
-        memory = new Type[a*b];
+        size_type total = 1;
+        strides[0] = total;
+        for(long i = 1, j = ndims-1; i < ndims; i++, j--){
+            total *= dims[j];
+            strides[i] = total;
+        }
+
+        memory = new Type[size()];
         data = memory;
     }
 
-    Mat(std::initializer_list<Type> list, size_type a = 0){
+    Mat(std::initializer_list<Type> list){
         refCount = new int32_t;
         *refCount = 1;
+
         ndims = 1;
         dims = new size_type[ndims];
         dims[0] = list.size();
-        errorCheck(a != 0 && list.size() != a,
-            "Initializer list size inconsistent with dimensions");
+
         strides = new size_type[ndims];
         strides[0] = 1;
-        memory = new Type[a];
+
+        memory = new Type[list.size()];
         data = memory;
         size_type i = 0;
         for(auto elem : list){
@@ -184,18 +201,31 @@ class Mat {
         }
     }
 
-    Mat(std::initializer_list<Type> list, size_type a, size_type b){
+    template<typename... arg>
+    Mat(std::initializer_list<Type> list, const arg... ind){
         refCount = new int32_t;
         *refCount = 1;
+
+        ndims = sizeof...(arg);
+        errorCheck(ndims > 32, "Mat constructed with too many arguments");
+
         dims = new size_type[ndims];
-        dims[0] = a;
-        dims[1] = b; // make this variadic
-        errorCheck(list.size() != a*b,
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        for(long i = 0; i < ndims; i++){
+            dims[i] = temp[i];
+        }
+        errorCheck(list.size() != size(),
             "Initializer list size inconsistent with dimensions");
+
         strides = new size_type[ndims];
-        strides[0] = 1;
-        strides[1] = columns();
-        memory = new Type[a*b];
+        size_type total = 1;
+        strides[0] = total;
+        for(long i = 1, j = ndims-1; i < ndims; i++, j--){
+            total *= dims[j];
+            strides[i] = total;
+        }
+        
+        memory = new Type[size()];
         data = memory;
         size_type i = 0;
         for(auto elem : list){
