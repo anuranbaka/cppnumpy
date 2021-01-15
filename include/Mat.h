@@ -270,20 +270,24 @@ class Mat {
         delete []strides;
     }
 
-    Type& operator() (size_type a){
-        return data[a*strides[0]];
+    template<typename... arg>
+    Type& operator() (const arg... ind){
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        size_type offset = 0;
+        for(long i = 0, j = ndims-1; i < ndims; i++, j--){
+            offset += temp[i]*strides[j];
+        }
+        return data[offset];
     }
 
-    Type& operator() (size_type a, size_type b){
-        return data[a*strides[1] + b*strides[0]];
-    }
-
-    const Type& operator() (size_type a) const{
-        return data[a*strides[0]];
-    }
-
-    const Type& operator() (size_type a, size_type b) const{
-        return data[a*strides[1] + b*strides[0]];
+    template<typename... arg>
+    const Type& operator() (const arg... ind) const{
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        size_type offset = 0;
+        for(long i = 0, j = ndims-1; i < ndims; i++, j--){
+            offset += temp[i]*strides[j];
+        }
+        return data[offset];
     }
 
     Type& operator() (iterator i){
