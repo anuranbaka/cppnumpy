@@ -405,15 +405,7 @@ class Mat {
         return broadcast(b, Or<Type,bool>);
     }
 
-    Mat<bool> operator!(){
-        Mat<bool> result(rows(),columns());
-        for(size_type i = 0; i < result.rows(); i++){
-            for(size_type j = 0; j < result.columns(); j++){
-                result(i,j) = !(static_cast<bool>(operator()(i,j)));
-            }
-        }
-        return result;
-    }
+    Mat<bool> operator!(); // defined below
 
     Mat<bool> operator==(const Mat<Type> b){
         return broadcast(b, Equality<Type>);
@@ -1229,6 +1221,14 @@ Mat<bool> operator>=(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
 }
 
+template<class Type>
+Mat<bool> Mat<Type>::operator!(){
+    Mat<bool> result(this->copy<bool>());
+    for(Mat<bool>::iterator i = result.begin(); i != result.end(); ++i){
+        *i = !(*i);
+    }
+    return result;
+}
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
     errorCheck(mask.rows() != rows(),
