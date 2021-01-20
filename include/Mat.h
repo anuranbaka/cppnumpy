@@ -169,11 +169,9 @@ class Mat {
         }
 
         strides = new size_type[ndims];
-        size_type total = 1;
-        strides[0] = total;
+        strides[0] = 1;
         for(long i = 1, j = ndims-1; i < ndims; i++, j--){
-            total *= dims[j];
-            strides[i] = total;
+            strides[i] = strides[i-1]*dims[j];
         }
 
         memory = new Type[size()];
@@ -217,11 +215,9 @@ class Mat {
             "Initializer list size inconsistent with dimensions");
 
         strides = new size_type[ndims];
-        size_type total = 1;
-        strides[0] = total;
+        strides[0] = 1;
         for(long i = 1, j = ndims-1; i < ndims; i++, j--){
-            total *= dims[j];
-            strides[i] = total;
+            strides[i] = strides[i-1]*dims[j];
         }
         
         memory = new Type[size()];
