@@ -477,26 +477,51 @@ class Mat {
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
-        if(ndims == 2){
-            int r,c;
-            if(dims[0] >= b.dims[0]) r = dims[0];
-            else r = b.dims[0];
-            if(dims[1] >= b.dims[1]) c = dims[1];
-            else c = b.dims[1];
-            Mat<Type3> out(r,c);
-            broadcast(b, f, out);
-            return out;
+        Mat<Type3> out;
+        delete[] out.dims;
+        delete[] out.strides;
+
+        size_type* big_dim;
+        size_type* small_dim;
+        long dimdiff;
+        if(ndims >= b.ndims){
+            big_dim = dims;
+            small_dim = b.dims;
+            dimdiff = ndims - b.ndims;
+            out.ndims = ndims;
+            out.dims = new size_type[ndims];
+            out.strides = new size_type[ndims];
         }
-        else if(ndims == 1){
-            int c;
-            if(dims[0] >= b.dims[0]) c = dims[0];
-            else c = b.dims[0];
-            Mat<Type3> out(c);
-            broadcast(b, f, out);
-            return out;
+        else{
+            big_dim = b.dims;
+            small_dim = dims;
+            dimdiff = b.ndims - ndims;
+            out.ndims = b.ndims;
+            out.dims = new size_type[b.ndims];
+            out.strides = new size_type[b.ndims];
         }
-        else errorCheck(true, "n-dimensional broadcast not yet implemented");
-        return Mat<Type3>::zeros(0);
+        errorCheck(ndims != 1 && b.ndims != 1 && dimdiff != 0,
+            "operands could not be broadcast together");
+
+        for(long i = 0; i < out.ndims; i++){
+            if(i < dimdiff) out.dims[i] = big_dim[i];
+            else{
+                if(big_dim[i] > small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
+                else out.dims[i] = small_dim[i - dimdiff];
+            }
+        }
+
+        out.strides[0] = 1;
+        for(long i = 1, j = out.ndims-1; i < out.ndims; i++, j--){
+            out.strides[i] = out.strides[i-1]*out.dims[j];
+        }
+
+        delete[] out.memory;
+        out.memory = new Type3[out.size()];
+        out.data = out.memory;
+
+        broadcast(b, f, out);
+        return out;
     }
 
     template<class Type2, class Type3>
