@@ -522,20 +522,39 @@ class Mat {
 
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        for(long n = 0; n < ndims; n++){
-            if(dims[n] > b.dims[n]){
-                errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
-                            "frames not aligned");
-            }
-            else if(dims[n] < b.dims[n]){
-                errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
-                            "frames not aligned");
-            }
-            else{
-                errorCheck(out.dims[n] != dims[n],
-                            "broadcast output matrix frame misaligned");
+        if(ndims >= b.ndims){
+            for(long n = 0; n < ndims; n++){
+                if(n < b.ndims && dims[n] > b.dims[n]){
+                    errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
+                                "frames not aligned");
+                }
+                else if(n < b.ndims && dims[n] < b.dims[n]){
+                    errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
+                                "frames not aligned");
+                }
+                else{
+                    errorCheck(out.dims[n] != dims[n],
+                                "broadcast output matrix frame misaligned");
+                }
             }
         }
+        else{
+            for(long n = 0; n < b.ndims; n++){
+                if(n < ndims && dims[n] > b.dims[n]){
+                    errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
+                                "frames not aligned");
+                }
+                else if(n < ndims && dims[n] < b.dims[n]){
+                    errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
+                                "frames not aligned");
+                }
+                else{
+                    errorCheck(out.dims[n] != b.dims[n],
+                                "broadcast output matrix frame misaligned");
+                }
+            }
+        }
+
         if(ndims == 2){
             size_type resultRow, resultCol, leftRow,
                         leftCol, rightRow, rightCol;
