@@ -84,11 +84,7 @@ class Mat {
     }
 
     iterator end(){
-        size_type pos = 0;
-        for(long i = 0, j = ndims - 1; i < ndims; i++, j--){
-            pos += strides[i]*dims[j];
-        }
-        return iterator(*this, pos);
+        return iterator(*this, size());
     }
 
     const_iterator begin() const{
@@ -96,11 +92,7 @@ class Mat {
     }
 
     const_iterator end() const{
-        size_type pos = 0;
-        for(long i = 0, j = ndims - 1; i < ndims; i++, j--){
-            pos += strides[i]*dims[j];
-        }
-        return const_iterator(*this, pos);
+        return const_iterator(*this, size());
     }
 
     size_type size() const{
@@ -132,9 +124,9 @@ class Mat {
 
     bool isContiguous() const{
         size_type check = 1;
-        for(long i = 1, j = ndims - 1; i < ndims; i++, j--){
-            check *= dims[j];
+        for(long i = ndims - 1; i >= 0; i--){
             if(strides[i] != check) return false;
+            check *= dims[i];
         }
         return true;
     }
@@ -169,11 +161,11 @@ class Mat {
         }
 
         strides = new size_type[ndims];
-        strides[0] = 1;
-        for(long i = 1, j = ndims-1; i < ndims; i++, j--){
-            strides[i] = strides[i-1]*dims[j];
+        strides[ndims-1] = 1;
+        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
+            strides[j] = strides[j+1]*dims[i];
         }
-
+     
         memory = new Type[size()];
         data = memory;
     }
@@ -215,11 +207,11 @@ class Mat {
             "Initializer list size inconsistent with dimensions");
 
         strides = new size_type[ndims];
-        strides[0] = 1;
-        for(long i = 1, j = ndims-1; i < ndims; i++, j--){
-            strides[i] = strides[i-1]*dims[j];
+        strides[ndims-1] = 1;
+        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
+            strides[j] = strides[j+1]*dims[i];
         }
-        
+     
         memory = new Type[size()];
         data = memory;
         size_type i = 0;
@@ -270,8 +262,8 @@ class Mat {
     Type& operator() (const arg... ind){
         size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
         size_type offset = 0;
-        for(long i = 0, j = ndims-1; i < ndims; i++, j--){
-            offset += temp[i]*strides[j];
+        for(long i = 0; i < ndims; i++){
+            offset += temp[i]*strides[i];
         }
         return data[offset];
     }
@@ -280,8 +272,8 @@ class Mat {
     const Type& operator() (const arg... ind) const{
         size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
         size_type offset = 0;
-        for(long i = 0, j = ndims-1; i < ndims; i++, j--){
-            offset += temp[i]*strides[j];
+        for(long i = 0; i < ndims; i++){
+            offset += temp[i]*strides[i];
         }
         return data[offset];
     }
@@ -507,9 +499,9 @@ class Mat {
             }
         }
 
-        out.strides[0] = 1;
-        for(long i = 1, j = out.ndims-1; i < out.ndims; i++, j--){
-            out.strides[i] = out.strides[i-1]*out.dims[j];
+        out.strides[ndims-1] = 1;
+        for(long i = 1, j = out.ndims-2; i < out.ndims; i++, j--){
+            out.strides[j] = out.strides[j+1]*out.dims[i];
         }
 
         delete[] out.memory;
@@ -854,7 +846,7 @@ class Mat {
         if(ndims == 2){
             dims[0] = static_cast<size_type>(new_dim1);
             dims[1] = static_cast<size_type>(new_dim2);
-            strides[1] = static_cast<size_type>(new_dim2);
+            strides[0] = static_cast<size_type>(new_dim2);
         }
         else{
             ndims = 2;
@@ -864,8 +856,8 @@ class Mat {
             dims[0] = new_dim1;
             dims[1] = new_dim2;
             strides = new size_type[ndims];
-            strides[0] = 1;
-            strides[1] = new_dim2;
+            strides[1] = 1;
+            strides[0] = new_dim2;
         }
         return;
     }
@@ -884,8 +876,8 @@ class Mat {
             if(strides != NULL) result.strides[i] = strides[i];
         }
         if(strides == NULL){
-            result.strides[0] = 1;
-            if(result.ndims == 2) result.strides[1] = result.dims[1];
+            result.strides[result.ndims-1] = 1;
+            if(result.ndims == 2) result.strides[0] = result.dims[1];
         }
         result.customTypeData = data;
         result.memory = data;
@@ -1058,67 +1050,69 @@ class MatIter{
     public:
 
     Mat<Type>& matrix;
-    size_t position;
+    size_t position = 0, index = 0;
+    size_t dimind[32];
 
-    MatIter(Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
+    MatIter(Mat<Type>& mat, size_t ind) : matrix(mat){
+        for(int i = 0; i < matrix.ndims; i++){
+            dimind[i] = 0;
+        }
+        if(ind == matrix.size()){
+            index = ind;
+            position = matrix.size();
+            for(int i = 0; i < matrix.ndims; i++){
+                position *= matrix.strides[i];
+            }
+        }
+        while(index < ind){
+            (*this)++;
+        }
+    }
     
     bool operator==(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position == b.position) return true;
+        if(index == b.index) return true;
         else return false;
     }
 
     bool operator!=(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position != b.position) return true;
+        if(index != b.index) return true;
         else return false;
     }
 
     MatIter& operator++(){
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-            else position += matrix.strides[0];
-        }
-        else if((position - offset) % matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = matrix.ndims-1; i >= 0; i--){
+            dimind[i]++;
+            if(dimind[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                dimind[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return *this;
     }
 
     MatIter operator++(int){
         MatIter<Type> clone(*this);
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-        }
-        else if((position-offset)%matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = matrix.ndims-1; i >= 0; i--){
+            dimind[i]++;
+            if(dimind[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                dimind[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return clone;
     }
 
@@ -1132,67 +1126,69 @@ class Const_MatIter{
     public:
 
     const Mat<Type>& matrix;
-    size_t position;
+    size_t position = 0, index = 0;
+    size_t dimind[32];
 
-    Const_MatIter(const Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
-    
+    Const_MatIter(const Mat<Type>& mat, size_t ind) : matrix(mat){
+        for(int i = 0; i < matrix.ndims; i++){
+            dimind[i] = 0;
+        }
+        if(ind == matrix.size()){
+            index = ind;
+            position = matrix.size();
+            for(int i = 0; i < matrix.ndims; i++){
+                position *= matrix.strides[i];
+            }
+        }
+        while(index < ind){
+            (*this)++;
+        }
+    }
+
     bool operator==(Const_MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position == b.position) return true;
+        if(index == b.index) return true;
         else return false;
     }
 
     bool operator!=(Const_MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position != b.position) return true;
+        if(index != b.index) return true;
         else return false;
     }
 
     Const_MatIter& operator++(){
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-            else position += matrix.strides[0];
-        }
-        else if((position - offset) % matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = matrix.ndims-1; i >= 0; i--){
+            dimind[i]++;
+            if(dimind[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                dimind[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return *this;
     }
 
     Const_MatIter operator++(int){
         Const_MatIter<Type> clone(*this);
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-        }
-        else if((position-offset)%matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = matrix.ndims-1; i >= 0; i--){
+            dimind[i]++;
+            if(dimind[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                dimind[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return clone;
     }
 
