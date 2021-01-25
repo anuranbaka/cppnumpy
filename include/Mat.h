@@ -547,55 +547,52 @@ class Mat {
             }
         }
 
-        if(ndims == 2){
-            size_type resultRow, resultCol, leftRow,
-                        leftCol, rightRow, rightCol;
-            for(size_type i = 0; i < out.size(); i++){
-                resultRow = i/out.columns();
-                resultCol = i%out.columns();
-                leftRow = i/out.columns()%rows();
-                leftCol = i%columns();
-                rightRow = i/out.columns()%b.rows();
-                rightCol = i%b.columns();
-
-                out(resultRow, resultCol) =
-                    (*f)(operator()(leftRow, leftCol),
-                        b(rightRow, rightCol));
-            }
+        size_type caststrideA[32];
+        size_type caststrideB[32];
+        for(long i = 0; i < out.ndims; i++){
+            if(ndims < out.ndims - i || dims[i - (out.ndims - ndims)] == 1)
+                caststrideA[i] = 0;
+            else caststrideA[i] = strides[i - (out.ndims - ndims)];
+            if(b.ndims < out.ndims - i || b.dims[i - (out.ndims - b.ndims)] == 1)
+                caststrideB[i] = 0;
+            else caststrideB[i] = b.strides[i - (out.ndims - b.ndims)];
         }
-        else{
-            for(size_type i = 0; i < out.size(); i++){
-                out(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
+
+        size_type posA = 0, posB = 0, posOut = 0;
+        size_type dimind[32];
+        for(long i = 0; i < out.ndims; i++){
+            dimind[i] = 0;
+        }
+        for(size_type i = 0; i < out.size(); i++){
+            out.data[posOut] = f(this->data[posA],b.data[posB]);
+            for(long j = out.ndims-1; j >= 0; j--){
+                dimind[j]++;
+                if(dimind[j] != out.dims[j]){
+                    posA += caststrideA[j];
+                    posB += caststrideB[j];
+                    posOut += out.strides[j];
+                    break;
+                }
+                else{
+                    dimind[j] = 0;
+                    posA -= caststrideA[j]*(out.dims[j]-1);
+                    posB -= caststrideB[j]*(out.dims[j]-1);
+                    posOut -= out.strides[j]*(out.dims[j]-1);
+                }
             }
         }
     }
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
-        errorCheck(ndims > 2,
-            "broadcast of 3 or more dimensions not yet implemented");
-        if(ndims == 2){
-            Mat<Type2> temp({b},1,1);
-            return broadcast(temp, *f);
-        }
-        else{
-            Mat<Type2> temp({b},1);
-            return broadcast(temp, *f);
-        }
+        Mat<Type2> temp({b},1);
+        return broadcast(temp, *f);
     }
 
     template<class Type2, class Type3>
     void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        errorCheck(ndims > 2,
-            "broadcast of 3 or more dimensions not yet implemented");
-        if(ndims == 2){
-            Mat<Type2> temp({b},1,1);
-            return broadcast(temp, *f, out);
-        }
-        else{
-            Mat<Type2> temp({b},1);
-            return broadcast(temp, *f, out);
-        }
+        Mat<Type2> temp({b},1);
+        return broadcast(temp, *f, out);
     }
 
     Mat operator- (){
