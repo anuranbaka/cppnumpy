@@ -734,52 +734,22 @@ class Mat {
 
     template<class newType = Type>
     Mat<newType> copy() const{
-        Mat<newType> dest;
-        if(ndims == 2){
-            Mat<newType> temp(rows(),columns());
-            dest = temp;
+        Mat<newType> dest(size());
+        dest.ndims = ndims;
+        delete[] dest.dims;
+        dest.dims = new size_type[ndims];
+        delete[] dest.strides;
+        dest.strides = new size_type[ndims];
+        for(long i = 0; i < ndims; i++){
+            dest.dims[i] = dims[i];
+            dest.strides[i] = strides[i];
         }
-        else{
-            Mat<newType> temp(columns());
-            dest = temp;
-        }
-        size_t n = 0;
-        for(auto i : *this){
-            dest.data[n] = static_cast<newType>(i);
-            n++;
-        }
+        copy(dest);
         return dest;
     }
 
     template<class newType>
-    void copy(Mat<newType>& dest) const{
-        errorCheck(dest.ndims != ndims,
-            "Matrix dimension mismatch during copy");
-        for(long i = 0; i > dest.ndims; i++){
-            errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
-        }
-        if(ndims == 2){
-            size_t m = 0;
-            size_t n = 0;
-            for(auto i : *this){
-                dest(m,n) = static_cast<newType>(i);
-                n++;
-                if(n == columns()){
-                    n = 0;
-                    m++;
-                }
-            }
-        }
-        else if(ndims == 1){
-            size_t n = 0;
-            for(auto i : *this){
-                dest(n) = static_cast<newType>(i);
-                n++;
-            }
-        }
-        else errorCheck(true, "n-dimensional copy not yet implemented");
-        return;
-    }
+    void copy(Mat<newType>& dest) const;
 
     void scalarFill(Type x){
         for(auto& i : *this){
@@ -1342,4 +1312,20 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
         errorCheck(true, "n-dimensional fancy indexing not yet implemented");
         return;
     }
+}
+
+template<class Type>
+template<class newType>
+void Mat<Type>::copy(Mat<newType>& dest) const{
+    errorCheck(dest.ndims != ndims,
+        "Matrix dimension mismatch during copy");
+    for(long i = 0; i > dest.ndims; i++){
+        errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
+    }
+    MatIter<newType> j = dest.begin();
+    for(auto i : *this){
+        *j = static_cast<newType>(i);
+        j++;
+    }
+    return;
 }
