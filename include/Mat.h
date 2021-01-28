@@ -499,7 +499,7 @@ class Mat {
             }
         }
 
-        out.strides[ndims-1] = 1;
+        out.strides[out.ndims-1] = 1;
         for(long i = 1, j = out.ndims-2; i < out.ndims; i++, j--){
             out.strides[j] = out.strides[j+1]*out.dims[i];
         }
@@ -625,7 +625,7 @@ class Mat {
         errorCheck(sizeof...(arg) > static_cast<size_type>(2*out.ndims),
                     "too many arguments for roi function");
         int temp[sizeof...(arg)] = {(static_cast<int>(ind))...};
-        
+
         for(long i = 0; i < out.ndims; i++){
             if(static_cast<size_type>(2*i) >= sizeof...(arg)) break;
             else if(static_cast<size_type>(2*i)+1 >= sizeof...(arg)){
@@ -914,16 +914,9 @@ class Mat {
         return result;
     }
 
-    static Mat zeros(size_type a){
-        Mat result(a);
-        for(auto& i: result){
-            i = 0;
-        }
-        return result;
-    }
-
-    static Mat zeros(size_type a, size_type b){
-        Mat result(a,b);
+    template<typename... arg>
+    static Mat zeros(const arg... ind){
+        Mat result(ind...);
         for(auto& i: result){
             i = 0;
         }
@@ -931,23 +924,16 @@ class Mat {
     }
 
     static Mat zeros_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+        Mat result = empty_like(a);
         for(auto& i: result){
             i = 0;
         }
         return result;
     }
 
-    static Mat ones(size_type a, size_type b){
-        Mat result(a,b);
-        for(auto& i: result){
-            i = 1;
-        }
-        return result;
-    }
-
-    static Mat ones(size_type a){
-        Mat result(a);
+    template<typename... arg>
+    static Mat ones(const arg... ind){
+        Mat result(ind...);
         for(auto& i: result){
             i = 1;
         }
@@ -955,15 +941,24 @@ class Mat {
     }
 
     static Mat ones_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+        Mat result = empty_like(a);
         for(auto& i: result){
             i = 1;
         }
         return result;
     }
 
-    static Mat empty_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+    static Mat<Type> empty_like(const Mat<Type> a){
+        Mat<Type> result(a.size());
+        result.ndims = a.ndims;
+        delete[] result.dims;
+        result.dims = new size_type[a.ndims];
+        delete[] result.strides;
+        result.strides = new size_type[a.ndims];
+        for(long i = 0; i < a.ndims; i++){
+            result.dims[i] = a.dims[i];
+            result.strides[i] = a.strides[i];
+        }
         return result;
     }
 
@@ -1007,15 +1002,8 @@ class Mat {
 
     template<class Type2, class Type3>
     static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
-        b.errorCheck(b.ndims > 2, "n-dimensional broadcast not yet implemented.");
-        if(b.ndims == 2){
-            Mat<Type> temp({a},1,1);
-            return temp.broadcast(b, f);
-        }
-        else{
-            Mat<Type> temp({a},1);
-            return temp.broadcast(b, f);
-        }
+        Mat<Type> temp({a},1);
+        return temp.broadcast(b, f);
     }
     
     template<class Type2, class Type3>
