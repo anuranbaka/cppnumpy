@@ -618,51 +618,36 @@ class Mat {
         return result;
     }
 
-    Mat roi(int dim1Start = -1, int dim1End = -1,
-            int dim2Start = -1, int dim2End = -1){
-        if(ndims == 1){
-            errorCheck(ndims == 1 && (dim2Start != -1 || dim2End != -1),
-                "Too many arguments for 1d matrix");
-            errorCheck(dim1Start < -1 ||
-                dim1Start > static_cast<int>(columns()),
-                "roi argument 1 invalid");
-            errorCheck(dim1End < -1 ||
-                dim1End > static_cast<int>(columns()),
-                "roi argument 2 invalid");
-            errorCheck(dim2Start != -1, "Too many arguments");
-            errorCheck(dim2End != -1, "Too many arguments");
+    template<typename... arg>
+    Mat<Type> roi(const arg... ind){
+        Mat<Type> out(*this);
+        if(sizeof...(arg) == 0) return out;
+        errorCheck(sizeof...(arg) > static_cast<size_type>(2*out.ndims),
+                    "too many arguments for roi function");
+        int temp[sizeof...(arg)] = {(static_cast<int>(ind))...};
+        
+        for(long i = 0; i < out.ndims; i++){
+            if(static_cast<size_type>(2*i) >= sizeof...(arg)) break;
+            else if(static_cast<size_type>(2*i)+1 >= sizeof...(arg)){
+                if(temp[2*i] == -1) temp[2*i] = 0;
+                errorCheck(temp[(2*i)] < 0
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
+                        "roi shape mismatch");
+                out.dims[i] -= temp[2*i];
+                out.data += temp[2*i]*out.strides[i];
+            }
+            else{
+                if(temp[(2*i)+1] == -1) temp[(2*i)+1] = out.dims[i];
+                if(temp[2*i] == -1) temp[2*i] = 0;
+                errorCheck(temp[(2*i)+1] < 0 || temp[(2*i)] < 0
+                        || static_cast<size_type>(temp[(2*i)+1]) > out.dims[i]
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
+                        "roi shape mismatch");
+                out.dims[i] = temp[(2*i)+1] - temp[2*i];
+                out.data += temp[2*i]*out.strides[i];
+            }
         }
-        else if(ndims == 2){
-            errorCheck(dim1Start < -1 ||
-                dim1Start > static_cast<int>(rows()),
-                "roi argument 1 invalid");
-            errorCheck(dim1End < -1 ||
-                dim1End > static_cast<int>(rows()),
-                "roi argument 2 invalid");
-            errorCheck(dim2Start < -1 ||
-                dim2Start > static_cast<int>(columns()),
-                "roi argument 3 invalid");
-            errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()),
-                "roi argument 4 invalid");
-        }
-
-        if(dim1Start == -1) dim1Start = 0;
-        if(dim1End == -1 && ndims == 2) dim1End = static_cast<int>(rows());
-        else if(dim1End == -1 && ndims == 1) dim1End = static_cast<int>(columns());
-        if(dim2Start == -1 && ndims == 2) dim2Start = 0;
-        if(dim2End == -1 && ndims == 2) dim2End = static_cast<int>(columns());
-
-        Mat<Type> result(*this);
-        result.dims[0] = dim1End-dim1Start;
-        if(ndims == 2){
-            result.dims[1] = dim2End-dim2Start;
-            result.data = &memory[dim1Start*columns() + dim2Start];
-        }
-        else
-        {
-            result.data = &memory[dim1Start];
-        }
-        return result;
+        return out;
     }
 
     //i has 4 versions depending on whether the given parameter is a boolean

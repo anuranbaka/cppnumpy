@@ -85,8 +85,8 @@ int main (){
     fprintf(outFile, "y.roi(1)\n");
     output.print(outFile);
 
-    output = x.roi();
-    fprintf(outFile, "x.roi()\n");
+    output = x.roi(-1);
+    fprintf(outFile, "x.roi(-1)\n");
     output.print(outFile);
     
     Mat<bool> mask({true, true, false, true,
