@@ -663,8 +663,6 @@ class Mat {
                 typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
 
     Mat T(Mat& dest){
-        errorCheck(ndims != 2,
-            "transpose may only be used on 2d matrix");
         errorCheck(memory == dest.memory,
             "Source and destination matrix share same backing data");
         t().copy(dest);
@@ -672,7 +670,7 @@ class Mat {
     }
 
     Mat T(){
-        errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
+        errorCheck(ndims != 2, "hard in-place transpose may only be used on 2d matrix");
         if(rows() == columns()){
             Type temp;
             for(size_type i=0; i<rows(); i++){
@@ -695,18 +693,17 @@ class Mat {
         }
         else{
             errorCheck(true,
-                "transpose may only be used on square or continuous matrices");
+                "hard in-place transpose may only be used on square or contiguous matrices");
         }
         return *this;
     }
 
     Mat t() const{
-        errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
         Mat<Type> dest(*this);
-        dest.strides[0] = strides[1];
-        dest.strides[1] = strides[0];
-        dest.dims[0] = dims[1];
-        dest.dims[1] = dims[0];
+        for(int i = 0, j = ndims-1; i < ndims; i++, j--){
+            dest.strides[i] = strides[j];
+            dest.dims[i] = dims[j];
+        }
         return dest;
     }
 
