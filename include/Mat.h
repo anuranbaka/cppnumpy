@@ -754,58 +754,48 @@ class Mat {
         }
     }
 
-    void reshape(int new_dim1 = -1){
+    template<typename... arg>
+    void reshape(const arg... ind){
+        if(sizeof...(arg) == 0) return;
         errorCheck(!isContiguous(),
             "Cannot reshape non-contiguous matrix");
-        errorCheck(new_dim1 < -1,
-            "matrix cannot have negative dimensions");
-        if(new_dim1 == -1) new_dim1 = size();
-        else errorCheck(size() != static_cast<size_type>(new_dim1),
-                        "new shape size mismatch");
 
-        if(ndims == 1) return;
+        long autodim = -1;
+        if(static_cast<long>(sizeof...(arg)) < ndims){
+            errorCheck(static_cast<long>(sizeof...(arg)) < ndims-1, "not enough arguments for reshape");
+            autodim = ndims-1;
+        }
+
+        long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
+        size_type shapecheck = 1;
+        for(long i = 0; i < static_cast<long>(sizeof...(arg)); i++){
+            errorCheck(i > ndims, "too many arguments to reshape function");
+            errorCheck(temp[i] < -1, "matrix dimensions can not be negative");
+            if(temp[i] == -1){
+                errorCheck(autodim != -1, "too many inferred dimensions in reshape");
+                autodim = i;
+            }
+            else shapecheck *= temp[i];
+        }
+        if(autodim == -1) errorCheck(shapecheck != size(), "new shape size mismatch");
         else{
-            ndims = 1;
-            delete[] dims;
-            delete[] strides;
-            dims = new size_type[ndims];
-            dims[0] = new_dim1;
-            strides = new size_type[ndims];
-            strides[0] = 1;
+            errorCheck(size() % shapecheck != 0, "reshape dimension inferrence failed");
+            shapecheck = size() / shapecheck;
         }
-        return;
-    }
-
-    void reshape(int new_dim1, int new_dim2){
-        errorCheck(!isContiguous(),
-            "Cannot reshape non-contiguous matrix");
-        errorCheck(new_dim1 < -1 || new_dim2 < -1,
-            "matrix cannot have negative dimensions");
-        errorCheck(new_dim1 == -1 && new_dim2 == -1,
-            "only one argument of reshape can be -1");
-        if(new_dim1 == -1) new_dim1 = size()/new_dim2;
-        else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-        else errorCheck(size() !=
-                static_cast<size_type>(new_dim1) * static_cast<size_type>(new_dim2),
-                "new shape size mismatch");
-
-        if(ndims == 2){
-            dims[0] = static_cast<size_type>(new_dim1);
-            dims[1] = static_cast<size_type>(new_dim2);
-            strides[0] = static_cast<size_type>(new_dim2);
+        
+        ndims = sizeof...(arg);
+        delete[] dims;
+        dims = new size_type[ndims];
+        for(long i = 0; i < ndims; i++){
+            if(i == autodim) dims[i] = shapecheck;
+            else dims[i] = temp[i];
         }
-        else{
-            ndims = 2;
-            delete[] dims;
-            delete[] strides;
-            dims = new size_type[ndims];
-            dims[0] = new_dim1;
-            dims[1] = new_dim2;
-            strides = new size_type[ndims];
-            strides[1] = 1;
-            strides[0] = new_dim2;
+        delete[] strides;
+        strides = new size_type[ndims];
+        strides[ndims-1] = 1;
+        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
+            strides[j] = strides[j+1]*dims[i];
         }
-        return;
     }
 
     static Mat<Type> wrap(Type* data, long new_ndims,
