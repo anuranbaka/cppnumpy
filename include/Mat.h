@@ -52,6 +52,14 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
+    void buildStrides(){
+        strides = new size_type[ndims];
+        strides[ndims-1] = 1;
+        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
+            strides[j] = strides[j+1]*dims[j+1];
+        }
+    }
+
     public:
 
     typedef MatIter<Type> iterator;
@@ -138,9 +146,7 @@ class Mat {
         ndims = 1;
         dims = new size_type[ndims];
         dims[0] = 1;
-
-        strides = new size_type[ndims];
-        strides[0] = 1;
+        buildStrides();
 
         memory = new Type[1];
         data = memory;
@@ -159,12 +165,7 @@ class Mat {
         for(long i = 0; i < ndims; i++){
             dims[i] = temp[i];
         }
-
-        strides = new size_type[ndims];
-        strides[ndims-1] = 1;
-        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
-            strides[j] = strides[j+1]*dims[i];
-        }
+        buildStrides();
      
         memory = new Type[size()];
         data = memory;
@@ -177,9 +178,7 @@ class Mat {
         ndims = 1;
         dims = new size_type[ndims];
         dims[0] = list.size();
-
-        strides = new size_type[ndims];
-        strides[0] = 1;
+        buildStrides();
 
         memory = new Type[list.size()];
         data = memory;
@@ -205,12 +204,7 @@ class Mat {
         }
         errorCheck(list.size() != size(),
             "Initializer list size inconsistent with dimensions");
-
-        strides = new size_type[ndims];
-        strides[ndims-1] = 1;
-        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
-            strides[j] = strides[j+1]*dims[i];
-        }
+        buildStrides();
      
         memory = new Type[size()];
         data = memory;
@@ -791,11 +785,7 @@ class Mat {
             else dims[i] = temp[i];
         }
         delete[] strides;
-        strides = new size_type[ndims];
-        strides[ndims-1] = 1;
-        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
-            strides[j] = strides[j+1]*dims[i];
-        }
+        buildStrides();
     }
 
     static Mat<Type> wrap(Type* data, long new_ndims,
@@ -1222,11 +1212,7 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
         out.dims[i] = dims[i];
     }
     delete[] out.strides;
-    out.strides = new size_type[out.ndims];
-    out.strides[out.ndims-1] = 1;
-    for(long i = 1, j = out.ndims-2; i < out.ndims; i++, j--){
-        out.strides[j] = out.strides[j+1]*out.dims[i];
-    }
+    out.buildStrides();
 
     ito(indices, out);
     return out;
