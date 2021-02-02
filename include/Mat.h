@@ -1191,24 +1191,19 @@ Mat<bool> Mat<Type>::operator!(){
 }
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
-    errorCheck(mask.rows() != rows(),
-        "Matrix shape mismatch in call to i()");
-    errorCheck(ndims == 2 && mask.columns() != columns(),
-        "Matrix shape mismatch in call to i()");
+    errorCheck(ndims != mask.ndims, "matrix dimension mismatch in call to i()");
+    for(long i = 0; i < ndims; i++){
+        errorCheck(mask.dims[i] != dims[i],
+            "Matrix shape mismatch in call to i()");
+    }
+
     size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
     }
     Mat<Type> out(newSize);
 
-    Mat<bool>::iterator j = mask.begin();
-    iterator k = out.begin();
-    for(iterator i = begin(); i != end(); ++i, ++j){
-        if(*j){
-            *k = *i;
-            ++k;
-        }
-    }
+    ito(mask, out);
     return out;
 }
 
@@ -1216,36 +1211,37 @@ template<class Type>
 template<class Type2>
 Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    if(ndims == 2){
-        Mat<Type> out(indices.size(), columns());
-        for(size_type i = 0; i < indices.size(); i++){
-            for(size_type j = 0; j < columns(); j++){
-                out(i,j) = operator()(indices(i),j);
-            }
-        }
-        return out;
+    errorCheck(indices.ndims != 1, "indices must be stored as a 1-dimensional matrix");
+
+    Mat<Type> out(indices.size() * (size() / dims[0]));
+    out.ndims = ndims;
+    delete[] out.dims;
+    out.dims = new size_type[ndims];
+    out.dims[0] = indices.size();
+    for(int i = 1; i < ndims; i++){
+        out.dims[i] = dims[i];
     }
-    else if(ndims == 1){
-        Mat<Type> out(indices.size());
-        for(size_type i = 0; i < indices.size(); i++){
-            out(i) = operator()(indices(i));
-        }
-        return out;
+    delete[] out.strides;
+    out.strides = new size_type[out.ndims];
+    out.strides[out.ndims-1] = 1;
+    for(long i = 1, j = out.ndims-2; i < out.ndims; i++, j--){
+        out.strides[j] = out.strides[j+1]*out.dims[i];
     }
-    else{
-        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
-        return Mat<Type>::zeros(0);
-    }
+
+    ito(indices, out);
+    return out;
 }
 
 template<class Type>
 void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
-    errorCheck(mask.rows() != rows(),
-        "Incorrect number of rows in mask in call to i()");
-    errorCheck(ndims == 2 && mask.columns() != columns(),
-        "Incorrect number of columns in mask in call to i()");
+    errorCheck(ndims != mask.ndims, "matrix dimension mismatch in call to ito()");
+    for(long i = 0; i < ndims; i++){
+        errorCheck(mask.dims[i] != dims[i],
+            "matrix shape mismatch in call to ito()");
+    }
     errorCheck(out.ndims != 1,
-                "output of ito function must be 1-dimensional");
+                "output of ito() function must be 1-dimensional");
+
     Mat<Type>::size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
@@ -1254,6 +1250,7 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
+
     Mat<bool>::iterator j = mask.begin();
     iterator k = out.begin();
     for(iterator i = begin(); i != end(); ++i, ++j){
@@ -1270,34 +1267,36 @@ template<class Type2>
 void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
     errorCheck(indices.ndims != 1,
-        "Index list should be 1 dimension");
+        "index list should be 1 dimension");
     errorCheck(out.ndims != ndims,
-        "inconsistent number of dimensions in output matrix in call to ito");
-    errorCheck(ndims == 1 && out.columns() != indices.size(),
-        "output matrix shape mismatch - incorrect number of columns");
-    if(ndims > 1){
-        errorCheck(out.columns() != columns(),
-            "output matrix shape mismatch - incorrect number of columns");
-        errorCheck(out.rows() != indices.size(),
-            "output matrix shape mismatch - incorrect number of rows");
+        "inconsistent number of dimensions in output matrix in call to ito()");
+    errorCheck(out.dims[0] != indices.size(),
+        "output matrix shape does not match given index list in call to ito()");
+    for(long i = 1; i < ndims; i++){
+        errorCheck(out.dims[i] != dims[i],
+        "output matrix shape mismatch in call to ito()");
     }
-    if(ndims == 2){
-        for(size_type i = 0; i < indices.size(); i++){
-            for(size_type j = 0; j < columns(); j++){
-                out(i,j) = operator()(indices(i),j);
+
+    size_type offset = size() / dims[0];
+    iterator dimend = begin();
+    iterator i = begin(); //for iterating the current matrix
+    size_type j = 0; //for iterating the index list
+    for(iterator k = out.begin(); k != out.end(); ++k){ //for iterating the output
+        if(i == dimend){
+            i.index = indices(j) * offset;
+            i.position = indices(j) * strides[0];
+            if(j+1 == indices.size()){
+                dimend.index = indices.size();
+                dimend.position = 0;
             }
+            else{
+                dimend.index = (indices(j) + 1) * offset;
+                dimend.position = (indices(j) + 1) * strides[0];
+            }
+            ++j;
         }
-        return;
-    }
-    else if(ndims == 1){
-        for(size_type i = 0; i < indices.size(); i++){
-            out(i) = operator()(indices(i));
-        }
-        return;
-    }
-    else{
-        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
-        return;
+        *k = *i;
+        ++i;
     }
 }
 
