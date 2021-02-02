@@ -482,13 +482,14 @@ class Mat {
             out.dims = new size_type[b.ndims];
             out.strides = new size_type[b.ndims];
         }
-        errorCheck(ndims != 1 && b.ndims != 1 && dimdiff != 0,
-            "operands could not be broadcast together");
 
         for(long i = 0; i < out.ndims; i++){
             if(i < dimdiff) out.dims[i] = big_dim[i];
             else{
-                if(big_dim[i] > small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
+                errorCheck(big_dim[i] != small_dim[i - dimdiff] &&
+                            big_dim[i] != 1 && small_dim[i - dimdiff] != 1,
+                            "operand frames not aligned");
+                if(big_dim[i] >= small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
                 else out.dims[i] = small_dim[i - dimdiff];
             }
         }
@@ -509,35 +510,19 @@ class Mat {
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
         if(ndims >= b.ndims){
-            for(long n = 0; n < ndims; n++){
-                if(n < b.ndims && dims[n] > b.dims[n]){
-                    errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
-                                "frames not aligned");
-                }
-                else if(n < b.ndims && dims[n] < b.dims[n]){
-                    errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
-                                "frames not aligned");
-                }
-                else{
-                    errorCheck(out.dims[n] != dims[n],
-                                "broadcast output matrix frame misaligned");
-                }
+            long dimdiff = ndims - b.ndims;
+            for(long n = dimdiff; n < ndims; n++){
+                errorCheck(dims[n] != 1 && b.dims[n - dimdiff] != 1 &&
+                            dims[n] != b.dims[n - dimdiff],
+                            "frames not aligned");
             }
         }
         else{
-            for(long n = 0; n < b.ndims; n++){
-                if(n < ndims && dims[n] > b.dims[n]){
-                    errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
-                                "frames not aligned");
-                }
-                else if(n < ndims && dims[n] < b.dims[n]){
-                    errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
-                                "frames not aligned");
-                }
-                else{
-                    errorCheck(out.dims[n] != b.dims[n],
-                                "broadcast output matrix frame misaligned");
-                }
+            long dimdiff = b.ndims - ndims;
+            for(long n = dimdiff; n < b.ndims; n++){
+                errorCheck(dims[n - dimdiff] != 1 && b.dims[n] != 1 &&
+                            dims[n - dimdiff] != b.dims[n],
+                            "frames not aligned");
             }
         }
 
