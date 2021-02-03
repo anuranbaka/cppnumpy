@@ -52,15 +52,15 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
+    public:
     void buildStrides(){
+        if(strides != NULL) delete[] strides;
         strides = new size_type[ndims];
         strides[ndims-1] = 1;
         for(long i = 1, j = ndims-2; i < ndims; i++, j--){
             strides[j] = strides[j+1]*dims[j+1];
         }
     }
-
-    public:
 
     typedef MatIter<Type> iterator;
     typedef Const_MatIter<Type> const_iterator;
@@ -72,7 +72,7 @@ class Mat {
 
     long ndims = 2;
     size_type* dims;
-    size_type* strides;
+    size_type* strides = NULL;
     Type* memory; 
     Type* data;
     int32_t* refCount;
@@ -461,7 +461,6 @@ class Mat {
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
         Mat<Type3> out;
         delete[] out.dims;
-        delete[] out.strides;
 
         size_type* big_dim;
         size_type* small_dim;
@@ -493,11 +492,7 @@ class Mat {
                 else out.dims[i] = small_dim[i - dimdiff];
             }
         }
-
-        out.strides[out.ndims-1] = 1;
-        for(long i = 1, j = out.ndims-2; i < out.ndims; i++, j--){
-            out.strides[j] = out.strides[j+1]*out.dims[i];
-        }
+        out.buildStrides();
 
         delete[] out.memory;
         out.memory = new Type3[out.size()];
@@ -769,7 +764,6 @@ class Mat {
             if(i == autodim) dims[i] = shapecheck;
             else dims[i] = temp[i];
         }
-        delete[] strides;
         buildStrides();
     }
 
@@ -1196,7 +1190,6 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
     for(int i = 1; i < ndims; i++){
         out.dims[i] = dims[i];
     }
-    delete[] out.strides;
     out.buildStrides();
 
     ito(indices, out);
