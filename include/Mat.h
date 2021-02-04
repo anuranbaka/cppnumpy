@@ -682,24 +682,67 @@ class Mat {
     }
 
     void print(){
-        size_t n = 0;
-        for(auto i : *this){
-            printf("%g", (double)i);
-            n++;
-            if(n%columns() != 0) printf(", ");
-            else printf("\n");
+        iterator i = begin();
+        size_type n = 0;
+        
+        while(i != end()){
+            for(long j = 0; j < ndims; j++){
+                if(i.dimind[j] == 0) printf("[");
+            }
+            for(auto i : *this){
+                printf("%g", (double)i);
+                n++;
+                if(n%columns() != 0) printf(" ");
+                else if(n != rows()*columns()) printf("\n");
+            }
+            for(long j = 0; j < ndims; j++){
+                if(i.dimind[j] == dims[j]-1) printf("]\n");
+            }
+            i++;
         }
         return;
     }
 
     void print(FILE* output){
-        size_t n = 0;
-        for(auto i : *this){
-            fprintf(output, "%g", (double)i);
-            n++;
-            if(n%columns() != 0) fprintf(output, ", ");
-            else fprintf(output, "\n");
+        iterator i = begin();
+        long j;
+        long endframe;
+
+        while(i != end()){
+            if(i.dimind[ndims-1] == 0){
+                j = ndims-1;
+                for(; j >= 0; j--){
+                    if(i.dimind[j] != 0){
+                        break;
+                    }
+                }
+                for(long k = 0; k < ndims; k++){
+                    if(k <= j) fprintf(output, " ");
+                    else fprintf(output, "[");
+                }
+            }
+
+            fprintf(output, "%g", (double)(*i));
+
+            if(i.dimind[ndims-1] != dims[ndims-1]-1) fprintf(output, " ");
+            else{
+                endframe = 0;
+                for(j = ndims - 1; j >= 0; j--){
+                    if(i.dimind[j] == dims[j]-1){
+                        fprintf(output, "]");
+                        endframe++;
+                    }
+                    else break;
+                }
+                if(i.index != size()-1){
+                    for(j = 0; j < endframe; j++){
+                        fprintf(output, "\n");
+                    }
+                }
+            }
+            i++;
         }
+        fprintf(output, "\n");
         return;
     }
 
