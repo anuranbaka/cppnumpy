@@ -10,8 +10,11 @@ double Max(double a, double b){
 int main (){
     Mat<double> m({1,2,3,4,5,6,7,8},2,4);
     Mat<> n({1,2,3},1,3);
+    Mat<> o({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16},2,2,4);
     Mat<> x({1,2,3,4,5,6,7,8,9},3,3);
     Mat<> y({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24},4,6);
+    Mat<> z(4,1,4,6);
+    { int i = 1; for(auto& j : z){ j = i++; }}
     Mat<> output(1,1);
     FILE* outFile = fopen("matTest/matTestOutput.txt", "w");
 
@@ -21,11 +24,17 @@ int main (){
     fprintf(outFile, "matrix n\n");
     n.print(outFile);
 
+    fprintf(outFile, "matrix o\n");
+    o.print(outFile);
+
     fprintf(outFile, "matrix x\n");
     x.print(outFile);
 
     fprintf(outFile, "matrix y\n");
     y.print(outFile);
+
+    fprintf(outFile, "matrix z\n");
+    z.print(outFile);
 
     output = x.t();
     fprintf(outFile, "transpose of x\n");
@@ -35,8 +44,16 @@ int main (){
     fprintf(outFile, "transpose of m\n");
     output.print(outFile);
 
+    output = o.t();
+    fprintf(outFile, "transpose of o\n");
+    output.print(outFile);
+
     output = n + x;
     fprintf(outFile, "n + x\n");
+    output.print(outFile);
+
+    output = m + o;
+    fprintf(outFile, "m + o\n");
     output.print(outFile);
 
     output = n.t() + x;
@@ -45,6 +62,10 @@ int main (){
 
     output = x.t() - n.t();
     fprintf(outFile, "transpose of x - transpose of n\n");
+    output.print(outFile);
+
+    output = y * z;
+    fprintf(outFile, "y * z\n");
     output.print(outFile);
 
     output = n ^ x;
@@ -85,6 +106,10 @@ int main (){
     fprintf(outFile, "y.roi(1)\n");
     output.print(outFile);
 
+    output = z.roi(1,3,0,1,2,4,2,5);
+    fprintf(outFile, "z.roi(1,3,0,1,2,4,2,5)\n");
+    output.print(outFile);
+
     output = x.roi(-1);
     fprintf(outFile, "x.roi(-1)\n");
     output.print(outFile);
@@ -93,6 +118,10 @@ int main (){
                     false, true, false, false}, 2, 4);
     output = m.i(mask);
     fprintf(outFile, "fancy indexing to mask just elements 0,1,3,5 of matrix m\n");
+    output.print(outFile);
+
+    output = o.i(mask);
+    fprintf(outFile, "using that same mask on matrix o\n");
     output.print(outFile);
 
     output.scalarFill(false);
@@ -105,8 +134,12 @@ int main (){
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
 
+    output = z.i(index);
+    fprintf(outFile, "using the same index to get layers 1 and 3 of matrix z\n");
+    output.print(outFile);
+
     output.scalarFill(0);
-    y.ito(index, output);
+    z.ito(index, output);
     fprintf(outFile, "applying the indexing using ito\n");
     output.print(outFile);
 
@@ -142,8 +175,8 @@ int main (){
     fprintf(outFile, "Set each element of x to a minimum of 4 with broadcast()\n");
     output.print(outFile);
 
-    output = x + 5;
-    fprintf(outFile, "broadcast scalar: x + 5\n");
+    output = z + 5;
+    fprintf(outFile, "broadcast scalar: z + 5\n");
     output.print(outFile);
 
     output = 10.0 - x;
@@ -230,8 +263,8 @@ int main (){
     fprintf(outFile, "8x8 matrix of zeros\n");
     output.print(outFile);
 
-    output = Mat<>::ones(4,5);
-    fprintf(outFile, "4x5 matrix of ones\n");
+    output = Mat<>::ones(3,2,2,5,6);
+    fprintf(outFile, "3x3x2x2x2 matrix of ones\n");
     output.print(outFile);
     
     output = Mat<>::eye(6);
@@ -248,6 +281,10 @@ int main (){
 
     output.reshape(14,2);
     fprintf(outFile, "reshape the previous matrix into a 14x2 matrix\n");
+    output.print(outFile);
+
+    output.reshape(2,2,7);
+    fprintf(outFile, "reshape again into a 2x2x7 matrix\n");
     output.print(outFile);
 
     output = x;
