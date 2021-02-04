@@ -1203,20 +1203,31 @@ Mat<bool> Mat<Type>::operator!(){
 }
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
-    errorCheck(ndims != mask.ndims, "matrix dimension mismatch in call to i()");
+    bool cast = false;
+    if(ndims != mask.ndims) cast = true;
     for(long i = 0; i < ndims; i++){
-        errorCheck(mask.dims[i] != dims[i],
-            "Matrix shape mismatch in call to i()");
+        if(mask.dims[i] != dims[i]) cast = true;
     }
 
     size_type newSize = 0;
-    for(auto i : mask){
-        if(i) newSize++;
+    if(cast){
+        Mat<bool> temp = (*this & false) | mask;
+        for(auto i : temp){
+            if(i) newSize++;
+        }
+        Mat<Type> out(newSize);
+        ito(temp, out);
+        return out;
     }
-    Mat<Type> out(newSize);
+    else{
+        for(auto i : mask){
+            if(i) newSize++;
+        }
+        Mat<Type> out(newSize);
+        ito(mask, out);
+        return out;
 
-    ito(mask, out);
-    return out;
+    }
 }
 
 template<class Type>
@@ -1241,24 +1252,35 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
 
 template<class Type>
 void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
-    errorCheck(ndims != mask.ndims, "matrix dimension mismatch in call to ito()");
-    for(long i = 0; i < ndims; i++){
-        errorCheck(mask.dims[i] != dims[i],
-            "matrix shape mismatch in call to ito()");
-    }
     errorCheck(out.ndims != 1,
                 "output of ito() function must be 1-dimensional");
 
-    Mat<Type>::size_type newSize = 0;
-    for(auto i : mask){
-        if(i) newSize++;
+    bool cast = false;
+    if(ndims != mask.ndims) cast = true;
+    for(long i = 0; i < ndims; i++){
+        if(mask.dims[i] != dims[i]) cast = true;
     }
+    size_type newSize = 0;
+    Mat<bool> temp;
+    if(cast){
+        temp = (*this & false) | mask;
+        for(auto i : temp){
+            if(i) newSize++;
+        }
+    }
+    else{
+        for(auto i : mask){
+            if(i) newSize++;
+        }
+    }
+
     errorCheck(out.size() < newSize, "insufficient space in output matrix");
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
 
     Mat<bool>::iterator j = mask.begin();
+    if(cast) j.matrix = temp;
     iterator k = out.begin();
     for(iterator i = begin(); i != end(); ++i, ++j){
         if(*j){
