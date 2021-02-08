@@ -146,10 +146,10 @@ class Mat {
 
         ndims = 1;
         dims = new size_type[ndims];
-        dims[0] = 1;
+        dims[0] = 0;
         buildStrides();
 
-        memory = new Type[1];
+        memory = new Type[0];
         data = memory;
     }
 
@@ -159,13 +159,9 @@ class Mat {
         *refCount = 1;
 
         ndims = sizeof...(arg);
-        errorCheck(ndims > 32, "Mat constructed with too many arguments");
+        errorCheck(ndims > 32, "too many dimensions (<=32 allowed)");
 
-        dims = new size_type[ndims];
-        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
-        for(long i = 0; i < ndims; i++){
-            dims[i] = temp[i];
-        }
+        dims = new size_type[ndims]{(static_cast<size_type>(ind))...};
         buildStrides();
      
         memory = new Type[size()];
@@ -196,13 +192,9 @@ class Mat {
         *refCount = 1;
 
         ndims = sizeof...(arg);
-        errorCheck(ndims > 32, "Mat constructed with too many arguments");
+        errorCheck(ndims > 32, "too many dimensions (<=32 allowed)");
 
-        dims = new size_type[ndims];
-        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
-        for(long i = 0; i < ndims; i++){
-            dims[i] = temp[i];
-        }
+        dims = new size_type[ndims]{(static_cast<size_type>(ind))...};
         errorCheck(list.size() != size(),
             "Initializer list size inconsistent with dimensions");
         buildStrides();
