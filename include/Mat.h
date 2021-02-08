@@ -793,10 +793,8 @@ class Mat {
             result.dims[i] = new_dims[i];
             if(strides != NULL) result.strides[i] = strides[i];
         }
-        if(strides == NULL){
-            result.strides[result.ndims-1] = 1;
-            if(result.ndims == 2) result.strides[0] = result.dims[1];
-        }
+        if(strides == NULL) result.buildStrides();
+
         result.customTypeData = data;
         result.memory = data;
         result.data = data;
