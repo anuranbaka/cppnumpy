@@ -555,8 +555,11 @@ class Mat {
     }
 
     Mat operator- (){
-        Mat<Type> temp({-1},1);
-        return broadcast(temp, Multiply<Type>);
+        Mat<Type> temp(copy());
+        for(auto& i : temp){
+            i *= -1;
+        }
+        return temp;
     }
 
     Mat operator^ (const Mat<Type> &b){
