@@ -743,7 +743,6 @@ class Mat {
 
     template<typename... arg>
     void reshape(const arg... ind){
-        if(sizeof...(arg) == 0) return;
         errorCheck(!isContiguous(),
             "Cannot reshape non-contiguous matrix");
 
@@ -752,11 +751,12 @@ class Mat {
             errorCheck(static_cast<long>(sizeof...(arg)) < ndims-1, "not enough arguments for reshape");
             autodim = ndims-1;
         }
+        errorCheck(static_cast<long>(sizeof...(arg)) > 2*ndims, "too many arguments to reshape function");
+        if(sizeof...(arg) == 0) return;
 
         long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
-        size_type shapecheck = 1;
+        size_type shapecheck = 1, autoLength;
         for(long i = 0; i < static_cast<long>(sizeof...(arg)); i++){
-            errorCheck(i > ndims, "too many arguments to reshape function");
             errorCheck(temp[i] < -1, "matrix dimensions can not be negative");
             if(temp[i] == -1){
                 errorCheck(autodim != -1, "too many inferred dimensions in reshape");
@@ -767,14 +767,14 @@ class Mat {
         if(autodim == -1) errorCheck(shapecheck != size(), "new shape size mismatch");
         else{
             errorCheck(size() % shapecheck != 0, "reshape dimension inferrence failed");
-            shapecheck = size() / shapecheck;
+            autoLength = size() / shapecheck;
         }
         
         ndims = sizeof...(arg);
         delete[] dims;
         dims = new size_type[ndims];
         for(long i = 0; i < ndims; i++){
-            if(i == autodim) dims[i] = shapecheck;
+            if(i == autodim) dims[i] = autoLength;
             else dims[i] = temp[i];
         }
         buildStrides();
