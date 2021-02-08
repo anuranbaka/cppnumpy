@@ -54,10 +54,11 @@ class Mat {
 
     public:
     void buildStrides(){
+        errorCheck(ndims == 0, "ndims cannot equal 0");
         if(strides != NULL) delete[] strides;
         strides = new size_type[ndims];
         strides[ndims-1] = 1;
-        for(long i = 1, j = ndims-2; i < ndims; i++, j--){
+        for(long j = ndims-2; j >= 0; j--){
             strides[j] = strides[j+1]*dims[j+1];
         }
     }
