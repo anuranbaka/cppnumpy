@@ -890,12 +890,10 @@ class Mat {
         result.ndims = a.ndims;
         delete[] result.dims;
         result.dims = new size_type[a.ndims];
-        delete[] result.strides;
-        result.strides = new size_type[a.ndims];
         for(long i = 0; i < a.ndims; i++){
             result.dims[i] = a.dims[i];
-            result.strides[i] = a.strides[i];
         }
+        result.buildStrides();
         return result;
     }
 
