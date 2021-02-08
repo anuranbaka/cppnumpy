@@ -967,22 +967,20 @@ class MatIter{
             }
         }
         while(index < ind){
-            (*this)++;
+            ++(*this);
         }
     }
     
     bool operator==(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(index == b.index) return true;
-        else return false;
+        return index == b.index;
     }
 
     bool operator!=(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(index != b.index) return true;
-        else return false;
+        return index != b.index;
     }
 
     MatIter& operator++(){
@@ -1003,18 +1001,7 @@ class MatIter{
 
     MatIter operator++(int){
         MatIter<Type> clone(*this);
-        index++;
-        for(int i = matrix.ndims-1; i >= 0; i--){
-            dimind[i]++;
-            if(dimind[i] != matrix.dims[i]){
-                position += matrix.strides[i];
-                break;
-            }
-            else{
-                dimind[i] = 0;
-                position -= matrix.strides[i]*(matrix.dims[i]-1);
-            }
-        }
+        ++(*this);
         return clone;
     }
 
@@ -1043,7 +1030,7 @@ class Const_MatIter{
             }
         }
         while(index < ind){
-            (*this)++;
+            ++(*this);
         }
     }
 
@@ -1079,18 +1066,7 @@ class Const_MatIter{
 
     Const_MatIter operator++(int){
         Const_MatIter<Type> clone(*this);
-        index++;
-        for(int i = matrix.ndims-1; i >= 0; i--){
-            dimind[i]++;
-            if(dimind[i] != matrix.dims[i]){
-                position += matrix.strides[i];
-                break;
-            }
-            else{
-                dimind[i] = 0;
-                position -= matrix.strides[i]*(matrix.dims[i]-1);
-            }
-        }
+        ++(*this);
         return clone;
     }
 
