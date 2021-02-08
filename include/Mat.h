@@ -670,24 +670,7 @@ class Mat {
     }
 
     void print(){
-        iterator i = begin();
-        size_type n = 0;
-        
-        while(i != end()){
-            for(long j = 0; j < ndims; j++){
-                if(i.dimind[j] == 0) printf("[");
-            }
-            for(auto i : *this){
-                printf("%g", (double)i);
-                n++;
-                if(n%columns() != 0) printf(" ");
-                else if(n != rows()*columns()) printf("\n");
-            }
-            for(long j = 0; j < ndims; j++){
-                if(i.dimind[j] == dims[j]-1) printf("]\n");
-            }
-            i++;
-        }
+        print(stdout);
         return;
     }
 
