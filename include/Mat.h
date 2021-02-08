@@ -366,7 +366,6 @@ class Mat {
     }
 
     Mat<bool> operator&(bool b){
-        Mat<bool> temp({b},1);
         return broadcast(b, And<Type,bool>);
     }
 
@@ -376,7 +375,6 @@ class Mat {
     }
 
     Mat<bool> operator|(bool b){
-        Mat<bool> temp({b},1);
         return broadcast(b, Or<Type,bool>);
     }
 
@@ -387,7 +385,6 @@ class Mat {
     }
 
     Mat<bool> operator==(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, Equality<Type>);
     }
 
@@ -396,7 +393,6 @@ class Mat {
     }
 
     Mat<bool> operator!=(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, Inequality<Type>);
     }
 
@@ -405,7 +401,6 @@ class Mat {
     }
 
     Mat<bool> operator<(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, LessThan<Type>);
     }
 
@@ -414,7 +409,6 @@ class Mat {
     }
 
     Mat<bool> operator<=(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, LessThanEqual<Type>);
     }
 
@@ -423,7 +417,6 @@ class Mat {
     }
 
     Mat<bool> operator>(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, GreaterThan<Type>);
     }
 
@@ -432,7 +425,6 @@ class Mat {
     }
 
     Mat<bool> operator>=(Type b){
-        Mat<Type> temp({b},1);
         return broadcast(b, GreaterThanEqual<Type>);
     }
 
