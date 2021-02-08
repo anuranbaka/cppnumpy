@@ -723,12 +723,11 @@ class Mat {
         dest.ndims = ndims;
         delete[] dest.dims;
         dest.dims = new size_type[ndims];
-        delete[] dest.strides;
         dest.strides = new size_type[ndims];
         for(long i = 0; i < ndims; i++){
             dest.dims[i] = dims[i];
-            dest.strides[i] = strides[i];
         }
+        dest.buildStrides();
         copy(dest);
         return dest;
     }
