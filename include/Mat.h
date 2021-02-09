@@ -491,18 +491,38 @@ class Mat {
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
         if(ndims >= b.ndims){
             long dimdiff = ndims - b.ndims;
-            for(long n = dimdiff; n < ndims; n++){
-                errorCheck(dims[n] != 1 && b.dims[n - dimdiff] != 1 &&
-                            dims[n] != b.dims[n - dimdiff],
-                            "frames not aligned");
+            for(long n = 0; n < ndims; n++){
+                if(n >= dimdiff){
+                    if(dims[n] == 1 || dims[n] == b.dims[n-dimdiff]){
+                        errorCheck(out.dims[n] != b.dims[n-dimdiff],
+                        "output matrix shape does not match broadcast dimensions");
+                    }
+                    else errorCheck(out.dims[n] != dims[n],
+                        "output matrix shape does not match broadcast dimensions");
+                    errorCheck(dims[n] != 1 && b.dims[n - dimdiff] != 1 &&
+                                dims[n] != b.dims[n - dimdiff],
+                                "frames not aligned");
+                }
+                else errorCheck(out.dims[n] != dims[n],
+                    "output matrix shape does not match broadcast dimensions");
             }
         }
         else{
             long dimdiff = b.ndims - ndims;
             for(long n = dimdiff; n < b.ndims; n++){
-                errorCheck(dims[n - dimdiff] != 1 && b.dims[n] != 1 &&
-                            dims[n - dimdiff] != b.dims[n],
-                            "frames not aligned");
+                if(n >= dimdiff){
+                    if(dims[n-dimdiff] == 1 || dims[n-dimdiff] == b.dims[n]){
+                        errorCheck(out.dims[n] != b.dims[n],
+                        "output matrix shape does not match broadcast dimensions");
+                    }
+                    else errorCheck(out.dims[n] != dims[n-dimdiff],
+                        "output matrix shape does not match broadcast dimensions");
+                    errorCheck(dims[n - dimdiff] != 1 && b.dims[n] != 1 &&
+                                dims[n - dimdiff] != b.dims[n],
+                                "frames not aligned");
+                }
+                else errorCheck(out.dims[n] != b.dims[n],
+                    "output matrix shape does not match broadcast dimensions");
             }
         }
 
@@ -1143,16 +1163,17 @@ Mat<bool> Mat<Type>::operator!(){
     }
     return result;
 }
+
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
-    bool cast = false;
-    if(ndims != mask.ndims) cast = true;
+    bool bcast = false;
+    if(ndims != mask.ndims) bcast = true;
     for(long i = 0; i < ndims; i++){
-        if(mask.dims[i] != dims[i]) cast = true;
+        if(mask.dims[i] != dims[i]) bcast = true;
     }
 
     size_type newSize = 0;
-    if(cast){
+    if(bcast){
         Mat<bool> temp = (*this & false) | mask;
         for(auto i : temp){
             if(i) newSize++;
