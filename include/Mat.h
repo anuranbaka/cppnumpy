@@ -777,10 +777,13 @@ class Mat {
 
         long autodim = -1;
         if(static_cast<long>(sizeof...(arg)) < ndims){
-            errorCheck(static_cast<long>(sizeof...(arg)) < ndims-1, "not enough arguments for reshape");
+            errorCheck(static_cast<long>(sizeof...(arg)) < ndims-1
+                    || sizeof...(arg) == 0,
+                "not enough arguments for reshape");
             autodim = ndims-1;
         }
-        errorCheck(static_cast<long>(sizeof...(arg)) > 2*ndims, "too many arguments to reshape function");
+        errorCheck(static_cast<long>(sizeof...(arg)) > 2*ndims,
+            "too many arguments to reshape function");
         if(sizeof...(arg) == 0) return;
 
         long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
