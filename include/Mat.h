@@ -52,6 +52,21 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
+    template<class left, class right>
+    static void broadcastHelper(const Mat<left>& bigMat, const Mat<right>& smallMat, size_t* bigStrides, size_t* smallStrides){
+        long dimdiff = bigMat.ndims - smallMat.ndims;
+        for(long i = 0; i < dimdiff; i++){
+            bigStrides[i] = bigMat.strides[i];
+            smallStrides[i] = 0;
+        }
+        for(long i = dimdiff; i < bigMat.ndims; i++){
+            if(bigMat.dims[i] == 1) bigStrides[i] = 0;
+            else bigStrides[i] = bigMat.strides[i];
+            if(smallMat.dims[i-dimdiff] == 1) smallStrides[i] = 0;
+            else smallStrides[i] = smallMat.strides[i-dimdiff];
+        }
+    }
+
     public:
     void buildStrides(){
         errorCheck(ndims == 0, "ndims cannot equal 0");
@@ -489,8 +504,9 @@ class Mat {
 
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
+        long dimdiff;
         if(ndims >= b.ndims){
-            long dimdiff = ndims - b.ndims;
+            dimdiff = ndims - b.ndims;
             for(long n = 0; n < ndims; n++){
                 if(n >= dimdiff){
                     if(dims[n] == 1 || dims[n] == b.dims[n-dimdiff]){
@@ -508,7 +524,7 @@ class Mat {
             }
         }
         else{
-            long dimdiff = b.ndims - ndims;
+            dimdiff = b.ndims - ndims;
             for(long n = dimdiff; n < b.ndims; n++){
                 if(n >= dimdiff){
                     if(dims[n-dimdiff] == 1 || dims[n-dimdiff] == b.dims[n]){
@@ -526,16 +542,9 @@ class Mat {
             }
         }
 
-        size_type caststrideA[32];
-        size_type caststrideB[32];
-        for(long i = 0; i < out.ndims; i++){
-            if(ndims < out.ndims - i || dims[i - (out.ndims - ndims)] == 1)
-                caststrideA[i] = 0;
-            else caststrideA[i] = strides[i - (out.ndims - ndims)];
-            if(b.ndims < out.ndims - i || b.dims[i - (out.ndims - b.ndims)] == 1)
-                caststrideB[i] = 0;
-            else caststrideB[i] = b.strides[i - (out.ndims - b.ndims)];
-        }
+        size_type caststrideA[32], caststrideB[32];
+        if(ndims >= b.ndims) broadcastHelper(*this, b, caststrideA, caststrideB);
+        else broadcastHelper(b, *this, caststrideB, caststrideA);
 
         size_type posA = 0, posB = 0, posOut = 0;
         size_type dimind[32];
