@@ -987,19 +987,24 @@ class MatIter{
     size_t position = 0, index = 0;
     size_t dimind[32];
 
-    MatIter(Mat<Type>& mat, size_t ind) : matrix(mat){
-        for(int i = 0; i < matrix.ndims; i++){
+    MatIter(Mat<Type>& mat, size_t ind) : matrix(mat), index(ind){
+        mat.errorCheck(ind > mat.size(),
+            "iterator index greater than matrix size");
+        for(long i = 0; i < matrix.ndims; i++){
             dimind[i] = 0;
         }
         if(ind == matrix.size()){
-            index = ind;
             position = matrix.size();
-            for(int i = 0; i < matrix.ndims; i++){
+            for(long i = 0; i < matrix.ndims; i++){
                 position *= matrix.strides[i];
             }
+            return;
         }
-        while(index < ind){
-            ++(*this);
+        size_t temp = matrix.size(), remainder = index;
+        for(long i = 0; i < matrix.ndims; i++){
+            temp /= matrix.dims[i];
+            dimind[i] = remainder / temp;
+            remainder = index % temp;
         }
     }
     
