@@ -1183,31 +1183,13 @@ Mat<bool> Mat<Type>::operator!(){
 
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
-    bool bcast = false;
-    if(ndims != mask.ndims) bcast = true;
-    for(long i = 0; i < ndims; i++){
-        if(mask.dims[i] != dims[i]) bcast = true;
-    }
-
     size_type newSize = 0;
-    if(bcast){
-        Mat<bool> temp = (*this & false) | mask;
-        for(auto i : temp){
-            if(i) newSize++;
-        }
-        Mat<Type> out(newSize);
-        ito(temp, out);
-        return out;
+    for(auto i : mask){
+        if(i) newSize++;
     }
-    else{
-        for(auto i : mask){
-            if(i) newSize++;
-        }
-        Mat<Type> out(newSize);
-        ito(mask, out);
-        return out;
-
-    }
+    Mat<Type> out(newSize);
+    ito(mask, out);
+    return out;
 }
 
 template<class Type>
@@ -1235,32 +1217,16 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     errorCheck(out.ndims != 1,
                 "output of ito() function must be 1-dimensional");
 
-    bool cast = false;
-    if(ndims != mask.ndims) cast = true;
-    for(long i = 0; i < ndims; i++){
-        if(mask.dims[i] != dims[i]) cast = true;
-    }
     size_type newSize = 0;
-    Mat<bool> temp;
-    if(cast){
-        temp = (*this & false) | mask;
-        for(auto i : temp){
-            if(i) newSize++;
-        }
+    for(auto i : mask){
+        if(i) newSize++;
     }
-    else{
-        for(auto i : mask){
-            if(i) newSize++;
-        }
-    }
-
     errorCheck(out.size() < newSize, "insufficient space in output matrix");
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
 
     Mat<bool>::iterator j = mask.begin();
-    if(cast) j.matrix = temp;
     iterator k = out.begin();
     for(iterator i = begin(); i != end(); ++i, ++j){
         if(*j){

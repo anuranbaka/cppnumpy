@@ -120,10 +120,6 @@ int main (){
     fprintf(outFile, "fancy indexing to mask just elements 0,1,3,5 of matrix m\n");
     output.print(outFile);
 
-    output = o.i(mask);
-    fprintf(outFile, "using that same mask on matrix o\n");
-    output.print(outFile);
-
     output.scalarFill(false);
     m.ito(mask, output);
     fprintf(outFile, "applying the mask using ito\n");

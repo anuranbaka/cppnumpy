@@ -147,8 +147,6 @@ x.roi(-1)
  [7 8 9]]
 fancy indexing to mask just elements 0,1,3,5 of matrix m
 [1 2 4 6]
-using that same mask on matrix o
-[1 2 4 6 9 10 12 14]
 applying the mask using ito
 [1 2 4 6]
 fancy indexing to get just rows 1 and 3 of matrix y
