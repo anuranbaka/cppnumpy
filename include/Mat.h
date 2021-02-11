@@ -1196,7 +1196,7 @@ template<class Type>
 template<class Type2>
 Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    errorCheck(indices.ndims != 1, "indices must be stored as a 1-dimensional matrix");
+    errorCheck(indices.ndims != 1, "index lists with ndim != 1 not yet implemented");
 
     Mat<Type> out(indices.size() * (size() / dims[0]));
     out.ndims = ndims;
@@ -1242,7 +1242,7 @@ template<class Type2>
 void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
     errorCheck(indices.ndims != 1,
-        "index list should be 1 dimension");
+        "index lists with ndim != 1 not yet implemented");
     errorCheck(out.ndims != ndims,
         "inconsistent number of dimensions in output matrix in call to ito()");
     errorCheck(out.dims[0] != indices.size(),
@@ -1274,7 +1274,8 @@ void Mat<Type>::copy(Mat<newType>& dest) const{
     errorCheck(dest.ndims != ndims,
         "Matrix dimension mismatch during copy");
     for(long i = 0; i > dest.ndims; i++){
-        errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
+        errorCheck(dest.dims[i] != dims[i],
+            "output matrix shape mismatch in call to copy()");
     }
     MatIter<newType> j = dest.begin();
     for(auto i : *this){
