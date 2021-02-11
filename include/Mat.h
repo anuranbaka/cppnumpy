@@ -1255,23 +1255,16 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
     size_type offset = size() / dims[0];
     iterator dimend = begin();
     iterator i = begin(); //for iterating the current matrix
-    size_type j = 0; //for iterating the index list
-    for(iterator k = out.begin(); k != out.end(); ++k){ //for iterating the output
-        if(i == dimend){
-            i.index = indices(j) * offset;
-            i.position = indices(j) * strides[0];
-            if(j+1 == indices.size()){
-                dimend.index = indices.size();
-                dimend.position = 0;
-            }
-            else{
-                dimend.index = (indices(j) + 1) * offset;
-                dimend.position = (indices(j) + 1) * strides[0];
-            }
-            ++j;
+    iterator k = out.begin();
+
+    for(size_type j = 0; j < indices.size();j++){
+        i.index = indices(j) * offset;
+        i.position = indices(j) * offset;
+        dimend.index = (indices(j) + 1) * offset;
+        for(; i!= dimend; ++i){
+            *k = *i;
+            ++k;
         }
-        *k = *i;
-        ++i;
     }
 }
 
