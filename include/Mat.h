@@ -52,9 +52,32 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
-    template<class left, class right>
-    static void broadcastHelper(const Mat<left>& bigMat, const Mat<right>& smallMat, size_t* bigStrides, size_t* smallStrides){
+    template<class left, class right, class Type3>
+    static void broadcastHelper(const Mat<left>& bigMat, const Mat<right>& smallMat,
+                                size_t* bigStrides, size_t* smallStrides,
+                                Mat<Type3>& out){
         long dimdiff = bigMat.ndims - smallMat.ndims;
+        bigMat.errorCheck(out.ndims != bigMat.ndims,
+            "output matrix ndims not equal to broadcasted ndims");
+        for(int i = 0; i < dimdiff; i++){
+            bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                "broadcast output matrix shape mismatch");
+        }
+        for(int i = dimdiff; i < bigMat.ndims; i++){
+            if(bigMat.dims[i] != 1 && smallMat.dims[i-dimdiff] != 1){
+                bigMat.errorCheck(bigMat.dims[i] != smallMat.dims[i-dimdiff],
+                    "operand frames not aligned");
+                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                    "broadcast output matrix shape mismatch");
+            }
+            if(bigMat.dims[i] == 1)
+                bigMat.errorCheck(out.dims[i] != smallMat.dims[i-dimdiff],
+                "broadcast output matrix shape mismatch");
+            if(smallMat.dims[i-dimdiff] == 1)
+                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                "broadcast output matrix shape mismatch");
+        }
+
         for(long i = 0; i < dimdiff; i++){
             bigStrides[i] = bigMat.strides[i];
             smallStrides[i] = 0;
@@ -504,47 +527,9 @@ class Mat {
 
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        long dimdiff;
-        if(ndims >= b.ndims){
-            dimdiff = ndims - b.ndims;
-            for(long n = 0; n < ndims; n++){
-                if(n >= dimdiff){
-                    if(dims[n] == 1 || dims[n] == b.dims[n-dimdiff]){
-                        errorCheck(out.dims[n] != b.dims[n-dimdiff],
-                        "output matrix shape does not match broadcast dimensions");
-                    }
-                    else errorCheck(out.dims[n] != dims[n],
-                        "output matrix shape does not match broadcast dimensions");
-                    errorCheck(dims[n] != 1 && b.dims[n - dimdiff] != 1 &&
-                                dims[n] != b.dims[n - dimdiff],
-                                "frames not aligned");
-                }
-                else errorCheck(out.dims[n] != dims[n],
-                    "output matrix shape does not match broadcast dimensions");
-            }
-        }
-        else{
-            dimdiff = b.ndims - ndims;
-            for(long n = dimdiff; n < b.ndims; n++){
-                if(n >= dimdiff){
-                    if(dims[n-dimdiff] == 1 || dims[n-dimdiff] == b.dims[n]){
-                        errorCheck(out.dims[n] != b.dims[n],
-                        "output matrix shape does not match broadcast dimensions");
-                    }
-                    else errorCheck(out.dims[n] != dims[n-dimdiff],
-                        "output matrix shape does not match broadcast dimensions");
-                    errorCheck(dims[n - dimdiff] != 1 && b.dims[n] != 1 &&
-                                dims[n - dimdiff] != b.dims[n],
-                                "frames not aligned");
-                }
-                else errorCheck(out.dims[n] != b.dims[n],
-                    "output matrix shape does not match broadcast dimensions");
-            }
-        }
-
         size_type caststrideA[32], caststrideB[32];
-        if(ndims >= b.ndims) broadcastHelper(*this, b, caststrideA, caststrideB);
-        else broadcastHelper(b, *this, caststrideB, caststrideA);
+        if(ndims >= b.ndims) broadcastHelper(*this, b, caststrideA, caststrideB, out);
+        else broadcastHelper(b, *this, caststrideB, caststrideA, out);
 
         size_type posA = 0, posB = 0, posOut = 0;
         size_type dimind[32];
