@@ -505,15 +505,15 @@ class Mat {
             out.strides = new size_type[b.ndims];
         }
 
-        for(long i = 0; i < out.ndims; i++){
-            if(i < dimdiff) out.dims[i] = big_dim[i];
-            else{
-                errorCheck(big_dim[i] != small_dim[i - dimdiff] &&
-                            big_dim[i] != 1 && small_dim[i - dimdiff] != 1,
-                            "operand frames not aligned");
-                if(big_dim[i] >= small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
-                else out.dims[i] = small_dim[i - dimdiff];
-            }
+        for(long i = 0; i < dimdiff; i++){
+            out.dims[i] = big_dim[i];
+        }
+        for(long i = dimdiff; i < out.ndims; i++){
+            errorCheck(big_dim[i] != small_dim[i - dimdiff] &&
+                        big_dim[i] != 1 && small_dim[i - dimdiff] != 1,
+                        "operand frames not aligned");
+            if(big_dim[i] >= small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
+            else out.dims[i] = small_dim[i - dimdiff];
         }
         out.buildStrides();
 
