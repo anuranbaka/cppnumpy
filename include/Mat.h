@@ -978,6 +978,7 @@ class MatIter{
         for(long i = 0; i < matrix.ndims; i++){
             coord[i] = 0;
         }
+        if(ind == 0) return;
         if(ind == matrix.size()){
             position = matrix.size();
             for(long i = 0; i < matrix.ndims; i++){
@@ -1044,6 +1045,7 @@ class Const_MatIter{
         for(int i = 0; i < matrix.ndims; i++){
             coord[i] = 0;
         }
+        if(ind == 0) return;
         if(ind == matrix.size()){
             index = ind;
             position = matrix.size();
