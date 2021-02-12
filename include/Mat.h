@@ -1170,6 +1170,10 @@ Mat<bool> Mat<Type>::operator!(){
 
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
+    for(long i = 0; i < ndims; i++){
+        errorCheck(mask.dims[i] != dims[i],
+            "mask index broadcasting not yet implemented\n");
+    }
     size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
