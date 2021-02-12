@@ -527,29 +527,29 @@ class Mat {
 
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        size_type caststrideA[32], caststrideB[32];
-        if(ndims >= b.ndims) broadcastHelper(*this, b, caststrideA, caststrideB, out);
-        else broadcastHelper(b, *this, caststrideB, caststrideA, out);
+        size_type effstrideA[32], effstrideB[32];
+        if(ndims >= b.ndims) broadcastHelper(*this, b, effstrideA, effstrideB, out);
+        else broadcastHelper(b, *this, effstrideB, effstrideA, out);
 
         size_type posA = 0, posB = 0, posOut = 0;
-        size_type dimind[32];
+        size_type coord[32];
         for(long i = 0; i < out.ndims; i++){
-            dimind[i] = 0;
+            coord[i] = 0;
         }
         for(size_type i = 0; i < out.size(); i++){
             out.data[posOut] = f(this->data[posA],b.data[posB]);
             for(long j = out.ndims-1; j >= 0; j--){
-                dimind[j]++;
-                if(dimind[j] != out.dims[j]){
-                    posA += caststrideA[j];
-                    posB += caststrideB[j];
+                coord[j]++;
+                if(coord[j] != out.dims[j]){
+                    posA += effstrideA[j];
+                    posB += effstrideB[j];
                     posOut += out.strides[j];
                     break;
                 }
                 else{
-                    dimind[j] = 0;
-                    posA -= caststrideA[j]*(out.dims[j]-1);
-                    posB -= caststrideB[j]*(out.dims[j]-1);
+                    coord[j] = 0;
+                    posA -= effstrideA[j]*(out.dims[j]-1);
+                    posB -= effstrideB[j]*(out.dims[j]-1);
                     posOut -= out.strides[j]*(out.dims[j]-1);
                 }
             }
@@ -694,10 +694,10 @@ class Mat {
         long endframe;
 
         while(i != end()){
-            if(i.dimind[ndims-1] == 0){
+            if(i.coord[ndims-1] == 0){
                 j = ndims-1;
                 for(; j >= 0; j--){
-                    if(i.dimind[j] != 0){
+                    if(i.coord[j] != 0){
                         break;
                     }
                 }
@@ -709,11 +709,11 @@ class Mat {
 
             fprintf(output, "%g", (double)(*i));
 
-            if(i.dimind[ndims-1] != dims[ndims-1]-1) fprintf(output, " ");
+            if(i.coord[ndims-1] != dims[ndims-1]-1) fprintf(output, " ");
             else{
                 endframe = 0;
                 for(j = ndims - 1; j >= 0; j--){
-                    if(i.dimind[j] == dims[j]-1){
+                    if(i.coord[j] == dims[j]-1){
                         fprintf(output, "]");
                         endframe++;
                     }
@@ -970,13 +970,13 @@ class MatIter{
 
     Mat<Type>& matrix;
     size_t position = 0, index = 0;
-    size_t dimind[32];
+    size_t coord[32];
 
     MatIter(Mat<Type>& mat, size_t ind) : matrix(mat), index(ind){
         mat.errorCheck(ind > mat.size(),
             "iterator index greater than matrix size");
         for(long i = 0; i < matrix.ndims; i++){
-            dimind[i] = 0;
+            coord[i] = 0;
         }
         if(ind == matrix.size()){
             position = matrix.size();
@@ -988,7 +988,7 @@ class MatIter{
         size_t temp = matrix.size(), remainder = index;
         for(long i = 0; i < matrix.ndims; i++){
             temp /= matrix.dims[i];
-            dimind[i] = remainder / temp;
+            coord[i] = remainder / temp;
             remainder = index % temp;
         }
     }
@@ -1008,13 +1008,13 @@ class MatIter{
     MatIter& operator++(){
         index++;
         for(int i = matrix.ndims-1; i >= 0; i--){
-            dimind[i]++;
-            if(dimind[i] != matrix.dims[i]){
+            coord[i]++;
+            if(coord[i] != matrix.dims[i]){
                 position += matrix.strides[i];
                 break;
             }
             else{
-                dimind[i] = 0;
+                coord[i] = 0;
                 position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
@@ -1038,11 +1038,11 @@ class Const_MatIter{
 
     const Mat<Type>& matrix;
     size_t position = 0, index = 0;
-    size_t dimind[32];
+    size_t coord[32];
 
     Const_MatIter(const Mat<Type>& mat, size_t ind) : matrix(mat){
         for(int i = 0; i < matrix.ndims; i++){
-            dimind[i] = 0;
+            coord[i] = 0;
         }
         if(ind == matrix.size()){
             index = ind;
@@ -1073,13 +1073,13 @@ class Const_MatIter{
     Const_MatIter& operator++(){
         index++;
         for(int i = matrix.ndims-1; i >= 0; i--){
-            dimind[i]++;
-            if(dimind[i] != matrix.dims[i]){
+            coord[i]++;
+            if(coord[i] != matrix.dims[i]){
                 position += matrix.strides[i];
                 break;
             }
             else{
-                dimind[i] = 0;
+                coord[i] = 0;
                 position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
