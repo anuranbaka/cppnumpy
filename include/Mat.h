@@ -54,8 +54,8 @@ class Mat {
 
     template<class left, class right, class Type3>
     static void broadcastHelper(const Mat<left>& bigMat, const Mat<right>& smallMat,
-                                size_t* bigStrides, size_t* smallStrides,
-                                Mat<Type3>& out){
+                                Mat<Type3>& out,
+                                size_t* bigStrides, size_t* smallStrides){
         long dimdiff = bigMat.ndim - smallMat.ndim;
         bigMat.errorCheck(out.ndim != bigMat.ndim,
             "output matrix ndim not equal to broadcasted ndim");
@@ -528,8 +528,8 @@ class Mat {
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
         size_type effstrideA[32], effstrideB[32];
-        if(ndim >= b.ndim) broadcastHelper(*this, b, effstrideA, effstrideB, out);
-        else broadcastHelper(b, *this, effstrideB, effstrideA, out);
+        if(ndim >= b.ndim) broadcastHelper(*this, b, out, effstrideA, effstrideB);
+        else broadcastHelper(b, *this, effstrideB, out, effstrideA);
 
         size_type posA = 0, posB = 0, posOut = 0;
         size_type coord[32];
@@ -761,15 +761,9 @@ class Mat {
             "Cannot reshape non-contiguous matrix");
 
         long autodim = -1;
-        if(static_cast<long>(sizeof...(arg)) < ndim){
-            errorCheck(static_cast<long>(sizeof...(arg)) < ndim-1
-                    || sizeof...(arg) == 0,
-                "not enough arguments for reshape");
-            autodim = ndim-1;
-        }
         errorCheck(static_cast<long>(sizeof...(arg)) > 32,
             "too many arguments to reshape function");
-        if(sizeof...(arg) == 0) return;
+        errorCheck(sizeof...(arg) == 0, "reshape requires at least one parameter");
 
         long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
         size_type shapecheck = 1, autoLength;
@@ -1247,10 +1241,11 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
     iterator i = begin(); //for iterating the current matrix
     iterator k = out.begin();
 
+    size_type offset = size() / dims[0];
     for(size_type j = 0; j < indices.size();j++){
-        i.index = indices(j) * strides[0];
+        i.index = indices(j) * offset;
         i.position = indices(j) * strides[0];
-        dimend.index = (indices(j) + 1) * strides[0];
+        dimend.index = (indices(j) + 1) * offset;
         for(; i!= dimend; ++i){
             *k = *i;
             ++k;
