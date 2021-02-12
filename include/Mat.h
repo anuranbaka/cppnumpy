@@ -1243,15 +1243,14 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
         "output matrix shape mismatch in call to ito()");
     }
 
-    size_type offset = size() / dims[0];
     iterator dimend = begin();
     iterator i = begin(); //for iterating the current matrix
     iterator k = out.begin();
 
     for(size_type j = 0; j < indices.size();j++){
-        i.index = indices(j) * offset;
-        i.position = indices(j) * offset;
-        dimend.index = (indices(j) + 1) * offset;
+        i.index = indices(j) * strides[0];
+        i.position = indices(j) * strides[0];
+        dimend.index = (indices(j) + 1) * strides[0];
         for(; i!= dimend; ++i){
             *k = *i;
             ++k;
