@@ -965,12 +965,19 @@ class MatIter{
     Mat<Type>& matrix;
     size_t position = 0, index = 0;
     size_t coord[32];
+    size_t eff_last_dim;
 
     MatIter(Mat<Type>& mat, size_t ind) : matrix(mat), index(ind){
         mat.errorCheck(ind > mat.size(),
             "iterator index greater than matrix size");
         for(long i = 0; i < matrix.ndim; i++){
             coord[i] = 0;
+        }
+        for(long i = matrix.ndim-1; i >= 0; i--){
+            if(matrix.dims[i] != 1){
+                eff_last_dim = i;
+                break;
+            }
         }
         if(ind == 0) return;
         if(ind == matrix.size()){
@@ -1002,7 +1009,7 @@ class MatIter{
 
     MatIter& operator++(){
         index++;
-        for(int i = matrix.ndim-1; i >= 0; i--){
+        for(int i = eff_last_dim; i >= 0; i--){
             coord[i]++;
             if(coord[i] != matrix.dims[i]){
                 position += matrix.strides[i];
@@ -1034,10 +1041,17 @@ class Const_MatIter{
     const Mat<Type>& matrix;
     size_t position = 0, index = 0;
     size_t coord[32];
+    size_t eff_last_dim;
 
     Const_MatIter(const Mat<Type>& mat, size_t ind) : matrix(mat){
         for(int i = 0; i < matrix.ndim; i++){
             coord[i] = 0;
+        }
+        for(long i = matrix.ndim-1; i >= 0; i--){
+            if(matrix.dims[i] != 1){
+                eff_last_dim = i;
+                break;
+            }
         }
         if(ind == 0) return;
         if(ind == matrix.size()){
@@ -1068,7 +1082,7 @@ class Const_MatIter{
 
     Const_MatIter& operator++(){
         index++;
-        for(int i = matrix.ndim-1; i >= 0; i--){
+        for(int i = eff_last_dim; i >= 0; i--){
             coord[i]++;
             if(coord[i] != matrix.dims[i]){
                 position += matrix.strides[i];
