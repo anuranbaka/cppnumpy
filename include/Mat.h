@@ -529,7 +529,7 @@ class Mat {
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
         size_type effstrideA[32], effstrideB[32];
         if(ndim >= b.ndim) broadcastHelper(*this, b, out, effstrideA, effstrideB);
-        else broadcastHelper(b, *this, effstrideB, out, effstrideA);
+        else broadcastHelper(b, *this, out, effstrideB, effstrideA);
 
         size_type posA = 0, posB = 0, posOut = 0;
         size_type coord[32];
