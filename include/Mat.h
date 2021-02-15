@@ -52,7 +52,54 @@ class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
 
+    template<class left, class right, class Type3>
+    static void broadcastHelper(const Mat<left>& bigMat, const Mat<right>& smallMat,
+                                Mat<Type3>& out,
+                                size_t* bigStrides, size_t* smallStrides){
+        long dimdiff = bigMat.ndim - smallMat.ndim;
+        bigMat.errorCheck(out.ndim != bigMat.ndim,
+            "output matrix ndim not equal to broadcasted ndim");
+        for(int i = 0; i < dimdiff; i++){
+            bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                "broadcast output matrix shape mismatch");
+        }
+        for(int i = dimdiff; i < bigMat.ndim; i++){
+            if(bigMat.dims[i] != 1 && smallMat.dims[i-dimdiff] != 1){
+                bigMat.errorCheck(bigMat.dims[i] != smallMat.dims[i-dimdiff],
+                    "operand frames not aligned");
+                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                    "broadcast output matrix shape mismatch");
+            }
+            if(bigMat.dims[i] == 1)
+                bigMat.errorCheck(out.dims[i] != smallMat.dims[i-dimdiff],
+                "broadcast output matrix shape mismatch");
+            if(smallMat.dims[i-dimdiff] == 1)
+                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
+                "broadcast output matrix shape mismatch");
+        }
+
+        for(long i = 0; i < dimdiff; i++){
+            bigStrides[i] = bigMat.strides[i];
+            smallStrides[i] = 0;
+        }
+        for(long i = dimdiff; i < bigMat.ndim; i++){
+            if(bigMat.dims[i] == 1) bigStrides[i] = 0;
+            else bigStrides[i] = bigMat.strides[i];
+            if(smallMat.dims[i-dimdiff] == 1) smallStrides[i] = 0;
+            else smallStrides[i] = smallMat.strides[i-dimdiff];
+        }
+    }
+
     public:
+    void buildStrides(){
+        errorCheck(ndim == 0, "ndim cannot equal 0");
+        if(strides != NULL) delete[] strides;
+        strides = new size_type[ndim];
+        strides[ndim-1] = 1;
+        for(long j = ndim-2; j >= 0; j--){
+            strides[j] = strides[j+1]*dims[j+1];
+        }
+    }
 
     typedef MatIter<Type> iterator;
     typedef Const_MatIter<Type> const_iterator;
@@ -62,9 +109,9 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    long ndims = 2;
+    long ndim = 2;
     size_type* dims;
-    size_type* strides;
+    size_type* strides = NULL;
     Type* memory; 
     Type* data;
     int32_t* refCount;
@@ -84,12 +131,7 @@ class Mat {
     }
 
     iterator end(){
-        if(ndims == 2){
-            return iterator(*this, strides[0]*columns() + strides[1]*rows());
-        }
-        else{
-            return iterator(*this, strides[0]*columns());
-        }
+        return iterator(*this, size());
     }
 
     const_iterator begin() const{
@@ -97,86 +139,83 @@ class Mat {
     }
 
     const_iterator end() const{
-        if(ndims == 2){
-            return const_iterator(*this, strides[0]*columns() + strides[1]*rows());
-        }
-        else{
-            return const_iterator(*this, strides[0]*columns());
-        }
+        return const_iterator(*this, size());
     }
 
     size_type size() const{
-        if(ndims == 0) return 0;
+        if(ndim == 0) return 0;
         size_type result = dims[0];
-        for(long i = 1; i < ndims; i++){
+        for(long i = 1; i < ndim; i++){
             result *= dims[i];
         }
         return result;
     }
 
     size_type rows() const{
-        errorCheck(ndims < 2, "1d matrix has no rows");
-        return this->dims[ndims - 2];
+        errorCheck(ndim < 2, "1d matrix has no rows");
+        return this->dims[ndim - 2];
     }
 
     size_type columns() const{
-        return this->dims[ndims - 1];
+        return this->dims[ndim - 1];
     }
 
-    bool inbounds(size_type a){
-        if(a >= 0 && a < columns()) return true;
-        else return false;
-    }
-
-    bool inbounds(size_type a, size_type b){
-        if(a >= 0 && a < rows() && b >= 0 && b < columns()) return true;
-        else return false;
-    }
-
-    bool isContiguous() const{
-        if(strides[0] != 1) return false;
-        if(ndims == 2 && strides[1] != dims[1]) return false;
-        else if(ndims > 2) errorCheck(true,
-            "n-dimensional contiguity check not yet implemented.");
+    template<typename... arg>
+    bool inbounds(const arg... ind){
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        for(int i = 0; i < ndim; i++){
+            if(temp[i] >= dims[i] || temp[i] < 0) return false;
+        }
         return true;
     }
 
-    Mat(size_type a = 1){
+    bool isContiguous() const{
+        size_type check = 1;
+        for(long i = ndim - 1; i >= 0; i--){
+            if(strides[i] != check) return false;
+            check *= dims[i];
+        }
+        return true;
+    }
+
+    Mat(){
         refCount = new int32_t;
         *refCount = 1;
-        ndims = 1;
-        dims = new size_type[ndims];
-        dims[0] = a;
-        strides = new size_type[ndims];
-        strides[0] = 1;
-        memory = new Type[a];
+
+        ndim = 1;
+        dims = new size_type[ndim];
+        dims[0] = 0;
+        buildStrides();
+
+        memory = new Type[0];
         data = memory;
     }
 
-    Mat(size_type a, size_type b){
+    template<typename... arg>
+    Mat(const arg... ind){
         refCount = new int32_t;
         *refCount = 1;
-        dims = new size_type[ndims];
-        dims[0] = a;
-        dims[1] = b;
-        strides = new size_type[ndims];
-        strides[0] = 1;
-        strides[1] = b;
-        memory = new Type[a*b];
+
+        ndim = sizeof...(arg);
+        errorCheck(ndim > 32, "too many dimensions (<=32 allowed)");
+
+        dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
+        buildStrides();
+     
+        memory = new Type[size()];
         data = memory;
     }
 
-    Mat(std::initializer_list<Type> list, size_type a = 0){
+    Mat(std::initializer_list<Type> list){
         refCount = new int32_t;
         *refCount = 1;
-        ndims = 1;
-        dims = new size_type[ndims];
+
+        ndim = 1;
+        dims = new size_type[ndim];
         dims[0] = list.size();
-        errorCheck(a != 0 && list.size() != a,
-            "Initializer list size inconsistent with dimensions");
-        strides = new size_type[ndims];
-        strides[0] = 1;
-        memory = new Type[a];
+        buildStrides();
+
+        memory = new Type[list.size()];
         data = memory;
         size_type i = 0;
         for(auto elem : list){
@@ -185,18 +224,20 @@ class Mat {
         }
     }
 
-    Mat(std::initializer_list<Type> list, size_type a, size_type b){
+    template<typename... arg>
+    Mat(std::initializer_list<Type> list, const arg... ind){
         refCount = new int32_t;
         *refCount = 1;
-        dims = new size_type[ndims];
-        dims[0] = a;
-        dims[1] = b; // make this variadic
-        errorCheck(list.size() != a*b,
+
+        ndim = sizeof...(arg);
+        errorCheck(ndim > 32, "too many dimensions (<=32 allowed)");
+
+        dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
+        errorCheck(list.size() != size(),
             "Initializer list size inconsistent with dimensions");
-        strides = new size_type[ndims];
-        strides[0] = 1;
-        strides[1] = columns();
-        memory = new Type[a*b];
+        buildStrides();
+     
+        memory = new Type[size()];
         data = memory;
         size_type i = 0;
         for(auto elem : list){
@@ -208,13 +249,13 @@ class Mat {
     Mat(const Mat& b){
         refCount = b.refCount;
         (*refCount)++;
-        ndims = b.ndims;
-        dims = new size_type[ndims];
-        for(long i = 0; i < ndims; i++){
+        ndim = b.ndim;
+        dims = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
             dims[i] = b.dims[i];
         }
-        strides = new size_type[ndims];
-        for(long i = 0; i < ndims; i++){
+        strides = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
             strides[i] = b.strides[i];
         }
         memory = b.memory;
@@ -242,20 +283,24 @@ class Mat {
         delete []strides;
     }
 
-    Type& operator() (size_type a){
-        return data[a*strides[0]];
+    template<typename... arg>
+    Type& operator() (const arg... ind){
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        size_type offset = 0;
+        for(long i = 0; i < ndim; i++){
+            offset += temp[i]*strides[i];
+        }
+        return data[offset];
     }
 
-    Type& operator() (size_type a, size_type b){
-        return data[a*strides[1] + b*strides[0]];
-    }
-
-    const Type& operator() (size_type a) const{
-        return data[a*strides[0]];
-    }
-
-    const Type& operator() (size_type a, size_type b) const{
-        return data[a*strides[1] + b*strides[0]];
+    template<typename... arg>
+    const Type& operator() (const arg... ind) const{
+        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        size_type offset = 0;
+        for(long i = 0; i < ndim; i++){
+            offset += temp[i]*strides[i];
+        }
+        return data[offset];
     }
 
     Type& operator() (iterator i){
@@ -266,13 +311,13 @@ class Mat {
         this->~Mat<Type>();
         refCount = b.refCount;
         (*refCount)++;
-        ndims = b.ndims;
-        dims = new size_type[ndims];
-        for(long i = 0; i < ndims; i++){
+        ndim = b.ndim;
+        dims = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
             dims[i] = b.dims[i];
         }
-        strides = new size_type[ndims];
-        for(long i = 0; i < ndims; i++){
+        strides = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
             strides[i] = b.strides[i];
         }
         memory = b.memory;
@@ -359,7 +404,6 @@ class Mat {
     }
 
     Mat<bool> operator&(bool b){
-        Mat<bool> temp({b},1,1);
         return broadcast(b, And<Type,bool>);
     }
 
@@ -369,26 +413,16 @@ class Mat {
     }
 
     Mat<bool> operator|(bool b){
-        Mat<bool> temp({b},1,1);
         return broadcast(b, Or<Type,bool>);
     }
 
-    Mat<bool> operator!(){
-        Mat<bool> result(rows(),columns());
-        for(size_type i = 0; i < result.rows(); i++){
-            for(size_type j = 0; j < result.columns(); j++){
-                result(i,j) = !(static_cast<bool>(operator()(i,j)));
-            }
-        }
-        return result;
-    }
+    Mat<bool> operator!(); // defined below
 
     Mat<bool> operator==(const Mat<Type> b){
         return broadcast(b, Equality<Type>);
     }
 
     Mat<bool> operator==(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, Equality<Type>);
     }
 
@@ -397,7 +431,6 @@ class Mat {
     }
 
     Mat<bool> operator!=(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, Inequality<Type>);
     }
 
@@ -406,7 +439,6 @@ class Mat {
     }
 
     Mat<bool> operator<(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, LessThan<Type>);
     }
 
@@ -415,7 +447,6 @@ class Mat {
     }
 
     Mat<bool> operator<=(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, LessThanEqual<Type>);
     }
 
@@ -424,7 +455,6 @@ class Mat {
     }
 
     Mat<bool> operator>(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, GreaterThan<Type>);
     }
 
@@ -433,7 +463,6 @@ class Mat {
     }
 
     Mat<bool> operator>=(Type b){
-        Mat<Type> temp({b},1,1);
         return broadcast(b, GreaterThanEqual<Type>);
     }
 
@@ -453,105 +482,102 @@ class Mat {
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
-        if(ndims == 2){
-            int r,c;
-            if(dims[0] >= b.dims[0]) r = dims[0];
-            else r = b.dims[0];
-            if(dims[1] >= b.dims[1]) c = dims[1];
-            else c = b.dims[1];
-            Mat<Type3> out(r,c);
-            broadcast(b, f, out);
-            return out;
+        Mat<Type3> out;
+        delete[] out.dims;
+
+        size_type* big_dim;
+        size_type* small_dim;
+        long dimdiff;
+        if(ndim >= b.ndim){
+            big_dim = dims;
+            small_dim = b.dims;
+            dimdiff = ndim - b.ndim;
+            out.ndim = ndim;
+            out.dims = new size_type[ndim];
+            out.strides = new size_type[ndim];
         }
-        else if(ndims == 1){
-            int c;
-            if(dims[0] >= b.dims[0]) c = dims[0];
-            else c = b.dims[0];
-            Mat<Type3> out(c);
-            broadcast(b, f, out);
-            return out;
+        else{
+            big_dim = b.dims;
+            small_dim = dims;
+            dimdiff = b.ndim - ndim;
+            out.ndim = b.ndim;
+            out.dims = new size_type[b.ndim];
+            out.strides = new size_type[b.ndim];
         }
-        else errorCheck(true, "n-dimensional broadcast not yet implemented");
-        return Mat<Type3>::zeros(0);
+
+        for(long i = 0; i < dimdiff; i++){
+            out.dims[i] = big_dim[i];
+        }
+        for(long i = dimdiff; i < out.ndim; i++){
+            errorCheck(big_dim[i] != small_dim[i - dimdiff] &&
+                        big_dim[i] != 1 && small_dim[i - dimdiff] != 1,
+                        "operand frames not aligned");
+            if(big_dim[i] >= small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
+            else out.dims[i] = small_dim[i - dimdiff];
+        }
+        out.buildStrides();
+
+        delete[] out.memory;
+        out.memory = new Type3[out.size()];
+        out.data = out.memory;
+
+        broadcast(b, f, out);
+        return out;
     }
 
     template<class Type2, class Type3>
     void broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        for(long n = 0; n < ndims; n++){
-            if(dims[n] > b.dims[n]){
-                errorCheck(b.dims[n] != 1 || out.dims[n] != dims[n],
-                            "frames not aligned");
-            }
-            else if(dims[n] < b.dims[n]){
-                errorCheck(dims[n] != 1 || out.dims[n] != b.dims[n],
-                            "frames not aligned");
-            }
-            else{
-                errorCheck(out.dims[n] != dims[n],
-                            "broadcast output matrix frame misaligned");
-            }
-        }
-        if(ndims == 2){
-            size_type resultRow, resultCol, leftRow,
-                        leftCol, rightRow, rightCol;
-            for(size_type i = 0; i < out.size(); i++){
-                resultRow = i/out.columns();
-                resultCol = i%out.columns();
-                leftRow = i/out.columns()%rows();
-                leftCol = i%columns();
-                rightRow = i/out.columns()%b.rows();
-                rightCol = i%b.columns();
+        size_type effstrideA[32], effstrideB[32];
+        if(ndim >= b.ndim) broadcastHelper(*this, b, out, effstrideA, effstrideB);
+        else broadcastHelper(b, *this, out, effstrideB, effstrideA);
 
-                out(resultRow, resultCol) =
-                    (*f)(operator()(leftRow, leftCol),
-                        b(rightRow, rightCol));
-            }
+        size_type posA = 0, posB = 0, posOut = 0;
+        size_type coord[32];
+        for(long i = 0; i < out.ndim; i++){
+            coord[i] = 0;
         }
-        else{
-            for(size_type i = 0; i < out.size(); i++){
-                out(i) = (*f)(operator()(i%columns()), b(i%b.columns()));
+        for(size_type i = 0; i < out.size(); i++){
+            out.data[posOut] = f(this->data[posA],b.data[posB]);
+            for(long j = out.ndim-1; j >= 0; j--){
+                coord[j]++;
+                if(coord[j] != out.dims[j]){
+                    posA += effstrideA[j];
+                    posB += effstrideB[j];
+                    posOut += out.strides[j];
+                    break;
+                }
+                else{
+                    coord[j] = 0;
+                    posA -= effstrideA[j]*(out.dims[j]-1);
+                    posB -= effstrideB[j]*(out.dims[j]-1);
+                    posOut -= out.strides[j]*(out.dims[j]-1);
+                }
             }
         }
     }
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
-        errorCheck(ndims > 2,
-            "broadcast of 3 or more dimensions not yet implemented");
-        if(ndims == 2){
-            Mat<Type2> temp({b},1,1);
-            return broadcast(temp, *f);
-        }
-        else{
-            Mat<Type2> temp({b},1);
-            return broadcast(temp, *f);
-        }
+        Mat<Type2> temp({b},1);
+        return broadcast(temp, *f);
     }
 
     template<class Type2, class Type3>
     void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        errorCheck(ndims > 2,
-            "broadcast of 3 or more dimensions not yet implemented");
-        if(ndims == 2){
-            Mat<Type2> temp({b},1,1);
-            return broadcast(temp, *f, out);
-        }
-        else{
-            Mat<Type2> temp({b},1);
-            return broadcast(temp, *f, out);
-        }
+        Mat<Type2> temp({b},1);
+        return broadcast(temp, *f, out);
     }
 
     Mat operator- (){
-        Mat<Type> temp({-1},1);
-        if(ndims == 2){
-            temp.reshape(1,1);
+        Mat<Type> temp(copy());
+        for(auto& i : temp){
+            i *= -1;
         }
-        return broadcast(temp, Multiply<Type>);
+        return temp;
     }
 
     Mat operator^ (const Mat<Type> &b){
-        errorCheck(ndims != 2 || b.ndims != 2,
+        errorCheck(ndim != 2 || b.ndim != 2,
             "Matrix multiply only available on 2d matrices");
         errorCheck(columns() != b.rows(), "Matrix size mismatch");
         Mat<Type> result(rows(),b.columns());
@@ -568,51 +594,36 @@ class Mat {
         return result;
     }
 
-    Mat roi(int dim1Start = -1, int dim1End = -1,
-            int dim2Start = -1, int dim2End = -1){
-        if(ndims == 1){
-            errorCheck(ndims == 1 && (dim2Start != -1 || dim2End != -1),
-                "Too many arguments for 1d matrix");
-            errorCheck(dim1Start < -1 ||
-                dim1Start > static_cast<int>(columns()),
-                "roi argument 1 invalid");
-            errorCheck(dim1End < -1 ||
-                dim1End > static_cast<int>(columns()),
-                "roi argument 2 invalid");
-            errorCheck(dim2Start != -1, "Too many arguments");
-            errorCheck(dim2End != -1, "Too many arguments");
-        }
-        else if(ndims == 2){
-            errorCheck(dim1Start < -1 ||
-                dim1Start > static_cast<int>(rows()),
-                "roi argument 1 invalid");
-            errorCheck(dim1End < -1 ||
-                dim1End > static_cast<int>(rows()),
-                "roi argument 2 invalid");
-            errorCheck(dim2Start < -1 ||
-                dim2Start > static_cast<int>(columns()),
-                "roi argument 3 invalid");
-            errorCheck(dim2End < -1 || dim2End > static_cast<int>(columns()),
-                "roi argument 4 invalid");
-        }
+    template<typename... arg>
+    Mat<Type> roi(const arg... ind){
+        Mat<Type> out(*this);
+        if(sizeof...(arg) == 0) return out;
+        errorCheck(sizeof...(arg) > static_cast<size_type>(2*out.ndim),
+                    "too many arguments for roi function");
+        int temp[sizeof...(arg)] = {(static_cast<int>(ind))...};
 
-        if(dim1Start == -1) dim1Start = 0;
-        if(dim1End == -1 && ndims == 2) dim1End = static_cast<int>(rows());
-        else if(dim1End == -1 && ndims == 1) dim1End = static_cast<int>(columns());
-        if(dim2Start == -1 && ndims == 2) dim2Start = 0;
-        if(dim2End == -1 && ndims == 2) dim2End = static_cast<int>(columns());
-
-        Mat<Type> result(*this);
-        result.dims[0] = dim1End-dim1Start;
-        if(ndims == 2){
-            result.dims[1] = dim2End-dim2Start;
-            result.data = &memory[dim1Start*columns() + dim2Start];
+        for(long i = 0; i < out.ndim; i++){
+            if(static_cast<size_type>(2*i) >= sizeof...(arg)) break;
+            else if(static_cast<size_type>(2*i)+1 >= sizeof...(arg)){
+                if(temp[2*i] == -1) temp[2*i] = 0;
+                errorCheck(temp[(2*i)] < 0
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
+                        "roi shape mismatch");
+                out.dims[i] -= temp[2*i];
+                out.data += temp[2*i]*out.strides[i];
+            }
+            else{
+                if(temp[(2*i)+1] == -1) temp[(2*i)+1] = out.dims[i];
+                if(temp[2*i] == -1) temp[2*i] = 0;
+                errorCheck(temp[(2*i)+1] < 0 || temp[(2*i)] < 0
+                        || static_cast<size_type>(temp[(2*i)+1]) > out.dims[i]
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
+                        "roi shape mismatch");
+                out.dims[i] = temp[(2*i)+1] - temp[2*i];
+                out.data += temp[2*i]*out.strides[i];
+            }
         }
-        else
-        {
-            result.data = &memory[dim1Start];
-        }
-        return result;
+        return out;
     }
 
     //i has 4 versions depending on whether the given parameter is a boolean
@@ -628,8 +639,6 @@ class Mat {
                 typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
 
     Mat T(Mat& dest){
-        errorCheck(ndims != 2,
-            "transpose may only be used on 2d matrix");
         errorCheck(memory == dest.memory,
             "Source and destination matrix share same backing data");
         t().copy(dest);
@@ -637,7 +646,7 @@ class Mat {
     }
 
     Mat T(){
-        errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
+        errorCheck(ndim != 2, "hard in-place transpose may only be used on 2d matrix");
         if(rows() == columns()){
             Type temp;
             for(size_type i=0; i<rows(); i++){
@@ -660,91 +669,85 @@ class Mat {
         }
         else{
             errorCheck(true,
-                "transpose may only be used on square or continuous matrices");
+                "hard in-place transpose may only be used on square or contiguous matrices");
         }
         return *this;
     }
 
     Mat t() const{
-        errorCheck(ndims != 2, "transpose may only be used on 2d matrix");
         Mat<Type> dest(*this);
-        dest.strides[0] = strides[1];
-        dest.strides[1] = strides[0];
-        dest.dims[0] = dims[1];
-        dest.dims[1] = dims[0];
+        for(int i = 0, j = ndim-1; i < ndim; i++, j--){
+            dest.strides[i] = strides[j];
+            dest.dims[i] = dims[j];
+        }
         return dest;
     }
 
     void print(){
-        size_t n = 0;
-        for(auto i : *this){
-            printf("%g", (double)i);
-            n++;
-            if(n%columns() != 0) printf(", ");
-            else printf("\n");
-        }
+        print(stdout);
         return;
     }
 
     void print(FILE* output){
-        size_t n = 0;
-        for(auto i : *this){
-            fprintf(output, "%g", (double)i);
-            n++;
-            if(n%columns() != 0) fprintf(output, ", ");
-            else fprintf(output, "\n");
+        iterator i = begin();
+        long j;
+        long endframe;
+
+        while(i != end()){
+            if(i.coord[ndim-1] == 0){
+                j = ndim-1;
+                for(; j >= 0; j--){
+                    if(i.coord[j] != 0){
+                        break;
+                    }
+                }
+                for(long k = 0; k < ndim; k++){
+                    if(k <= j) fprintf(output, " ");
+                    else fprintf(output, "[");
+                }
+            }
+
+            fprintf(output, "%g", (double)(*i));
+
+            if(i.coord[ndim-1] != dims[ndim-1]-1) fprintf(output, " ");
+            else{
+                endframe = 0;
+                for(j = ndim - 1; j >= 0; j--){
+                    if(i.coord[j] == dims[j]-1){
+                        fprintf(output, "]");
+                        endframe++;
+                    }
+                    else break;
+                }
+                if(i.index != size()-1){
+                    for(j = 0; j < endframe; j++){
+                        fprintf(output, "\n");
+                    }
+                }
+            }
+            i++;
         }
+        fprintf(output, "\n");
         return;
     }
 
     template<class newType = Type>
     Mat<newType> copy() const{
-        Mat<newType> dest;
-        if(ndims == 2){
-            Mat<newType> temp(rows(),columns());
-            dest = temp;
+        Mat<newType> dest(size());
+        dest.ndim = ndim;
+        delete[] dest.dims;
+        dest.dims = new size_type[ndim];
+        dest.strides = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
+            dest.dims[i] = dims[i];
         }
-        else{
-            Mat<newType> temp(columns());
-            dest = temp;
-        }
-        size_t n = 0;
-        for(auto i : *this){
-            dest.data[n] = static_cast<newType>(i);
-            n++;
-        }
+        dest.buildStrides();
+        copy(dest);
         return dest;
     }
 
     template<class newType>
-    void copy(Mat<newType>& dest) const{
-        errorCheck(dest.ndims != ndims,
-            "Matrix dimension mismatch during copy");
-        for(long i = 0; i > dest.ndims; i++){
-            errorCheck(dest.dims[i] != dims[i], "Matrix size mismatch");
-        }
-        if(ndims == 2){
-            size_t m = 0;
-            size_t n = 0;
-            for(auto i : *this){
-                dest(m,n) = static_cast<newType>(i);
-                n++;
-                if(n == columns()){
-                    n = 0;
-                    m++;
-                }
-            }
-        }
-        else if(ndims == 1){
-            size_t n = 0;
-            for(auto i : *this){
-                dest(n) = static_cast<newType>(i);
-                n++;
-            }
-        }
-        else errorCheck(true, "n-dimensional copy not yet implemented");
-        return;
-    }
+    void copy(Mat<newType>& dest) const;
 
     void scalarFill(Type x){
         for(auto& i : *this){
@@ -752,84 +755,64 @@ class Mat {
         }
     }
 
-    void reshape(int new_dim1 = -1){
+    template<typename... arg>
+    void reshape(const arg... ind){
         errorCheck(!isContiguous(),
             "Cannot reshape non-contiguous matrix");
-        errorCheck(new_dim1 < -1,
-            "matrix cannot have negative dimensions");
-        if(new_dim1 == -1) new_dim1 = size();
-        else errorCheck(size() != static_cast<size_type>(new_dim1),
-                        "new shape size mismatch");
 
-        if(ndims == 1) return;
-        else{
-            ndims = 1;
-            delete[] dims;
-            delete[] strides;
-            dims = new size_type[ndims];
-            dims[0] = new_dim1;
-            strides = new size_type[ndims];
-            strides[0] = 1;
+        long autodim = -1;
+        errorCheck(static_cast<long>(sizeof...(arg)) > 32,
+            "too many arguments to reshape function");
+        errorCheck(sizeof...(arg) == 0, "reshape requires at least one parameter");
+
+        long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
+        size_type shapecheck = 1, autoLength;
+        for(long i = 0; i < static_cast<long>(sizeof...(arg)); i++){
+            errorCheck(temp[i] < -1, "matrix dimensions can not be negative");
+            if(temp[i] == -1){
+                errorCheck(autodim != -1, "too many inferred dimensions in reshape");
+                autodim = i;
+            }
+            else shapecheck *= temp[i];
         }
-        return;
+        if(autodim == -1) errorCheck(shapecheck != size(), "new shape size mismatch");
+        else{
+            errorCheck(size() % shapecheck != 0, "reshape dimension inferrence failed");
+            autoLength = size() / shapecheck;
+        }
+        
+        ndim = sizeof...(arg);
+        delete[] dims;
+        dims = new size_type[ndim];
+        for(long i = 0; i < ndim; i++){
+            if(i == autodim) dims[i] = autoLength;
+            else dims[i] = temp[i];
+        }
+        buildStrides();
     }
 
-    void reshape(int new_dim1, int new_dim2){
-        errorCheck(!isContiguous(),
-            "Cannot reshape non-contiguous matrix");
-        errorCheck(new_dim1 < -1 || new_dim2 < -1,
-            "matrix cannot have negative dimensions");
-        errorCheck(new_dim1 == -1 && new_dim2 == -1,
-            "only one argument of reshape can be -1");
-        if(new_dim1 == -1) new_dim1 = size()/new_dim2;
-        else if(new_dim2 == -1) new_dim2 = size()/new_dim1;
-        else errorCheck(size() !=
-                static_cast<size_type>(new_dim1) * static_cast<size_type>(new_dim2),
-                "new shape size mismatch");
-
-        if(ndims == 2){
-            dims[0] = static_cast<size_type>(new_dim1);
-            dims[1] = static_cast<size_type>(new_dim2);
-            strides[1] = static_cast<size_type>(new_dim2);
-        }
-        else{
-            ndims = 2;
-            delete[] dims;
-            delete[] strides;
-            dims = new size_type[ndims];
-            dims[0] = new_dim1;
-            dims[1] = new_dim2;
-            strides = new size_type[ndims];
-            strides[0] = 1;
-            strides[1] = new_dim2;
-        }
-        return;
-    }
-
-    static Mat<Type> wrap(Type* data, long new_ndims,
+    static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
         Mat<Type> result;
         delete[] result.dims;
         delete[] result.strides;
         delete[] result.memory;
-        result.ndims = new_ndims;
-        result.dims = new size_type[result.ndims];
-        result.strides = new size_type[result.ndims];
-        for(long i = 0; i < result.ndims; i++){
+        result.ndim = new_ndim;
+        result.dims = new size_type[result.ndim];
+        result.strides = new size_type[result.ndim];
+        for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
             if(strides != NULL) result.strides[i] = strides[i];
         }
-        if(strides == NULL){
-            result.strides[0] = 1;
-            if(result.ndims == 2) result.strides[1] = result.dims[1];
-        }
+        if(strides == NULL) result.buildStrides();
+
         result.customTypeData = data;
         result.memory = data;
         result.data = data;
         return result;
     }
 
-    static Mat<Type> wrap(Type* data, long new_ndims,
+    static Mat<Type> wrap(Type* data, long new_ndim,
                         size_type* new_dims, size_type* new_strides, 
                         int64_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
@@ -840,10 +823,10 @@ class Mat {
         delete result.refCount;
         result.refCount = reinterpret_cast<int32_t*>(ref);
         (*result.refCount)++;
-        result.ndims = new_ndims;
-        result.dims = new size_type[result.ndims];
-        result.strides = new size_type[result.ndims];
-        for(long i = 0; i < result.ndims; i++){
+        result.ndim = new_ndim;
+        result.dims = new size_type[result.ndim];
+        result.strides = new size_type[result.ndim];
+        for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
             result.strides[i] = new_strides[i];
         }
@@ -854,7 +837,7 @@ class Mat {
         return result;
     }
 
-    static Mat<Type> wrap(Type* data, long new_ndims,
+    static Mat<Type> wrap(Type* data, long new_ndim,
                         size_type* new_dims, size_type* new_strides, 
                         int32_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
@@ -865,10 +848,10 @@ class Mat {
         delete result.refCount;
         result.refCount = ref;
         (*result.refCount)++;
-        result.ndims = new_ndims;
-        result.dims = new size_type[result.ndims];
-        result.strides = new size_type[result.ndims];
-        for(long i = 0; i < result.ndims; i++){
+        result.ndim = new_ndim;
+        result.dims = new size_type[result.ndim];
+        result.strides = new size_type[result.ndim];
+        for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
             result.strides[i] = new_strides[i];
         }
@@ -879,16 +862,9 @@ class Mat {
         return result;
     }
 
-    static Mat zeros(size_type a){
-        Mat result(a);
-        for(auto& i: result){
-            i = 0;
-        }
-        return result;
-    }
-
-    static Mat zeros(size_type a, size_type b){
-        Mat result(a,b);
+    template<typename... arg>
+    static Mat zeros(const arg... ind){
+        Mat result(ind...);
         for(auto& i: result){
             i = 0;
         }
@@ -896,23 +872,16 @@ class Mat {
     }
 
     static Mat zeros_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+        Mat result = empty_like(a);
         for(auto& i: result){
             i = 0;
         }
         return result;
     }
 
-    static Mat ones(size_type a, size_type b){
-        Mat result(a,b);
-        for(auto& i: result){
-            i = 1;
-        }
-        return result;
-    }
-
-    static Mat ones(size_type a){
-        Mat result(a);
+    template<typename... arg>
+    static Mat ones(const arg... ind){
+        Mat result(ind...);
         for(auto& i: result){
             i = 1;
         }
@@ -920,15 +889,22 @@ class Mat {
     }
 
     static Mat ones_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+        Mat result = empty_like(a);
         for(auto& i: result){
             i = 1;
         }
         return result;
     }
 
-    static Mat empty_like(const Mat a){
-        Mat result(a.rows(),a.columns());
+    static Mat<Type> empty_like(const Mat<Type> a){
+        Mat<Type> result(a.size());
+        result.ndim = a.ndim;
+        delete[] result.dims;
+        result.dims = new size_type[a.ndim];
+        for(long i = 0; i < a.ndim; i++){
+            result.dims[i] = a.dims[i];
+        }
+        result.buildStrides();
         return result;
     }
 
@@ -972,15 +948,8 @@ class Mat {
 
     template<class Type2, class Type3>
     static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
-        b.errorCheck(b.ndims > 2, "n-dimensional broadcast not yet implemented.");
-        if(b.ndims == 2){
-            Mat<Type> temp({a},1,1);
-            return temp.broadcast(b, f);
-        }
-        else{
-            Mat<Type> temp({a},1);
-            return temp.broadcast(b, f);
-        }
+        Mat<Type> temp({a},1);
+        return temp.broadcast(b, f);
     }
     
     template<class Type2, class Type3>
@@ -994,67 +963,69 @@ class MatIter{
     public:
 
     Mat<Type>& matrix;
-    size_t position;
+    size_t position = 0, index = 0;
+    size_t coord[32];
+    size_t eff_last_dim;
 
-    MatIter(Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
+    MatIter(Mat<Type>& mat, size_t ind) : matrix(mat), index(ind){
+        mat.errorCheck(ind > mat.size(),
+            "iterator index greater than matrix size");
+        for(long i = 0; i < matrix.ndim; i++){
+            coord[i] = 0;
+        }
+        for(long i = matrix.ndim-1; i >= 0; i--){
+            if(matrix.dims[i] != 1){
+                eff_last_dim = i;
+                break;
+            }
+        }
+        if(ind == 0) return;
+        if(ind == matrix.size()){
+            position = matrix.size();
+            for(long i = 0; i < matrix.ndim; i++){
+                position *= matrix.strides[i];
+            }
+            return;
+        }
+        size_t temp = matrix.size(), remainder = index;
+        for(long i = 0; i < matrix.ndim; i++){
+            temp /= matrix.dims[i];
+            coord[i] = remainder / temp;
+            remainder = index % temp;
+        }
+    }
     
     bool operator==(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position == b.position) return true;
-        else return false;
+        return index == b.index;
     }
 
     bool operator!=(MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position != b.position) return true;
-        else return false;
+        return index != b.index;
     }
 
     MatIter& operator++(){
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-            else position += matrix.strides[0];
-        }
-        else if((position - offset) % matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = eff_last_dim; i >= 0; i--){
+            coord[i]++;
+            if(coord[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                coord[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return *this;
     }
 
     MatIter operator++(int){
         MatIter<Type> clone(*this);
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-        }
-        else if((position-offset)%matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
-            }
-            else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
-            }
-        }
-        else position += matrix.strides[0];
+        ++(*this);
         return clone;
     }
 
@@ -1068,67 +1039,66 @@ class Const_MatIter{
     public:
 
     const Mat<Type>& matrix;
-    size_t position;
+    size_t position = 0, index = 0;
+    size_t coord[32];
+    size_t eff_last_dim;
 
-    Const_MatIter(const Mat<Type>& mat, size_t pos) : matrix(mat), position(pos){}
-    
+    Const_MatIter(const Mat<Type>& mat, size_t ind) : matrix(mat){
+        for(int i = 0; i < matrix.ndim; i++){
+            coord[i] = 0;
+        }
+        for(long i = matrix.ndim-1; i >= 0; i--){
+            if(matrix.dims[i] != 1){
+                eff_last_dim = i;
+                break;
+            }
+        }
+        if(ind == 0) return;
+        if(ind == matrix.size()){
+            index = ind;
+            position = matrix.size();
+            for(int i = 0; i < matrix.ndim; i++){
+                position *= matrix.strides[i];
+            }
+        }
+        while(index < ind){
+            ++(*this);
+        }
+    }
+
     bool operator==(Const_MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position == b.position) return true;
+        if(index == b.index) return true;
         else return false;
     }
 
     bool operator!=(Const_MatIter b){
         matrix.errorCheck(matrix.data != b.matrix.data,
             "Comparison between iterators of different matrices");
-        if(position != b.position) return true;
+        if(index != b.index) return true;
         else return false;
     }
 
     Const_MatIter& operator++(){
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-            else position += matrix.strides[0];
-        }
-        else if((position - offset) % matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
+        index++;
+        for(int i = eff_last_dim; i >= 0; i--){
+            coord[i]++;
+            if(coord[i] != matrix.dims[i]){
+                position += matrix.strides[i];
+                break;
             }
             else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
+                coord[i] = 0;
+                position -= matrix.strides[i]*(matrix.dims[i]-1);
             }
         }
-        else position += matrix.strides[0];
         return *this;
     }
 
     Const_MatIter operator++(int){
         Const_MatIter<Type> clone(*this);
-        size_t offset = matrix.strides[0]*(matrix.columns()-1);
-        if(matrix.ndims == 1){
-            if(position >= matrix.columns()-1) position = matrix.columns();
-        }
-        else if((position-offset)%matrix.strides[1] == 0
-                    && position >= offset){
-            if(position >= (matrix.columns()-1)*matrix.strides[0]
-                            + (matrix.rows()-1)*matrix.strides[1]){
-                position = matrix.strides[0]*matrix.columns()
-                            + matrix.strides[1]*matrix.rows();
-                //if at the end of a row, jump to the next
-            }
-            else{
-                position -= matrix.strides[0]*(matrix.columns() - 1);
-                position += matrix.strides[1];
-            }
-        }
-        else position += matrix.strides[0];
+        ++(*this);
         return clone;
     }
 
@@ -1198,25 +1168,26 @@ Mat<bool> operator>=(Type a, Mat<Type> &b){
 }
 
 template<class Type>
+Mat<bool> Mat<Type>::operator!(){
+    Mat<bool> result(this->copy<bool>());
+    for(Mat<bool>::iterator i = result.begin(); i != result.end(); ++i){
+        *i = !(*i);
+    }
+    return result;
+}
+
+template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
-    errorCheck(mask.rows() != rows(),
-        "Matrix shape mismatch in call to i()");
-    errorCheck(ndims == 2 && mask.columns() != columns(),
-        "Matrix shape mismatch in call to i()");
+    for(long i = 0; i < ndim; i++){
+        errorCheck(mask.dims[i] != dims[i],
+            "mask index broadcasting not yet implemented\n");
+    }
     size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
     }
     Mat<Type> out(newSize);
-
-    Mat<bool>::iterator j = mask.begin();
-    iterator k = out.begin();
-    for(iterator i = begin(); i != end(); ++i, ++j){
-        if(*j){
-            *k = *i;
-            ++k;
-        }
-    }
+    ito(mask, out);
     return out;
 }
 
@@ -1224,37 +1195,28 @@ template<class Type>
 template<class Type2>
 Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    if(ndims == 2){
-        Mat<Type> out(indices.size(), columns());
-        for(size_type i = 0; i < indices.size(); i++){
-            for(size_type j = 0; j < columns(); j++){
-                out(i,j) = operator()(indices(i),j);
-            }
-        }
-        return out;
+    errorCheck(indices.ndim != 1, "index lists with ndim != 1 not yet implemented");
+
+    Mat<Type> out(indices.size() * (size() / dims[0]));
+    out.ndim = ndim;
+    delete[] out.dims;
+    out.dims = new size_type[ndim];
+    out.dims[0] = indices.size();
+    for(int i = 1; i < ndim; i++){
+        out.dims[i] = dims[i];
     }
-    else if(ndims == 1){
-        Mat<Type> out(indices.size());
-        for(size_type i = 0; i < indices.size(); i++){
-            out(i) = operator()(indices(i));
-        }
-        return out;
-    }
-    else{
-        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
-        return Mat<Type>::zeros(0);
-    }
+    out.buildStrides();
+
+    ito(indices, out);
+    return out;
 }
 
 template<class Type>
 void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
-    errorCheck(mask.rows() != rows(),
-        "Incorrect number of rows in mask in call to i()");
-    errorCheck(ndims == 2 && mask.columns() != columns(),
-        "Incorrect number of columns in mask in call to i()");
-    errorCheck(out.ndims != 1,
-                "output of ito function must be 1-dimensional");
-    Mat<Type>::size_type newSize = 0;
+    errorCheck(out.ndim != 1,
+                "output of ito() function must be 1-dimensional");
+
+    size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
     }
@@ -1262,6 +1224,7 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
+
     Mat<bool>::iterator j = mask.begin();
     iterator k = out.begin();
     for(iterator i = begin(); i != end(); ++i, ++j){
@@ -1277,34 +1240,46 @@ template<class Type>
 template<class Type2>
 void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    errorCheck(indices.ndims != 1,
-        "Index list should be 1 dimension");
-    errorCheck(out.ndims != ndims,
-        "inconsistent number of dimensions in output matrix in call to ito");
-    errorCheck(ndims == 1 && out.columns() != indices.size(),
-        "output matrix shape mismatch - incorrect number of columns");
-    if(ndims > 1){
-        errorCheck(out.columns() != columns(),
-            "output matrix shape mismatch - incorrect number of columns");
-        errorCheck(out.rows() != indices.size(),
-            "output matrix shape mismatch - incorrect number of rows");
+    errorCheck(indices.ndim != 1,
+        "index lists with ndim != 1 not yet implemented");
+    errorCheck(out.ndim != ndim,
+        "inconsistent number of dimensions in output matrix in call to ito()");
+    errorCheck(out.dims[0] != indices.size(),
+        "output matrix shape does not match given index list in call to ito()");
+    for(long i = 1; i < ndim; i++){
+        errorCheck(out.dims[i] != dims[i],
+        "output matrix shape mismatch in call to ito()");
     }
-    if(ndims == 2){
-        for(size_type i = 0; i < indices.size(); i++){
-            for(size_type j = 0; j < columns(); j++){
-                out(i,j) = operator()(indices(i),j);
-            }
+
+    iterator dimend = begin();
+    iterator i = begin(); //for iterating the current matrix
+    iterator k = out.begin();
+
+    size_type offset = size() / dims[0];
+    for(size_type j = 0; j < indices.size();j++){
+        i.index = indices(j) * offset;
+        i.position = indices(j) * strides[0];
+        dimend.index = (indices(j) + 1) * offset;
+        for(; i!= dimend; ++i){
+            *k = *i;
+            ++k;
         }
-        return;
     }
-    else if(ndims == 1){
-        for(size_type i = 0; i < indices.size(); i++){
-            out(i) = operator()(indices(i));
-        }
-        return;
+}
+
+template<class Type>
+template<class newType>
+void Mat<Type>::copy(Mat<newType>& dest) const{
+    errorCheck(dest.ndim != ndim,
+        "Matrix dimension mismatch during copy");
+    for(long i = 0; i > dest.ndim; i++){
+        errorCheck(dest.dims[i] != dims[i],
+            "output matrix shape mismatch in call to copy()");
     }
-    else{
-        errorCheck(true, "n-dimensional fancy indexing not yet implemented");
-        return;
+    MatIter<newType> j = dest.begin();
+    for(auto i : *this){
+        *j = static_cast<newType>(i);
+        j++;
     }
+    return;
 }
