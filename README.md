@@ -4,7 +4,7 @@ Release ver. ALPHA 1.2 2/16/2021
 # CPPNUMPY Matrix Library
 This is standalone C++ matrix header library that was built to be byte compatible with Numpy. Included are bindings that correctly propagate memory management and error systems between C++ and Python, so that developers can write code without thinking about where the matrix originated.
 Our design goal was to have a library that maps 1:1 to a basic subset of the Numpy API. In the rare case that this isn't possible due to language constraints (such as Python's matrix multiply operator "@" which isn't available in C++) we aim for a close equivalent to minimize mental load when porting code between the two.
-Any code written in C++ that takes in our matrices can be compiled with a special header we provide, and the resulting shared library will be importable as a module in CPython, and the functions/classes will take and return Numpy arrays wherever our matrix class was used.
+Any code written in C++ that takes in our matrices can be compiled with a special header we provide, and the resulting shared library will be importable as a module in CPython. The functions and classes will take and return Numpy arrays wherever our matrix class was used.
 Generally speaking, when writing on the C++ side, functions behave just like in NumPy, except for the following changes:
 - The operator "^" is overloaded to perform matrix multiplication rather than bitwise XOR
 - "T" is used for a hard transpose, while "t" is used for a soft transpose
@@ -106,12 +106,12 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **operator()**: returns element at the given coordinates
   - ` Type operator(size_t...) `
 - **roi** specifies a region of interest and returns a submatrix of a given shape. Parameters are passed in pairs corresponding to each dimension and -1 signifies "to the beginning/end of the dimension". 
-  - ` Mat& roi(int...) `
-- **i** takes either a boolean mask or list of indices and returns a matrix containing only the specified elements
+  - ` Mat& roi(int...) // e.g. m.roi(start, end, start2, end2, ...)`
+- **i** masks an array with a boolean mask or extracts elements with a list of indices.
   - ` Mat<Type> i(Mat<bool> mask)`
   - ` Mat<Type> i(Mat<IntegralType> indices)`
 - **ito** performs the same function as "i" but with an output parameter.
-  - ` Mat<Type> ito(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, a region of interest will be stored.`
+  - ` Mat<Type> ito(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, the returned matrix will be an roi within out.`
   - ` Mat<Type> ito(Mat<IntegralType> indices, Mat<Type> out)`
 ### Modifiers
 - **operator+**: elementwise addition
