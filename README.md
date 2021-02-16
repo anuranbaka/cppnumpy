@@ -1,14 +1,15 @@
-Release ver. ALPHA 1.1 1/7/2021
+Release ver. ALPHA 1.2 2/16/2021
 
 
 # CPPNUMPY Matrix Library
-This python-compatible matrix header library was built using a similar structure to the NumPy array. The library includes built-in operations for matrix arithmetic, transposition, iteration of elements, dimension broadcasting and the designation of submatrices in a manner similar to NumPy's array slicing. The matrix is initialized, stored and printed in row-major order. Most notably the library contains a type-caster using Pybind11 to allow functions written in C/C++ to be easily performed on a NumPy array.
-Generally speaking, it functions just like the NumPy array, except for the following changes:
-- The operator "^" is used for matrix multiplication rather than bitwise XOR
+This is standalone C++ matrix header library that was built to be byte compatible with Numpy. Included are bindings that correctly propagate memory management and error systems between C++ and Python, so that developers can write code without thinking about where the matrix originated.
+Our design goal was to have a library that maps 1:1 to a basic subset of the Numpy API. In the rare case that this isn't possible due to language constraints (such as Python's matrix multiply operator "@" which isn't available in C++) we aim for a close equivalent to minimize mental load when porting code between the two.
+Any code written in C++ that takes in our matrices can be compiled with a special header we provide, and the resulting shared library will be importable as a module in CPython, and the functions/classes will take and return Numpy arrays wherever our matrix class was used.
+Generally speaking, when writing on the C++ side, functions behave just like in NumPy, except for the following changes:
+- The operator "^" is overloaded to perform matrix multiplication rather than bitwise XOR
 - "T" is used for a hard transpose, while "t" is used for a soft transpose
 - Due to limitations of C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 - Array broadcasting is implemented as a function taking a function pointer
-- N-dimensional arrays are not yet supported
 
 # Usage
 The library supports several basic matrix arithmetic operations:
@@ -75,10 +76,8 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 # Functions
 ###### Template parameter "Type" used to signify the element type
 - **(constructor)**: takes an optional initializer list followed by dimensions
-  - ` Mat(std::initializer_list<Type>, size_t) `
-  - ` Mat(std::initializer_list<Type>, size_t, size_t) `
-  - ` Mat(size_t) `
-  - ` Mat(size_t, size_t) `
+  - ` Mat(std::initializer_list<Type>, size_t...) `
+  - ` Mat(size_t...) `
   - ` Mat(const Mat&) `
 - **(destructor)**: underlying memory is only deleted if it is the last matrix using it
   - ` ~Mat() `
@@ -105,16 +104,15 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` bool isContiguous() `
 ### Element Access
 - **operator()**: returns element at the given coordinates
-  - ` Type operator(size_t) `
-  - ` Type operator()(size_t, size_t) `
-- **roi** specifies a region of interest and returns a submatrix of a given shape. -1 signifies "to the beginning/end of the dimension"
-  - ` Mat& roi(int dim1Start = -1, int dim1End = -1, int dim2Start = -1, int dim2End = -1) `
+  - ` Type operator(size_t...) `
+- **roi** specifies a region of interest and returns a submatrix of a given shape. Parameters are passed in pairs corresponding to each dimension and -1 signifies "to the beginning/end of the dimension". 
+  - ` Mat& roi(int...) `
 - **i** takes either a boolean mask or list of indices and returns a matrix containing only the specified elements
-  - ` Mat<Type> i(Mat<bool> mask)
-  - ` Mat<Type> i(Mat<IntegralType> indices)
+  - ` Mat<Type> i(Mat<bool> mask)`
+  - ` Mat<Type> i(Mat<IntegralType> indices)`
 - **ito** performs the same function as "i" but with an output parameter.
-  - ` Mat<Type> i(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, a region of interest will be stored.
-  - ` Mat<Type> i(Mat<IntegralType> indices, Mat<Type> out)
+  - ` Mat<Type> ito(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, a region of interest will be stored.`
+  - ` Mat<Type> ito(Mat<IntegralType> indices, Mat<Type> out)`
 ### Modifiers
 - **operator+**: elementwise addition
   - ` Mat<Type> operator+(const Mat<Type>&) `
@@ -151,7 +149,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat<Type3> broadcast(Type2 operand, Type3 (*function)(Type,Type2)) `
 - **operator^**: matrix multiplication (Not XOR!)
   - ` Mat<Type> operator^(const Mat<Type>&) `
-- **T**: performs hard transpose, storing them in destination matrix if given
+- **T**: performs hard transpose on a 2D matrix, storing it in a destination matrix if given
   - ` Mat<Type> T() `
   - ` Mat<Type> T(Mat&) `
 - **t**: performs soft transpose, leaving the underlying data, and changing only how the matrix accesses elements
@@ -162,8 +160,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **scalarFill**: fills a matrix with a given value
   - ` void scalarFill(Type)  `
 - **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
-  - ` void reshape(int = -1) `
-  - ` void reshape(int, int) `
+  - ` void reshape(int...) `
 - **inverse**: non-member function that takes a matrix and returns its inverse
   - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
