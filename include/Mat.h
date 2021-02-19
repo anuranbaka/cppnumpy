@@ -25,6 +25,12 @@ template <class Type, class Type2>
 inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); }
 
 template <class Type>
+inline Type BitAnd(Type a, Type b){ return a & b; }
+
+template <class Type>
+inline Type BitOr(Type a, Type b){ return a | b; }
+
+template <class Type>
 inline bool Equality(Type a, Type b){ return a == b; }
 
 template <class Type>
@@ -399,21 +405,37 @@ class Mat {
     }
 
     template<class Type2>
-    Mat<bool> operator&(const Mat<Type2> &b){
+    Mat<bool> operator&&(const Mat<Type2> &b){
         return broadcast(b, And<Type,Type2>);
     }
 
-    Mat<bool> operator&(bool b){
+    Mat<bool> operator&&(bool b){
         return broadcast(b, And<Type,bool>);
     }
 
     template<class Type2>
-    Mat<bool> operator|(const Mat<Type2> &b){
+    Mat<bool> operator||(const Mat<Type2> &b){
         return broadcast(b, Or<Type,Type2>);
     }
 
-    Mat<bool> operator|(bool b){
+    Mat<bool> operator||(bool b){
         return broadcast(b, Or<Type,bool>);
+    }
+
+    Mat<Type> operator&(const Mat<Type> &b){
+        return broadcast(b, BitAnd<Type>);
+    }
+
+    Mat<Type> operator&(Type b){
+        return broadcast(b, BitAnd<Type>);
+    }
+
+    Mat<Type> operator|(const Mat<Type> &b){
+        return broadcast(b, BitOr<Type>);
+    }
+
+    Mat<Type> operator|(Type b){
+        return broadcast(b, BitOr<Type>);
     }
 
     Mat<bool> operator!(); // defined below
@@ -1128,13 +1150,23 @@ Mat<Type> operator/(Type a, Mat<Type> &b){
 }
 
 template<class Type>
-Mat<bool> operator&(bool a, Mat<Type> &b){
+Mat<bool> operator&&(bool a, Mat<Type> &b){
     return b.broadcast(a, And<Type,bool>);
 }
 
 template<class Type>
-Mat<bool> operator|(bool a, Mat<Type> &b){
+Mat<bool> operator||(bool a, Mat<Type> &b){
     return b.broadcast(a, Or<Type,bool>);
+}
+
+template<class Type>
+Mat<Type> operator&(Type a, Mat<Type> &b){
+    return b.broadcast(a, BitAnd<Type>);
+}
+
+template<class Type>
+Mat<Type> operator|(Type a, Mat<Type> &b){
+    return b.broadcast(a, BitOr<Type>);
 }
 
 template<class Type>

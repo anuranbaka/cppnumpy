@@ -86,6 +86,15 @@ int main (){
     fprintf(outFile, "casting matrix x to float using copy<float>()\n");
     outfloat.print(outFile);
 
+    Mat<int> outInt;
+    outInt = x.copy<int>() & 1;
+    fprintf(outFile, "using bitwise and: x & 1");
+    outInt.print(outFile);
+
+    outInt = x.copy<int>() | 7;
+    fprintf(outFile, "using bitwise or: x | 7");
+    outInt.print(outFile);
+
     x.copy(outfloat);
     fprintf(outFile, "casting matrix x to float using copy(dest)\n");
     outfloat.print(outFile);
@@ -309,32 +318,32 @@ int main (){
     fprintf(outFile, "boolMat:\n");
 
     boolMat.print(outFile);
-    outBool = boolMat & x;
-    fprintf(outFile, "boolMat & matrix x\n");
+    outBool = boolMat && x;
+    fprintf(outFile, "boolMat && matrix x\n");
     outBool.print(outFile);
 
-    outBool = x & !boolMat;
-    fprintf(outFile, "matrix x & !boolMat\n");
+    outBool = x && !boolMat;
+    fprintf(outFile, "matrix x && !boolMat\n");
     outBool.print(outFile);
 
-    outBool = boolMat | !x;
-    fprintf(outFile, "boolMat | !x\n");
+    outBool = boolMat || !x;
+    fprintf(outFile, "boolMat || !x\n");
     outBool.print(outFile);
 
-    outBool = x | boolMat;
-    fprintf(outFile, "x | boolMat\n");
+    outBool = x || boolMat;
+    fprintf(outFile, "x || boolMat\n");
     outBool.print(outFile);
 
-    outBool = true & y;
-    fprintf(outFile, "true & y\n");
+    outBool = true && y;
+    fprintf(outFile, "true && y\n");
     outBool.print(outFile);
 
-    outBool = !y | false;
-    fprintf(outFile, "!y | false\n");
+    outBool = !y || false;
+    fprintf(outFile, "!y || false\n");
     outBool.print(outFile);
 
-    outBool = !boolMat & true;
-    fprintf(outFile, "!boolMat | true\n");
+    outBool = !boolMat && true;
+    fprintf(outFile, "!boolMat && true\n");
     outBool.print(outFile);
 
     fprintf(outFile, "Checking if any elements of !boolMat are true:\n");
