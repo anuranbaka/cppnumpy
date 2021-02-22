@@ -580,14 +580,19 @@ class Mat {
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
-        Mat<Type2> temp({b},1);
-        return broadcast(temp, *f);
+        Mat<Type3> out = empty_like<Type3>(*this);
+        broadcast(b, f, out);
+        return out;
     }
 
     template<class Type2, class Type3>
     void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        Mat<Type2> temp({b},1);
-        return broadcast(temp, *f, out);
+        iterator j = begin();
+        for(auto& i : out){
+            i = f((*j), b);
+            j++;
+        }
+        return;
     }
 
     Mat operator- (){
@@ -971,8 +976,13 @@ class Mat {
 
     template<class Type2, class Type3>
     static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
-        Mat<Type> temp({a},1);
-        return temp.broadcast(b, f);
+        Mat<Type3> out = empty_like(b);
+        iterator j = b.begin();
+        for(auto& i : out){
+            i = f(a, (*j));
+            j++;
+        }
+        return out;
     }
     
     template<class Type2, class Type3>
