@@ -918,8 +918,9 @@ class Mat {
         return result;
     }
 
-    static Mat<Type> empty_like(const Mat<Type> a){
-        Mat<Type> result(a.size());
+    template<class newType = Type>
+    static Mat<newType> empty_like(const Mat<Type> a){
+        Mat<newType> result(a.size());
         result.ndim = a.ndim;
         delete[] result.dims;
         result.dims = new size_type[a.ndim];
