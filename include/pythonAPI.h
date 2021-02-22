@@ -46,12 +46,12 @@ PyObject* wrap_mat(Mat<T>& cmat){
     PyObject* capsule = PyCapsule_New(temp, MAT_NAME, destructor_wrapper<T>);
     int writeFlag = 0;
     if(!is_const<T>()) writeFlag = NPY_ARRAY_WRITEABLE;
-    npy_intp py_strides[cmat.ndims];
-    for(long i = 0; i < cmat.ndims; i++){
+    npy_intp py_strides[cmat.ndim];
+    for(long i = 0; i < cmat.ndim; i++){
         py_strides[i] = cmat.strides[i]*sizeof(T);
     }
     PyObject* out = PyArray_New(&PyArray_Type,
-                                    cmat.ndims,
+                                    cmat.ndim,
                                     (npy_intp*)cmat.dims,
                                     getTypenum<T>(),
                                     py_strides,
