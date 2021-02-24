@@ -164,15 +164,23 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **inverse**: non-member function that takes a matrix and returns its inverse
   - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
-- **operator&**: elementwise AND
+- **operator&&**: elementwise logical AND
   - ` Mat<bool> operator&(const Mat<Type2>&) `
   - ` Mat<bool> operator&(const bool) `
   - ` Mat<bool> operator&(const bool, const Mat<Type2>&) `
-- **operator|**: elementwise OR
+- **operator||**: elementwise logical OR
   - ` Mat<bool> operator|(const Mat<Type2>&) `
   - ` Mat<bool> operator|(const bool) `
   - ` Mat<bool> operator|(const bool, const Mat<Type2>&) `
-- **operator!**: elementwise negation
+- **operator&**: bitwise AND
+  - ` Mat<bool> operator&(const Mat<Type2>&) `
+  - ` Mat<bool> operator&(const bool) `
+  - ` Mat<bool> operator&(const bool, const Mat<Type2>&) `
+- **operator|**: bitwise OR
+  - ` Mat<bool> operator|(const Mat<Type2>&) `
+  - ` Mat<bool> operator|(const bool) `
+  - ` Mat<bool> operator|(const bool, const Mat<Type2>&) `
+- **operator!**: elementwise logical negation
   - ` Mat<bool> operator!() `
 - **all**: returns true if no element of matrix is false
   - ` bool all() `
@@ -195,8 +203,8 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat<Type> ones() `
 - **ones_like**: returns an array of ones with the same shape as a given matrix
   - ` Mat<Type> ones_like(const Mat) `
-- **empty_like**: returns an empty array with the same shape as a given matrix
-  - ` Mat<Type> empty_like(const Mat) `
+- **empty_like**: returns an empty array with the same shape as a given matrix. New matrix can have a different type using a template.
+  - ` Mat<newType> empty_like(const Mat<Type>) `
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
