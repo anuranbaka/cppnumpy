@@ -15,7 +15,7 @@ int main (){
     Mat<> y({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24},4,6);
     Mat<> z(4,1,4,6);
     { int i = 1; for(auto& j : z){ j = i++; }}
-    Mat<> output(1,1);
+    Mat<> output;
     FILE* outFile = fopen("matTest/matTestOutput.txt", "w");
 
     fprintf(outFile, "matrix m\n");
@@ -35,6 +35,10 @@ int main (){
 
     fprintf(outFile, "matrix z\n");
     z.print(outFile);
+
+    output = x.t() - n.t();
+    fprintf(outFile, "transpose of x - transpose of n\n");
+    output.print(outFile);
 
     output = x.t();
     fprintf(outFile, "transpose of x\n");
@@ -58,10 +62,6 @@ int main (){
 
     output = n.t() + x;
     fprintf(outFile, "transpose of n + x\n");
-    output.print(outFile);
-
-    output = x.t() - n.t();
-    fprintf(outFile, "transpose of x - transpose of n\n");
     output.print(outFile);
 
     output = y * z;

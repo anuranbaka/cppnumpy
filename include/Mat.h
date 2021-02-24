@@ -53,6 +53,8 @@ class MatIter;
 template <class Type>
 class Const_MatIter;
 
+static int32_t globalRefCount = 1;
+
 template <class Type = double>
 class Mat {
     friend class MatIter<Type>;
@@ -115,12 +117,12 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    long ndim = 2;
-    size_type* dims;
+    long ndim = 1;
+    size_type* dims = NULL;
     size_type* strides = NULL;
-    Type* memory; 
-    Type* data;
-    int32_t* refCount;
+    Type* memory = NULL;
+    Type* data = NULL;
+    int32_t* refCount = NULL;
     void* customTypeData = NULL;
     void (*customDestructor)(Mat<Type>*, void*) = 0;
 
@@ -185,16 +187,8 @@ class Mat {
     }
 
     Mat(){
-        refCount = new int32_t;
-        *refCount = 1;
-
-        ndim = 1;
-        dims = new size_type[ndim];
-        dims[0] = 0;
-        buildStrides();
-
-        memory = new Type[0];
-        data = memory;
+        refCount = &globalRefCount;
+        (*refCount)++;
     }
 
     template<typename... arg>
@@ -505,7 +499,8 @@ class Mat {
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
         Mat<Type3> out;
-        delete[] out.dims;
+        out.refCount = new int32_t;
+        *out.refCount = 1;
 
         size_type* big_dim;
         size_type* small_dim;
@@ -539,7 +534,6 @@ class Mat {
         }
         out.buildStrides();
 
-        delete[] out.memory;
         out.memory = new Type3[out.size()];
         out.data = out.memory;
 
@@ -821,9 +815,8 @@ class Mat {
     static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
+        result.refCount = new int32_t;
+        *result.refCount = 1;
         result.ndim = new_ndim;
         result.dims = new size_type[result.ndim];
         result.strides = new size_type[result.ndim];
@@ -844,10 +837,6 @@ class Mat {
                         int64_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
-        delete result.refCount;
         result.refCount = reinterpret_cast<int32_t*>(ref);
         (*result.refCount)++;
         result.ndim = new_ndim;
@@ -869,10 +858,6 @@ class Mat {
                         int32_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
-        delete result.refCount;
         result.refCount = ref;
         (*result.refCount)++;
         result.ndim = new_ndim;
