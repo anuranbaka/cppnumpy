@@ -69,10 +69,13 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
     PyObject* arrBase = (PyObject*)arr;
     long nd = PyArray_NDIM(arr);
     size_t* mat_strides = new size_t[nd];
+    Mat<T> out;
     for(long i = 0; i < nd; i++){
+        out.errorCheck((PyArray_STRIDES(arr)[i])%PyArray_ITEMSIZE(arr) != 0,
+                "Strides must be a multiple of ITEMSIZE to convert to Mat");
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
-    Mat<T> out = Mat<T>::wrap(
+    out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
         PyArray_NDIM(arr),
         reinterpret_cast<typename Mat<T>::size_type*>(PyArray_DIMS(arr)),
