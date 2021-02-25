@@ -46,12 +46,12 @@ PyObject* wrap_mat(Mat<T>& cmat){
     PyObject* capsule = PyCapsule_New(temp, MAT_NAME, destructor_wrapper<T>);
     int writeFlag = 0;
     if(!is_const<T>()) writeFlag = NPY_ARRAY_WRITEABLE;
-    npy_intp py_strides[cmat.ndims];
-    for(long i = 0; i < cmat.ndims; i++){
+    npy_intp py_strides[cmat.ndim];
+    for(long i = 0; i < cmat.ndim; i++){
         py_strides[i] = cmat.strides[i]*sizeof(T);
     }
     PyObject* out = PyArray_New(&PyArray_Type,
-                                    cmat.ndims,
+                                    cmat.ndim,
                                     (npy_intp*)cmat.dims,
                                     getTypenum<T>(),
                                     py_strides,
@@ -69,10 +69,13 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
     PyObject* arrBase = (PyObject*)arr;
     long nd = PyArray_NDIM(arr);
     size_t* mat_strides = new size_t[nd];
+    Mat<T> out;
     for(long i = 0; i < nd; i++){
+        out.errorCheck((PyArray_STRIDES(arr)[i])%PyArray_ITEMSIZE(arr) != 0,
+                "Strides must be a multiple of ITEMSIZE to convert to Mat");
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
-    Mat<T> out = Mat<T>::wrap(
+    out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
         PyArray_NDIM(arr),
         reinterpret_cast<typename Mat<T>::size_type*>(PyArray_DIMS(arr)),

@@ -15,7 +15,7 @@ int main (){
     Mat<> y({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24},4,6);
     Mat<> z(4,1,4,6);
     { int i = 1; for(auto& j : z){ j = i++; }}
-    Mat<> output(1,1);
+    Mat<> output;
     FILE* outFile = fopen("matTest/matTestOutput.txt", "w");
 
     fprintf(outFile, "matrix m\n");
@@ -89,6 +89,15 @@ int main (){
     x.copy(outfloat);
     fprintf(outFile, "casting matrix x to float using copy(dest)\n");
     outfloat.print(outFile);
+
+    Mat<int> outInt;
+    outInt = x.copy<int>() & 1;
+    fprintf(outFile, "using bitwise and: x & 1\n");
+    outInt.print(outFile);
+
+    outInt = x.copy<int>() | 7;
+    fprintf(outFile, "using bitwise or: x | 7\n");
+    outInt.print(outFile);
 
     output = m.roi(0,2,1,3);
     fprintf(outFile, "m.roi(0,1,1,3)\n");
@@ -309,32 +318,32 @@ int main (){
     fprintf(outFile, "boolMat:\n");
 
     boolMat.print(outFile);
-    outBool = boolMat & x;
-    fprintf(outFile, "boolMat & matrix x\n");
+    outBool = boolMat && x;
+    fprintf(outFile, "boolMat && matrix x\n");
     outBool.print(outFile);
 
-    outBool = x & !boolMat;
-    fprintf(outFile, "matrix x & !boolMat\n");
+    outBool = x && !boolMat;
+    fprintf(outFile, "matrix x && !boolMat\n");
     outBool.print(outFile);
 
-    outBool = boolMat | !x;
-    fprintf(outFile, "boolMat | !x\n");
+    outBool = boolMat || !x;
+    fprintf(outFile, "boolMat || !x\n");
     outBool.print(outFile);
 
-    outBool = x | boolMat;
-    fprintf(outFile, "x | boolMat\n");
+    outBool = x || boolMat;
+    fprintf(outFile, "x || boolMat\n");
     outBool.print(outFile);
 
-    outBool = true & y;
-    fprintf(outFile, "true & y\n");
+    outBool = true && y;
+    fprintf(outFile, "true && y\n");
     outBool.print(outFile);
 
-    outBool = !y | false;
-    fprintf(outFile, "!y | false\n");
+    outBool = !y || false;
+    fprintf(outFile, "!y || false\n");
     outBool.print(outFile);
 
-    outBool = !boolMat & true;
-    fprintf(outFile, "!boolMat | true\n");
+    outBool = !boolMat && true;
+    fprintf(outFile, "!boolMat && true\n");
     outBool.print(outFile);
 
     fprintf(outFile, "Checking if any elements of !boolMat are true:\n");

@@ -25,6 +25,12 @@ template <class Type, class Type2>
 inline bool Or(Type a, Type2 b){ return static_cast<bool>(a) || static_cast<bool>(b); }
 
 template <class Type>
+inline Type BitAnd(Type a, Type b){ return a & b; }
+
+template <class Type>
+inline Type BitOr(Type a, Type b){ return a | b; }
+
+template <class Type>
 inline bool Equality(Type a, Type b){ return a == b; }
 
 template <class Type>
@@ -46,6 +52,8 @@ template <class Type>
 class MatIter;
 template <class Type>
 class Const_MatIter;
+
+static int32_t emptyRefCount = 1;
 
 template <class Type = double>
 class Mat {
@@ -109,12 +117,12 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    long ndim = 2;
-    size_type* dims;
+    long ndim = 0;
+    size_type* dims = NULL;
     size_type* strides = NULL;
-    Type* memory; 
-    Type* data;
-    int32_t* refCount;
+    Type* memory = NULL;
+    Type* data = NULL;
+    int32_t* refCount = NULL;
     void* customTypeData = NULL;
     void (*customDestructor)(Mat<Type>*, void*) = 0;
 
@@ -179,16 +187,8 @@ class Mat {
     }
 
     Mat(){
-        refCount = new int32_t;
-        *refCount = 1;
-
-        ndim = 1;
-        dims = new size_type[ndim];
-        dims[0] = 0;
-        buildStrides();
-
-        memory = new Type[0];
-        data = memory;
+        refCount = &emptyRefCount;
+        (*refCount)++;
     }
 
     template<typename... arg>
@@ -399,21 +399,37 @@ class Mat {
     }
 
     template<class Type2>
-    Mat<bool> operator&(const Mat<Type2> &b){
+    Mat<bool> operator&&(const Mat<Type2> &b){
         return broadcast(b, And<Type,Type2>);
     }
 
-    Mat<bool> operator&(bool b){
+    Mat<bool> operator&&(bool b){
         return broadcast(b, And<Type,bool>);
     }
 
     template<class Type2>
-    Mat<bool> operator|(const Mat<Type2> &b){
+    Mat<bool> operator||(const Mat<Type2> &b){
         return broadcast(b, Or<Type,Type2>);
     }
 
-    Mat<bool> operator|(bool b){
+    Mat<bool> operator||(bool b){
         return broadcast(b, Or<Type,bool>);
+    }
+
+    Mat<Type> operator&(const Mat<Type> &b){
+        return broadcast(b, BitAnd<Type>);
+    }
+
+    Mat<Type> operator&(Type b){
+        return broadcast(b, BitAnd<Type>);
+    }
+
+    Mat<Type> operator|(const Mat<Type> &b){
+        return broadcast(b, BitOr<Type>);
+    }
+
+    Mat<Type> operator|(Type b){
+        return broadcast(b, BitOr<Type>);
     }
 
     Mat<bool> operator!(); // defined below
@@ -483,7 +499,8 @@ class Mat {
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
         Mat<Type3> out;
-        delete[] out.dims;
+        out.refCount = new int32_t;
+        *out.refCount = 1;
 
         size_type* big_dim;
         size_type* small_dim;
@@ -517,7 +534,6 @@ class Mat {
         }
         out.buildStrides();
 
-        delete[] out.memory;
         out.memory = new Type3[out.size()];
         out.data = out.memory;
 
@@ -558,14 +574,19 @@ class Mat {
 
     template<class Type2, class Type3>
     Mat<Type3> broadcast(Type2 b, Type3 (*f)(Type, Type2)){
-        Mat<Type2> temp({b},1);
-        return broadcast(temp, *f);
+        Mat<Type3> out = empty_like<Type3>(*this);
+        broadcast(b, f, out);
+        return out;
     }
 
     template<class Type2, class Type3>
     void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
-        Mat<Type2> temp({b},1);
-        return broadcast(temp, *f, out);
+        iterator j = begin();
+        for(auto& i : out){
+            i = f((*j), b);
+            j++;
+        }
+        return;
     }
 
     Mat operator- (){
@@ -794,9 +815,8 @@ class Mat {
     static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
+        result.refCount = new int32_t;
+        *result.refCount = 1;
         result.ndim = new_ndim;
         result.dims = new size_type[result.ndim];
         result.strides = new size_type[result.ndim];
@@ -817,10 +837,6 @@ class Mat {
                         int64_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
-        delete result.refCount;
         result.refCount = reinterpret_cast<int32_t*>(ref);
         (*result.refCount)++;
         result.ndim = new_ndim;
@@ -842,10 +858,6 @@ class Mat {
                         int32_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
         Mat<Type> result;
-        delete[] result.dims;
-        delete[] result.strides;
-        delete[] result.memory;
-        delete result.refCount;
         result.refCount = ref;
         (*result.refCount)++;
         result.ndim = new_ndim;
@@ -896,8 +908,9 @@ class Mat {
         return result;
     }
 
-    static Mat<Type> empty_like(const Mat<Type> a){
-        Mat<Type> result(a.size());
+    template<class newType = Type>
+    static Mat<newType> empty_like(const Mat<Type> a){
+        Mat<newType> result(a.size());
         result.ndim = a.ndim;
         delete[] result.dims;
         result.dims = new size_type[a.ndim];
@@ -948,8 +961,13 @@ class Mat {
 
     template<class Type2, class Type3>
     static Mat<Type3> broadcast(Type a, Mat<Type2>& b, Type3 (*f)(Type, Type2)){
-        Mat<Type> temp({a},1);
-        return temp.broadcast(b, f);
+        Mat<Type3> out = empty_like(b);
+        iterator j = b.begin();
+        for(auto& i : out){
+            i = f(a, (*j));
+            j++;
+        }
+        return out;
     }
     
     template<class Type2, class Type3>
@@ -1128,13 +1146,23 @@ Mat<Type> operator/(Type a, Mat<Type> &b){
 }
 
 template<class Type>
-Mat<bool> operator&(bool a, Mat<Type> &b){
+Mat<bool> operator&&(bool a, Mat<Type> &b){
     return b.broadcast(a, And<Type,bool>);
 }
 
 template<class Type>
-Mat<bool> operator|(bool a, Mat<Type> &b){
+Mat<bool> operator||(bool a, Mat<Type> &b){
     return b.broadcast(a, Or<Type,bool>);
+}
+
+template<class Type>
+Mat<Type> operator&(Type a, Mat<Type> &b){
+    return b.broadcast(a, BitAnd<Type>);
+}
+
+template<class Type>
+Mat<Type> operator|(Type a, Mat<Type> &b){
+    return b.broadcast(a, BitOr<Type>);
 }
 
 template<class Type>
