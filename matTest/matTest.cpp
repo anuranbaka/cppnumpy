@@ -36,10 +36,6 @@ int main (){
     fprintf(outFile, "matrix z\n");
     z.print(outFile);
 
-    output = x.t() - n.t();
-    fprintf(outFile, "transpose of x - transpose of n\n");
-    output.print(outFile);
-
     output = x.t();
     fprintf(outFile, "transpose of x\n");
     output.print(outFile);
@@ -64,6 +60,10 @@ int main (){
     fprintf(outFile, "transpose of n + x\n");
     output.print(outFile);
 
+    output = x.t() - n.t();
+    fprintf(outFile, "transpose of x - transpose of n\n");
+    output.print(outFile);
+
     output = y * z;
     fprintf(outFile, "y * z\n");
     output.print(outFile);
@@ -86,18 +86,18 @@ int main (){
     fprintf(outFile, "casting matrix x to float using copy<float>()\n");
     outfloat.print(outFile);
 
-    Mat<int> outInt;
-    outInt = x.copy<int>() & 1;
-    fprintf(outFile, "using bitwise and: x & 1");
-    outInt.print(outFile);
-
-    outInt = x.copy<int>() | 7;
-    fprintf(outFile, "using bitwise or: x | 7");
-    outInt.print(outFile);
-
     x.copy(outfloat);
     fprintf(outFile, "casting matrix x to float using copy(dest)\n");
     outfloat.print(outFile);
+
+    Mat<int> outInt;
+    outInt = x.copy<int>() & 1;
+    fprintf(outFile, "using bitwise and: x & 1\n");
+    outInt.print(outFile);
+
+    outInt = x.copy<int>() | 7;
+    fprintf(outFile, "using bitwise or: x | 7\n");
+    outInt.print(outFile);
 
     output = m.roi(0,2,1,3);
     fprintf(outFile, "m.roi(0,1,1,3)\n");

@@ -53,7 +53,7 @@ class MatIter;
 template <class Type>
 class Const_MatIter;
 
-static int32_t globalRefCount = 1;
+static int32_t emptyRefCount = 1;
 
 template <class Type = double>
 class Mat {
@@ -117,7 +117,7 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    long ndim = 1;
+    long ndim = 0;
     size_type* dims = NULL;
     size_type* strides = NULL;
     Type* memory = NULL;
@@ -187,7 +187,7 @@ class Mat {
     }
 
     Mat(){
-        refCount = &globalRefCount;
+        refCount = &emptyRefCount;
         (*refCount)++;
     }
 
