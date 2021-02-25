@@ -1,4 +1,4 @@
-Release ver. ALPHA 1.3 2/24/2021
+Release ver. ALPHA 1.3 2/25/2021
 
 
 # CPPNUMPY Matrix Library
@@ -203,7 +203,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat<Type> ones() `
 - **ones_like**: returns an array of ones with the same shape as a given matrix
   - ` Mat<Type> ones_like(const Mat) `
-- **empty_like**: returns an empty array with the same shape as a given matrix. New matrix can have a different type using a template.
+- **empty_like**: returns an empty array with the same shape as a given matrix. The new matrix can have a different type using a template.
   - ` Mat<newType> empty_like(const Mat<Type>) `
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
