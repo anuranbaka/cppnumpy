@@ -47,10 +47,10 @@ Type minor(const Mat<Type>& mat, size_t x, size_t y){
 }
 template <class Type>
 Mat<Type> inv(const Mat<Type>& mat){
-    mat.errorCheck(mat.ndim != 2 || mat.rows() != mat.columns(),
-        "Matrix dimensions non-invertible");
+    if(mat.ndim != 2 || mat.rows() != mat.columns())
+        throw invalid_argument("Matrix dimensions non-invertible");
     Type det = determinant(mat);
-    mat.errorCheck(det == 0, "matrix is singular");
+    if(det == 0) throw invalid_argument("matrix is singular");
     return adjugate(mat)/det;
 }
 template Mat<double> inv<double>(const Mat<double>& mat);

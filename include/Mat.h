@@ -818,6 +818,9 @@ class Mat {
 
     static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = new int32_t;
         *result.refCount = 1;
@@ -840,6 +843,9 @@ class Mat {
                         size_type* new_dims, size_type* new_strides, 
                         int64_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = reinterpret_cast<int32_t*>(ref);
         (*result.refCount)++;
@@ -861,6 +867,9 @@ class Mat {
                         size_type* new_dims, size_type* new_strides, 
                         int32_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = ref;
         (*result.refCount)++;

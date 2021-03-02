@@ -50,12 +50,12 @@ Type minor(const Mat<Type>& mat, size_t x, size_t y){
 }
 template <>
 Mat<double> inv(const Mat<double>& mat){
-    mat.errorCheck(mat.rows() != mat.columns(),
-        "inverse can only be called on a square matrix");
-    mat.errorCheck(mat.ndim != 2,
-        "inverse can only be called on a 2d matrix");
-    mat.errorCheck(!mat.isContiguous(),
-        "inverse can only be called on a contiguous matrix");
+    if(mat.rows() != mat.columns())
+        throw invalid_argument("inverse can only be called on a square matrix");
+    if(mat.ndim != 2)
+        throw invalid_argument("inverse can only be called on a 2d matrix");
+    if(!mat.isContiguous())
+        throw invalid_argument("inverse can only be called on a contiguous matrix");
     Mat<double> result(mat.copy());
     int order = mat.columns();
     int* piv;
@@ -66,8 +66,8 @@ Mat<double> inv(const Mat<double>& mat){
         piv = (int*)malloc(order*sizeof(int));
     }
     clapack_dgetrf(CblasRowMajor, order, order, result.data, order, piv);
-    mat.errorCheck(clapack_dgetri(CblasRowMajor, order, result.data, order, piv) != 0,
-        "Lapack inverse failed");
+    if(clapack_dgetri(CblasRowMajor, order, result.data, order, piv) != 0)
+        throw runtime_error("Lapack inverse failed");
     if(order >= 1000){
         free(piv);
     }
@@ -75,12 +75,12 @@ Mat<double> inv(const Mat<double>& mat){
 }
 template <>
 Mat<float> inv<float>(const Mat<float>& mat){
-    mat.errorCheck(mat.rows() != mat.columns(),
-        "inverse can only be called on a square matrix");
-    mat.errorCheck(mat.ndim != 2,
-        "inverse can only be called on a 2d matrix");
-    mat.errorCheck(!mat.isContiguous(),
-        "inverse can only be called on a contiguous matrix");
+    if(mat.rows() != mat.columns())
+        throw invalid_argument("inverse can only be called on a square matrix");
+    if(mat.ndim != 2)
+        throw invalid_argument("inverse can only be called on a 2d matrix");
+    if(!mat.isContiguous())
+        throw invalid_argument("inverse can only be called on a contiguous matrix");
     Mat<float> result(mat.copy());
     int order = mat.columns();
     int* piv;
@@ -91,8 +91,8 @@ Mat<float> inv<float>(const Mat<float>& mat){
         piv = (int*)malloc(order*sizeof(int));
     }
     clapack_sgetrf(CblasRowMajor, order, order, result.data, order, piv);
-    mat.errorCheck(clapack_sgetri(CblasRowMajor, order, result.data, order, piv) != 0,
-        "Lapack inverse failed");
+    if(clapack_sgetri(CblasRowMajor, order, result.data, order, piv) != 0)
+        throw invalid_argument("Lapack inverse failed");
     if(order >= 1000){
         free(piv);
     }
