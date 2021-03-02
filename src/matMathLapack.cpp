@@ -52,7 +52,7 @@ template <>
 Mat<double> inv(const Mat<double>& mat){
     mat.errorCheck(mat.rows() != mat.columns(),
         "inverse can only be called on a square matrix");
-    mat.errorCheck(mat.ndims != 2,
+    mat.errorCheck(mat.ndim != 2,
         "inverse can only be called on a 2d matrix");
     mat.errorCheck(!mat.isContiguous(),
         "inverse can only be called on a contiguous matrix");
@@ -77,7 +77,7 @@ template <>
 Mat<float> inv<float>(const Mat<float>& mat){
     mat.errorCheck(mat.rows() != mat.columns(),
         "inverse can only be called on a square matrix");
-    mat.errorCheck(mat.ndims != 2,
+    mat.errorCheck(mat.ndim != 2,
         "inverse can only be called on a 2d matrix");
     mat.errorCheck(!mat.isContiguous(),
         "inverse can only be called on a contiguous matrix");

@@ -47,7 +47,7 @@ Type minor(const Mat<Type>& mat, size_t x, size_t y){
 }
 template <class Type>
 Mat<Type> inv(const Mat<Type>& mat){
-    mat.errorCheck(mat.ndims != 2 || mat.rows() != mat.columns(),
+    mat.errorCheck(mat.ndim != 2 || mat.rows() != mat.columns(),
         "Matrix dimensions non-invertible");
     Type det = determinant(mat);
     mat.errorCheck(det == 0, "matrix is singular");
