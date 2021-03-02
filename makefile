@@ -16,7 +16,7 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic
 
-all: bin/matTest floodPybind matDebug
+all: bin/matTest floodPybind matDebug bin/errorTest
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -57,6 +57,8 @@ bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.
 endif
 endif
 
+bin/errorTest: matTest/errorTest.cpp include/Mat.h
+	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/errorTest.cpp -o bin/errorTest
 
 bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
