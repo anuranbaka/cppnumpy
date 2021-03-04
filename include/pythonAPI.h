@@ -71,8 +71,8 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
     size_t* mat_strides = new size_t[nd];
     Mat<T> out;
     for(long i = 0; i < nd; i++){
-        out.errorCheck((PyArray_STRIDES(arr)[i])%PyArray_ITEMSIZE(arr) != 0,
-                "Strides must be a multiple of ITEMSIZE to convert to Mat");
+        if((PyArray_STRIDES(arr)[i])%PyArray_ITEMSIZE(arr) != 0)
+            throw invalid_argument("Strides must be a multiple of ITEMSIZE to convert to Mat");
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
     out = Mat<T>::wrap(

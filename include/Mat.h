@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdexcept>
 #include <initializer_list>
 #include <matMath.h>
 #include <type_traits>
@@ -65,25 +66,25 @@ class Mat {
                                 Mat<Type3>& out,
                                 size_t* bigStrides, size_t* smallStrides){
         long dimdiff = bigMat.ndim - smallMat.ndim;
-        bigMat.errorCheck(out.ndim != bigMat.ndim,
-            "output matrix ndim not equal to broadcasted ndim");
+        if(out.ndim != bigMat.ndim)
+            throw invalid_argument("output matrix ndim not equal to broadcasted ndim");
         for(int i = 0; i < dimdiff; i++){
-            bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
-                "broadcast output matrix shape mismatch");
+            if(out.dims[i] != bigMat.dims[i])
+                throw invalid_argument("broadcast output matrix shape mismatch");
         }
         for(int i = dimdiff; i < bigMat.ndim; i++){
             if(bigMat.dims[i] != 1 && smallMat.dims[i-dimdiff] != 1){
-                bigMat.errorCheck(bigMat.dims[i] != smallMat.dims[i-dimdiff],
-                    "operand frames not aligned");
-                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
-                    "broadcast output matrix shape mismatch");
+                if(bigMat.dims[i] != smallMat.dims[i-dimdiff])
+                    throw invalid_argument("operand frames not aligned");
+                if(out.dims[i] != bigMat.dims[i])
+                    throw invalid_argument("broadcast output matrix shape mismatch");
             }
             if(bigMat.dims[i] == 1)
-                bigMat.errorCheck(out.dims[i] != smallMat.dims[i-dimdiff],
-                "broadcast output matrix shape mismatch");
+                if(out.dims[i] != smallMat.dims[i-dimdiff])
+                    throw invalid_argument("broadcast output matrix shape mismatch");
             if(smallMat.dims[i-dimdiff] == 1)
-                bigMat.errorCheck(out.dims[i] != bigMat.dims[i],
-                "broadcast output matrix shape mismatch");
+                if(out.dims[i] != bigMat.dims[i])
+                    throw invalid_argument("broadcast output matrix shape mismatch");
         }
 
         for(long i = 0; i < dimdiff; i++){
@@ -100,7 +101,8 @@ class Mat {
 
     public:
     void buildStrides(){
-        errorCheck(ndim == 0, "ndim cannot equal 0");
+        if(ndim == 0)
+            throw length_error("Cannot build strides for 0 dimensional matrix");
         if(strides != NULL) delete[] strides;
         strides = new size_type[ndim];
         strides[ndim-1] = 1;
@@ -125,14 +127,6 @@ class Mat {
     int32_t* refCount = NULL;
     void* customTypeData = NULL;
     void (*customDestructor)(Mat<Type>*, void*) = 0;
-
-    void errorCheck(bool e, const char* message) const{
-        if(e){
-            fprintf(stderr, "%s\n", message);
-            exit(1);
-        }
-        return;
-    }
 
     iterator begin(){
         return iterator(*this, 0);
@@ -160,16 +154,20 @@ class Mat {
     }
 
     size_type rows() const{
-        errorCheck(ndim < 2, "1d matrix has no rows");
+        if(ndim < 1) throw out_of_range("matrix has no dimensions");
+        if(ndim == 1) throw out_of_range("1d matrix has no rows");
         return this->dims[ndim - 2];
     }
 
     size_type columns() const{
+        if(ndim < 1) throw out_of_range("matrix has no dimensions");
         return this->dims[ndim - 1];
     }
 
     template<typename... arg>
     bool inbounds(const arg... ind){
+        if(static_cast<long>(sizeof...(arg)) > ndim)
+            throw out_of_range("too many coordinates passed to inbounds()");
         size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
         for(int i = 0; i < ndim; i++){
             if(temp[i] >= dims[i] || temp[i] < 0) return false;
@@ -197,7 +195,7 @@ class Mat {
         *refCount = 1;
 
         ndim = sizeof...(arg);
-        errorCheck(ndim > 32, "too many dimensions (<=32 allowed)");
+        if(ndim > 32) throw invalid_argument("too many dimensions (<=32 allowed)");
 
         dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
         buildStrides();
@@ -230,11 +228,11 @@ class Mat {
         *refCount = 1;
 
         ndim = sizeof...(arg);
-        errorCheck(ndim > 32, "too many dimensions (<=32 allowed)");
+        if(ndim > 32) throw invalid_argument("too many dimensions (<=32 allowed)");
 
         dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
-        errorCheck(list.size() != size(),
-            "Initializer list size inconsistent with dimensions");
+        if(list.size() != size())
+            throw invalid_argument("Initializer list size inconsistent with dimensions");
         buildStrides();
      
         memory = new Type[size()];
@@ -272,9 +270,8 @@ class Mat {
             return;
         }
         (*refCount)--;
-        errorCheck(*refCount < 0,
-            "Reference counter is negative somehow");
-        if(*refCount == 0){
+        if(*refCount < 0) fprintf(stderr, "Reference counter is negative somehow\n");
+        if(*refCount < 1){
             delete refCount;
             if(customTypeData == NULL)
                 delete []memory;
@@ -526,9 +523,9 @@ class Mat {
             out.dims[i] = big_dim[i];
         }
         for(long i = dimdiff; i < out.ndim; i++){
-            errorCheck(big_dim[i] != small_dim[i - dimdiff] &&
-                        big_dim[i] != 1 && small_dim[i - dimdiff] != 1,
-                        "operand frames not aligned");
+            if(big_dim[i] != small_dim[i - dimdiff] &&
+                        big_dim[i] != 1 && small_dim[i - dimdiff] != 1)
+                throw invalid_argument("operand frames not aligned");
             if(big_dim[i] >= small_dim[i - dimdiff]) out.dims[i] = big_dim[i];
             else out.dims[i] = small_dim[i - dimdiff];
         }
@@ -581,6 +578,8 @@ class Mat {
 
     template<class Type2, class Type3>
     void broadcast(Type2 b, Type3 (*f)(Type, Type2), Mat<Type3> &out){
+        if(out.size() != size())
+            throw invalid_argument("broadcast output matrix size mismatch");
         iterator j = begin();
         for(auto& i : out){
             i = f((*j), b);
@@ -598,9 +597,10 @@ class Mat {
     }
 
     Mat operator^ (const Mat<Type> &b){
-        errorCheck(ndim != 2 || b.ndim != 2,
-            "Matrix multiply only available on 2d matrices");
-        errorCheck(columns() != b.rows(), "Matrix size mismatch");
+        if(ndim != 2 || b.ndim != 2)
+            throw invalid_argument("Matrix multiply only available on 2d matrices");
+        if(columns() != b.rows())
+            throw invalid_argument("Matrix size mismatch");
         Mat<Type> result(rows(),b.columns());
         Type sum;
         for(size_type x = 0; x < rows(); x++){
@@ -619,27 +619,27 @@ class Mat {
     Mat<Type> roi(const arg... ind){
         Mat<Type> out(*this);
         if(sizeof...(arg) == 0) return out;
-        errorCheck(sizeof...(arg) > static_cast<size_type>(2*out.ndim),
-                    "too many arguments for roi function");
+        if(sizeof...(arg) > static_cast<size_type>(2*out.ndim))
+            throw out_of_range("too many arguments for roi function");
         int temp[sizeof...(arg)] = {(static_cast<int>(ind))...};
 
         for(long i = 0; i < out.ndim; i++){
             if(static_cast<size_type>(2*i) >= sizeof...(arg)) break;
             else if(static_cast<size_type>(2*i)+1 >= sizeof...(arg)){
                 if(temp[2*i] == -1) temp[2*i] = 0;
-                errorCheck(temp[(2*i)] < 0
-                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
-                        "roi shape mismatch");
+                if(temp[(2*i)] < 0
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i])
+                    throw invalid_argument("roi shape mismatch");
                 out.dims[i] -= temp[2*i];
                 out.data += temp[2*i]*out.strides[i];
             }
             else{
                 if(temp[(2*i)+1] == -1) temp[(2*i)+1] = out.dims[i];
                 if(temp[2*i] == -1) temp[2*i] = 0;
-                errorCheck(temp[(2*i)+1] < 0 || temp[(2*i)] < 0
+                if(temp[(2*i)+1] < 0 || temp[(2*i)] < 0
                         || static_cast<size_type>(temp[(2*i)+1]) > out.dims[i]
-                        || static_cast<size_type>(temp[2*i]) > out.dims[i],
-                        "roi shape mismatch");
+                        || static_cast<size_type>(temp[2*i]) > out.dims[i])
+                    throw invalid_argument("roi shape mismatch");
                 out.dims[i] = temp[(2*i)+1] - temp[2*i];
                 out.data += temp[2*i]*out.strides[i];
             }
@@ -660,14 +660,15 @@ class Mat {
                 typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
 
     Mat T(Mat& dest){
-        errorCheck(memory == dest.memory,
-            "Source and destination matrix share same backing data");
+        if(memory == dest.memory) throw invalid_argument
+                ("Source and destination matrix share same backing data");
         t().copy(dest);
         return dest;
     }
 
     Mat T(){
-        errorCheck(ndim != 2, "hard in-place transpose may only be used on 2d matrix");
+        if(ndim != 2) throw invalid_argument
+                ("hard in-place transpose may only be used on 2d matrix");
         if(rows() == columns()){
             Type temp;
             for(size_type i=0; i<rows(); i++){
@@ -689,8 +690,7 @@ class Mat {
             }
         }
         else{
-            errorCheck(true,
-                "hard in-place transpose may only be used on square or contiguous matrices");
+            throw logic_error("T() may only be used on square or contiguous matrices");
         }
         return *this;
     }
@@ -778,27 +778,31 @@ class Mat {
 
     template<typename... arg>
     void reshape(const arg... ind){
-        errorCheck(!isContiguous(),
-            "Cannot reshape non-contiguous matrix");
+        if(!isContiguous())
+            throw invalid_argument("Cannot reshape non-contiguous matrix");
 
         long autodim = -1;
-        errorCheck(static_cast<long>(sizeof...(arg)) > 32,
-            "too many arguments to reshape function");
-        errorCheck(sizeof...(arg) == 0, "reshape requires at least one parameter");
+        if(static_cast<long>(sizeof...(arg)) > 32)
+            throw invalid_argument("too many arguments to reshape function");
+        if(sizeof...(arg) == 0)
+            throw invalid_argument("reshape requires at least one parameter");
 
         long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
         size_type shapecheck = 1, autoLength;
         for(long i = 0; i < static_cast<long>(sizeof...(arg)); i++){
-            errorCheck(temp[i] < -1, "matrix dimensions can not be negative");
+            if(temp[i] < -1) throw out_of_range("matrix dimensions can not be negative");
             if(temp[i] == -1){
-                errorCheck(autodim != -1, "too many inferred dimensions in reshape");
+                if(autodim != -1)
+                    throw invalid_argument("too many inferred dimensions in reshape");
                 autodim = i;
             }
             else shapecheck *= temp[i];
         }
-        if(autodim == -1) errorCheck(shapecheck != size(), "new shape size mismatch");
+        if(autodim == -1 && shapecheck != size())
+            throw invalid_argument("new shape size mismatch");
         else{
-            errorCheck(size() % shapecheck != 0, "reshape dimension inferrence failed");
+            if(size() % shapecheck != 0)
+                throw invalid_argument("reshape dimension inferrence failed");
             autoLength = size() / shapecheck;
         }
         
@@ -814,6 +818,9 @@ class Mat {
 
     static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = new int32_t;
         *result.refCount = 1;
@@ -836,6 +843,9 @@ class Mat {
                         size_type* new_dims, size_type* new_strides, 
                         int64_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = reinterpret_cast<int32_t*>(ref);
         (*result.refCount)++;
@@ -857,6 +867,9 @@ class Mat {
                         size_type* new_dims, size_type* new_strides, 
                         int32_t* ref, void (*destructor)(Mat<Type>*, void*),
                         void* arr){
+        if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
+        if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
+        if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.refCount = ref;
         (*result.refCount)++;
@@ -986,8 +999,8 @@ class MatIter{
     size_t eff_last_dim;
 
     MatIter(Mat<Type>& mat, size_t ind) : matrix(mat), index(ind){
-        mat.errorCheck(ind > mat.size(),
-            "iterator index greater than matrix size");
+        if(ind > mat.size())
+            throw out_of_range("iterator index greater than matrix size");
         for(long i = 0; i < matrix.ndim; i++){
             coord[i] = 0;
         }
@@ -1014,14 +1027,14 @@ class MatIter{
     }
     
     bool operator==(MatIter b){
-        matrix.errorCheck(matrix.data != b.matrix.data,
-            "Comparison between iterators of different matrices");
+        if(matrix.data != b.matrix.data)
+            throw invalid_argument("Comparison between iterators of different matrices");
         return index == b.index;
     }
 
     bool operator!=(MatIter b){
-        matrix.errorCheck(matrix.data != b.matrix.data,
-            "Comparison between iterators of different matrices");
+        if(matrix.data != b.matrix.data)
+            throw invalid_argument("Comparison between iterators of different matrices");
         return index != b.index;
     }
 
@@ -1085,15 +1098,15 @@ class Const_MatIter{
     }
 
     bool operator==(Const_MatIter b){
-        matrix.errorCheck(matrix.data != b.matrix.data,
-            "Comparison between iterators of different matrices");
+        if(matrix.data != b.matrix.data)
+            throw invalid_argument("Comparison between iterators of different matrices");
         if(index == b.index) return true;
         else return false;
     }
 
     bool operator!=(Const_MatIter b){
-        matrix.errorCheck(matrix.data != b.matrix.data,
-            "Comparison between iterators of different matrices");
+        if(matrix.data != b.matrix.data)
+            throw invalid_argument("Comparison between iterators of different matrices");
         if(index != b.index) return true;
         else return false;
     }
@@ -1207,8 +1220,8 @@ Mat<bool> Mat<Type>::operator!(){
 template<class Type>
 Mat<Type> Mat<Type>::i(Mat<bool> &mask){
     for(long i = 0; i < ndim; i++){
-        errorCheck(mask.dims[i] != dims[i],
-            "mask index broadcasting not yet implemented\n");
+        if(mask.dims[i] != dims[i])
+            throw invalid_argument("mask index broadcasting not yet implemented\n");
     }
     size_type newSize = 0;
     for(auto i : mask){
@@ -1223,7 +1236,8 @@ template<class Type>
 template<class Type2>
 Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    errorCheck(indices.ndim != 1, "index lists with ndim != 1 not yet implemented");
+    if(indices.ndim != 1)
+        throw invalid_argument("index lists with ndim != 1 not yet implemented");
 
     Mat<Type> out(indices.size() * (size() / dims[0]));
     out.ndim = ndim;
@@ -1241,14 +1255,15 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
 
 template<class Type>
 void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
-    errorCheck(out.ndim != 1,
-                "output of ito() function must be 1-dimensional");
+    if(out.ndim != 1)
+        throw invalid_argument("output of ito() function must be 1-dimensional");
 
     size_type newSize = 0;
     for(auto i : mask){
         if(i) newSize++;
     }
-    errorCheck(out.size() < newSize, "insufficient space in output matrix");
+    if(out.size() < newSize)
+        throw invalid_argument("insufficient space in output matrix");
     if(out.size() > newSize){
         out = out.roi(0,newSize);
     }
@@ -1268,15 +1283,15 @@ template<class Type>
 template<class Type2>
 void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    errorCheck(indices.ndim != 1,
-        "index lists with ndim != 1 not yet implemented");
-    errorCheck(out.ndim != ndim,
-        "inconsistent number of dimensions in output matrix in call to ito()");
-    errorCheck(out.dims[0] != indices.size(),
-        "output matrix shape does not match given index list in call to ito()");
+    if(indices.ndim != 1)
+        throw invalid_argument("index lists with ndim != 1 not yet implemented");
+    if(out.ndim != ndim)
+        throw invalid_argument("inconsistent number of dimensions in output matrix in call to ito()");
+    if(out.dims[0] != indices.size())
+        throw invalid_argument("output matrix shape does not match given index list in call to ito()");
     for(long i = 1; i < ndim; i++){
-        errorCheck(out.dims[i] != dims[i],
-        "output matrix shape mismatch in call to ito()");
+        if(out.dims[i] != dims[i])
+        throw invalid_argument("output matrix shape mismatch in call to ito()");
     }
 
     iterator dimend = begin();
@@ -1298,11 +1313,11 @@ void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
 template<class Type>
 template<class newType>
 void Mat<Type>::copy(Mat<newType>& dest) const{
-    errorCheck(dest.ndim != ndim,
-        "Matrix dimension mismatch during copy");
+    if(dest.ndim != ndim)
+        throw invalid_argument("Matrix dimension mismatch during copy");
     for(long i = 0; i > dest.ndim; i++){
-        errorCheck(dest.dims[i] != dims[i],
-            "output matrix shape mismatch in call to copy()");
+        if(dest.dims[i] != dims[i])
+            throw invalid_argument("output matrix shape mismatch in call to copy()");
     }
     MatIter<newType> j = dest.begin();
     for(auto i : *this){
