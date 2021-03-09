@@ -400,5 +400,19 @@ int main (){
     fprintf(outFile, "inverse of the Hilbert matrix\n");
     output.print(outFile);
 
+    fflush(outFile);
+    std::ifstream testFile("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testCheck("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    if(testFile.tellg() != testCheck.tellg()){
+        printf("Test Failure\n");
+    }
+    else{
+        testFile.seekg(0); testCheck.seekg(0);
+        if(!std::equal(std::istreambuf_iterator<char>(testFile),
+                std::istreambuf_iterator<char>(),
+                std::istreambuf_iterator<char>(testCheck)))
+            printf("Test Failure\n");
+    }
+
     return 0;
 }
