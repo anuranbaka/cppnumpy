@@ -152,7 +152,7 @@ int main (){
     m.T().print(outFile);
 
     output = Mat<double>::empty_like(m);
-    output.reshape(m.columns(),m.rows());
+    output = output.reshape(m.columns(),m.rows());
     m.T(output);
     fprintf(outFile, "m.T(output)\n");
     output.print(outFile);
@@ -284,24 +284,26 @@ int main (){
     fprintf(outFile, "4x7 identity matrix with diagonal at -2\n");
     output.print(outFile);
 
-    output.reshape(14,2);
     fprintf(outFile, "reshape the previous matrix into a 14x2 matrix\n");
-    output.print(outFile);
+    output.reshape(14,2).print(outFile);
 
-    output.reshape(2,2,7);
     fprintf(outFile, "reshape again into a 2x2x7 matrix\n");
-    output.print(outFile);
+    output.reshape(2,2,7).print(outFile);
 
-    output = x;
-    output.reshape(9);
     fprintf(outFile, "matrix x as a 1d, 9 element matrix\n");
-    output.print(outFile);
+    x.reshape(9).print(outFile);
 
-    output = y.roi(1,3);
-    output.reshape(6,2);
-    fprintf(outFile, "taking the two middle rows from y and reshaping to a 6x2 matrix\n");
-    fprintf(outFile, "(legal because full rows are taken and are contiguous)\n");
+    fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
+    fprintf(outFile, "(returns a view because it is contiguous)\n");
     fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
+    y.roi(1,3).reshape(6,2).print(outFile);
+
+    fprintf(outFile, "reshaping the transpose of y to a 2,12 matrix\n");
+    fprintf(outFile, "(makes a copy because it is not contiguous)\n");
+    y.t().reshape(2,12).print(outFile);
+
+    fprintf(outFile, "reshaping y to a 2,2,3,2 matrix\n");
+    output = y.reshape(2,2,3,2);
     output.print(outFile);
 
     double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};

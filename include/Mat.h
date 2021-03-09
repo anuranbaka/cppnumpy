@@ -680,9 +680,8 @@ class Mat {
             }
         }
         else if(isContiguous()){
-            Mat<Type> clone(rows(), columns());
-            copy(clone);
-            reshape(columns(), rows());
+            Mat<Type> clone(copy());
+            operator=(reshape(columns(), rows()));
             for(size_type i = 0; i < columns(); i++){
                 for(size_type j = 0; j < rows(); j++){
                     operator()(j,i) = clone(i,j);
@@ -777,18 +776,15 @@ class Mat {
     }
 
     template<typename... arg>
-    void reshape(const arg... ind){
-        if(!isContiguous())
-            throw invalid_argument("Cannot reshape non-contiguous matrix");
-
+    Mat<Type> reshape(const arg... ind){
         long autodim = -1;
+        long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
+        size_type shapecheck = 1, autoLength;
+
         if(static_cast<long>(sizeof...(arg)) > 32)
             throw invalid_argument("too many arguments to reshape function");
         if(sizeof...(arg) == 0)
             throw invalid_argument("reshape requires at least one parameter");
-
-        long temp[sizeof...(arg)] = {(static_cast<long>(ind))...};
-        size_type shapecheck = 1, autoLength;
         for(long i = 0; i < static_cast<long>(sizeof...(arg)); i++){
             if(temp[i] < -1) throw out_of_range("matrix dimensions can not be negative");
             if(temp[i] == -1){
@@ -805,15 +801,23 @@ class Mat {
                 throw invalid_argument("reshape dimension inferrence failed");
             autoLength = size() / shapecheck;
         }
-        
-        ndim = sizeof...(arg);
-        delete[] dims;
-        dims = new size_type[ndim];
-        for(long i = 0; i < ndim; i++){
-            if(i == autodim) dims[i] = autoLength;
-            else dims[i] = temp[i];
+
+        Mat<Type> out;
+        if(isContiguous()){
+            out = *this;
         }
-        buildStrides();
+        else{
+            out = copy();
+        }
+        out.ndim = sizeof...(arg);
+        delete[] out.dims;
+        out.dims = new size_type[out.ndim];
+        for(long i = 0; i < out.ndim; i++){
+            if(i == autodim) out.dims[i] = autoLength;
+            else out.dims[i] = temp[i];
+        }
+        out.buildStrides();
+        return out;
     }
 
     static Mat<Type> wrap(Type* data, long new_ndim,
