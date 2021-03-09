@@ -159,8 +159,8 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` void copy(Mat<newType>&) `
 - **scalarFill**: fills a matrix with a given value
   - ` void scalarFill(Type)  `
-- **reshape**: sets the matrix dimensions equal to given arguments while preserving element order. One -1 can be used to infer new dimension.
-  - ` void reshape(int...) `
+- **reshape**: Returns a matrix in a new given shape. A view is returned if data is contiguous, otherwise a copy is returned. One -1 parameter can be used to infer new dimension.
+  - ` Mat<Type> reshape(int...) `
 - **inverse**: non-member function that takes a matrix and returns its inverse
   - ` Mat<Type> inverse(Mat<Type>) `
 ### Boolean Operators
