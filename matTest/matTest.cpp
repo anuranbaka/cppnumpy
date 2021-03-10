@@ -152,7 +152,7 @@ int main (){
     m.T().print(outFile);
 
     output = Mat<double>::empty_like(m);
-    output.reshape(m.columns(),m.rows());
+    output = output.reshape(m.columns(),m.rows());
     m.T(output);
     fprintf(outFile, "m.T(output)\n");
     output.print(outFile);
@@ -284,24 +284,38 @@ int main (){
     fprintf(outFile, "4x7 identity matrix with diagonal at -2\n");
     output.print(outFile);
 
-    output.reshape(14,2);
     fprintf(outFile, "reshape the previous matrix into a 14x2 matrix\n");
-    output.print(outFile);
+    output.reshape(14,2).print(outFile);
 
-    output.reshape(2,2,7);
     fprintf(outFile, "reshape again into a 2x2x7 matrix\n");
-    output.print(outFile);
+    output.reshape(2,2,7).print(outFile);
 
-    output = x;
-    output.reshape(9);
     fprintf(outFile, "matrix x as a 1d, 9 element matrix\n");
+    x.reshape(9).print(outFile);
+
+    fprintf(outFile, "printing matrix y again as a reminder of its current state\n");
+    y.print(outFile);
+
+    output = y.roi(1,3).reshape(6,2);
+    fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
+    if(output.memory == y.memory)
+        fprintf(outFile, "points to the same data because it is contiguous\n");
+    else
+        fprintf(outFile,
+            "something went wrong, the new matrix has a different memory pointer!\n");
     output.print(outFile);
 
-    output = y.roi(1,3);
-    output.reshape(6,2);
-    fprintf(outFile, "taking the two middle rows from y and reshaping to a 6x2 matrix\n");
-    fprintf(outFile, "(legal because full rows are taken and are contiguous)\n");
-    fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
+    output = y.t().reshape(2,12);
+    fprintf(outFile, "reshaping the transpose of y to a 2,12 matrix\n");
+    if(output.memory != y.memory)
+        fprintf(outFile, "points to a copy because it is not contiguous\n");
+    else
+        fprintf(outFile,
+            "something went wrong, the new matrix has the same memory pointer!\n");
+    output.print(outFile);
+
+    fprintf(outFile, "reshaping y to a 2,2,3,2 matrix\n");
+    output = y.reshape(2,2,3,2);
     output.print(outFile);
 
     double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -397,6 +411,20 @@ int main (){
     output = inv(hilbert);
     fprintf(outFile, "inverse of the Hilbert matrix\n");
     output.print(outFile);
+
+    fflush(outFile);
+    std::ifstream testFile("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testCheck("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    if(testFile.tellg() != testCheck.tellg()){
+        printf("Test Failure\n");
+    }
+    else{
+        testFile.seekg(0); testCheck.seekg(0);
+        if(!std::equal(std::istreambuf_iterator<char>(testFile),
+                std::istreambuf_iterator<char>(),
+                std::istreambuf_iterator<char>(testCheck)))
+            printf("Test Failure\n");
+    }
 
     return 0;
 }
