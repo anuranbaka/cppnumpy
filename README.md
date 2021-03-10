@@ -1,4 +1,4 @@
-Release ver. ALPHA 2.0 3/4/2021
+Release ver. ALPHA 2.0 3/10/2021
 
 
 # CPPNUMPY Matrix Library
@@ -157,12 +157,11 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **copy**: returns a copy of the matrix that does NOT use the same data pointer, or stores into given destination matrix. Optional template argument allows for type casting.
   - ` Mat<newType> copy<newType>() `
   - ` void copy(Mat<newType>&) `
-- **scalarFill**: fills a matrix with a given value
+- **scalarFill**: fills the matrix with a given value
   - ` void scalarFill(Type)  `
-- **reshape**: Returns a matrix in a new given shape. A view is returned if data is contiguous, otherwise a copy is returned. One -1 parameter can be used to infer new dimension.
+- **reshape**: Returns a version of the matrix with new shape. A view is returned if data is contiguous, otherwise a copy is returned. One -1 parameter can be used to infer a dimension.
   - ` Mat<Type> reshape(int...) `
-- **inverse**: non-member function that takes a matrix and returns its inverse
-  - ` Mat<Type> inverse(Mat<Type>) `
+- **inverse**: There is no member function for inverse. See linked in `inv()` under "Additional Non-member Functions" instead
 ### Boolean Operators
 - **operator&&**: elementwise logical AND
   - ` Mat<bool> operator&(const Mat<Type2>&) `
