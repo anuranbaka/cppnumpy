@@ -681,7 +681,7 @@ class Mat {
         }
         else if(isContiguous()){
             Mat<Type> clone(copy());
-            operator=(reshape(columns(), rows()));
+            (*this) = (reshape(columns(), rows()));
             for(size_type i = 0; i < columns(); i++){
                 for(size_type j = 0; j < rows(); j++){
                     operator()(j,i) = clone(i,j);
