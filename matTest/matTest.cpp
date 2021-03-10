@@ -293,14 +293,26 @@ int main (){
     fprintf(outFile, "matrix x as a 1d, 9 element matrix\n");
     x.reshape(9).print(outFile);
 
-    fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
-    fprintf(outFile, "(returns a view because it is contiguous)\n");
-    fprintf(outFile, "(Note that the zeros we filled in before are still there)\n");
-    y.roi(1,3).reshape(6,2).print(outFile);
+    fprintf(outFile, "printing matrix y again as a reminder of its current state\n");
+    y.print(outFile);
 
+    output = y.roi(1,3).reshape(6,2);
+    fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
+    if(output.memory == y.memory)
+        fprintf(outFile, "points to the same data because it is contiguous\n");
+    else
+        fprintf(outFile,
+            "something went wrong, the new matrix has a different memory pointer!\n");
+    output.print(outFile);
+
+    output = y.t().reshape(2,12);
     fprintf(outFile, "reshaping the transpose of y to a 2,12 matrix\n");
-    fprintf(outFile, "(makes a copy because it is not contiguous)\n");
-    y.t().reshape(2,12).print(outFile);
+    if(output.memory != y.memory)
+        fprintf(outFile, "points to a copy because it is not contiguous\n");
+    else
+        fprintf(outFile,
+            "something went wrong, the new matrix has the same memory pointer!\n");
+    output.print(outFile);
 
     fprintf(outFile, "reshaping y to a 2,2,3,2 matrix\n");
     output = y.reshape(2,2,3,2);
