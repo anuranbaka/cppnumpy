@@ -413,8 +413,8 @@ int main (){
     output.print(outFile);
 
     fflush(outFile);
-    std::ifstream testFile("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
-    std::ifstream testCheck("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testFile("matTest/matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testCheck("matTest/expectedMatTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     if(testFile.tellg() != testCheck.tellg()){
         printf("Test Failure\n");
     }
