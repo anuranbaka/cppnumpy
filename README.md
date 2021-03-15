@@ -207,6 +207,10 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 - **eye**: returns the identity matrix for an NxN matrix, or for a non-square matrix along a given diagonal (default diagonal starts at first element)
   - ` Mat<Type> eye(size_t) `
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
+- **arange** return evenly spaced values within a given interval
+  - ` Mat<Type> arange(int stop) `
+  - ` Mat<Type> arange(int start, int stop) `
+  - ` Mat<Type> arange(int start, int stop, int step) `
 ### Additional Non-member Functions
 - **inv()**: returns inverse of the given matrix which uses a stable, basic implementation or imports from Lapack
   -  ` Mat<Type> inv(Mat<Type>) `
