@@ -1,4 +1,4 @@
-Release ver. ALPHA 2.0 3/10/2021
+Release ver. ALPHA 2.2 3/16/2021
 
 
 # CPPNUMPY Matrix Library
