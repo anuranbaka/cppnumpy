@@ -834,7 +834,7 @@ class Mat {
     static Mat<Type> arange(int start, int stop){
         if(start < 0) throw out_of_range("arange start must be >= 0");
         if(stop < start) throw out_of_range("arange stop must be >= start");
-        Mat<Type> out((stop - start));
+        Mat<Type> out(stop - start);
         int j = start;
         for(auto& i : out){
             i = j;
@@ -846,6 +846,11 @@ class Mat {
     static Mat<Type> arange(int start, int stop, int step){
         if(start < 0) throw out_of_range("arange start must be >= 0");
         if(stop < start) throw out_of_range("arange stop must be >= start");
+        if(step == 0) throw runtime_error("attempted division by zero in arange()");
+        if(step < 0){
+            Mat<Type> out(0);
+            return out;
+        }
         Mat<Type> out((stop - start) / step);
         int j = start;
         for(auto& i : out){

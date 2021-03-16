@@ -332,6 +332,10 @@ int main (){
     fprintf(outFile, "y.i(Mat<size_t>::arange(1,5,2))\n");
     output.print(outFile);
 
+    temp = Mat<size_t>::arange(1,5,-2);
+    fprintf(outFile, "printing arange(1,5,-2), which should just be size 0\n");
+    temp.print(outFile);
+
     double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     size_t shape[2] = {3,5};
     Mat<double> wrapper = Mat<double>::wrap(e, 2, shape);
