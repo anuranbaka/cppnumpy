@@ -318,6 +318,24 @@ int main (){
     output = y.reshape(2,2,3,2);
     output.print(outFile);
 
+    fprintf(outFile, "arange(3)\n");
+    Mat<size_t>::arange(3).print(outFile);
+
+    fprintf(outFile, "arange(3,7)\n");
+    Mat<size_t>::arange(3,7).print(outFile);
+
+    fprintf(outFile, "arange(3,7,2)\n");
+    Mat<size_t>::arange(3,7,2).print(outFile);
+
+    Mat<size_t> temp = Mat<size_t>::arange(1,5,2);
+    output = y.i(temp);
+    fprintf(outFile, "y.i(Mat<size_t>::arange(1,5,2))\n");
+    output.print(outFile);
+
+    temp = Mat<size_t>::arange(1,5,-2);
+    fprintf(outFile, "printing arange(1,5,-2), which should just be size 0\n");
+    temp.print(outFile);
+
     double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     size_t shape[2] = {3,5};
     Mat<double> wrapper = Mat<double>::wrap(e, 2, shape);
@@ -413,8 +431,8 @@ int main (){
     output.print(outFile);
 
     fflush(outFile);
-    std::ifstream testFile("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
-    std::ifstream testCheck("matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testFile("matTest/matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
+    std::ifstream testCheck("matTest/expectedMatTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     if(testFile.tellg() != testCheck.tellg()){
         printf("Test Failure\n");
     }

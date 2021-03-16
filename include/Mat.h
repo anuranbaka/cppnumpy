@@ -820,6 +820,46 @@ class Mat {
         return out;
     }
 
+    static Mat<Type> arange(int stop){
+        if(stop < 0) throw out_of_range("arange stop must be >= 0");
+        Mat<Type> out(stop);
+        int j = 0;
+        for(auto& i : out){
+            i = j;
+            j++;
+        }
+        return out;
+    }
+
+    static Mat<Type> arange(int start, int stop){
+        if(start < 0) throw out_of_range("arange start must be >= 0");
+        if(stop < start) throw out_of_range("arange stop must be >= start");
+        Mat<Type> out(stop - start);
+        int j = start;
+        for(auto& i : out){
+            i = j;
+            j++;
+        }
+        return out;
+    }
+
+    static Mat<Type> arange(int start, int stop, int step){
+        if(start < 0) throw out_of_range("arange start must be >= 0");
+        if(stop < start) throw out_of_range("arange stop must be >= start");
+        if(step == 0) throw runtime_error("attempted division by zero in arange()");
+        if(step < 0){
+            Mat<Type> out(0);
+            return out;
+        }
+        Mat<Type> out((stop - start) / step);
+        int j = start;
+        for(auto& i : out){
+            i = j;
+            j += step;
+        }
+        return out;
+    }
+
     static Mat<Type> wrap(Type* data, long new_ndim,
                             size_type* new_dims, size_type* strides = NULL){
         if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");

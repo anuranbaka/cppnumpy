@@ -77,14 +77,6 @@ int main (){
         printf("O");
     }
     try{
-        valid.t().reshape(4,2);
-        printf("X");
-        errorSummary += "failed to catch reshape on non-contiguous mat\n";
-    }
-    catch(const exception& e){
-        printf("O");
-    }
-    try{
         valid.reshape(3,-1);
         printf("X");
         errorSummary += "failed to catch invalid reshape dimension inference\n";
@@ -119,9 +111,17 @@ int main (){
     catch(const exception& e){
         printf("O");
     }
+    try{
+        Mat<size_t>::arange(3,7,0);
+        printf("X");
+        errorSummary += "failed to catch arange with step = 0\n";
+    }
+    catch(const exception& e){
+        printf("O");
+    }
 
     if(errorSummary == ""){
-        printf("\nAll errors caught!");
+        printf("\nAll errors caught!\n");
     }
     else
     {
