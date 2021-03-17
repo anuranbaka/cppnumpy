@@ -1,4 +1,4 @@
-Release ver. ALPHA 2.2 3/16/2021
+Release ver. ALPHA 2.3 3/17/2021
 
 
 # CPPNUMPY Matrix Library
@@ -209,8 +209,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat<Type> eye(size_t, size_t, int k = 0) `
 - **arange** return evenly spaced values within a given interval
   - ` Mat<Type> arange(int stop) `
-  - ` Mat<Type> arange(int start, int stop) `
-  - ` Mat<Type> arange(int start, int stop, int step) `
+  - ` Mat<Type> arange(int start, int stop, int step = 1) `
 ### Additional Non-member Functions
 - **inv()**: returns inverse of the given matrix which uses a stable, basic implementation or imports from Lapack
   -  ` Mat<Type> inv(Mat<Type>) `
