@@ -650,13 +650,13 @@ class Mat {
     //i has 4 versions depending on whether the given parameter is a boolean
     //mask or a list of indices. The default parameter in the indexed version
     //simply causes substitution to fail when a floating point matrix is passed.
-    Mat<Type> i(Mat<bool> &mask);
+    Mat<Type> i(const Mat<bool> &mask);
     template<typename Type2>
-    Mat<Type> i(Mat<Type2> &indices,
+    Mat<Type> i(const Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
-    void ito(Mat<bool> &mask, Mat<Type> &out);
+    void ito(const Mat<bool> &mask, Mat<Type> &out);
     template<typename Type2>
-    void ito(Mat<Type2> &indices, Mat<Type> &out,
+    void ito(const Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
 
     Mat T(Mat& dest){
@@ -1249,7 +1249,7 @@ Mat<bool> Mat<Type>::operator!(){
 }
 
 template<class Type>
-Mat<Type> Mat<Type>::i(Mat<bool> &mask){
+Mat<Type> Mat<Type>::i(const Mat<bool> &mask){
     for(long i = 0; i < ndim; i++){
         if(mask.dims[i] != dims[i])
             throw invalid_argument("mask index broadcasting not yet implemented\n");
@@ -1265,7 +1265,7 @@ Mat<Type> Mat<Type>::i(Mat<bool> &mask){
 
 template<class Type>
 template<class Type2>
-Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
+Mat<Type> Mat<Type>::i(const Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
     if(indices.ndim != 1)
         throw invalid_argument("index lists with ndim != 1 not yet implemented");
@@ -1285,7 +1285,7 @@ Mat<Type> Mat<Type>::i(Mat<Type2> &indices,
 }
 
 template<class Type>
-void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
+void Mat<Type>::ito(const Mat<bool> &mask, Mat<Type> &out){
     if(out.ndim != 1)
         throw invalid_argument("output of ito() function must be 1-dimensional");
 
@@ -1299,7 +1299,7 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
         out = out.roi(0,newSize);
     }
 
-    Mat<bool>::iterator j = mask.begin();
+    Mat<bool>::const_iterator j = mask.begin();
     iterator k = out.begin();
     for(iterator i = begin(); i != end(); ++i, ++j){
         if(*j){
@@ -1312,7 +1312,7 @@ void Mat<Type>::ito(Mat<bool> &mask, Mat<Type> &out){
 
 template<class Type>
 template<class Type2>
-void Mat<Type>::ito(Mat<Type2> &indices, Mat<Type> &out,
+void Mat<Type>::ito(const Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
     if(indices.ndim != 1)
         throw invalid_argument("index lists with ndim != 1 not yet implemented");
