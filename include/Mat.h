@@ -190,7 +190,7 @@ class Mat {
     }
 
     template<typename... arg>
-    Mat(const arg... ind){
+    explicit Mat(const arg... ind){
         refCount = new int32_t;
         *refCount = 1;
 
