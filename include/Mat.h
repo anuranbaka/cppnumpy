@@ -278,6 +278,7 @@ class Mat {
         }
         delete []dims;
         delete []strides;
+        strides = NULL;
     }
 
     template<typename... arg>
