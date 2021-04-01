@@ -53,6 +53,26 @@ template <class Type>
 class MatIter;
 template <class Type>
 class Const_MatIter;
+template <class Type>
+class Mat;
+
+template<class Type, class Type2>
+class iMat{
+    public:
+    Mat<Type> matrix;
+    Mat<Type2> index;
+    
+    iMat(Mat<Type>& m, const Mat<Type2>& i) : matrix(m), index(i){
+        if(std::is_same<Type2, bool>::value){
+            for(long i = 0; i < matrix.ndim; i++){
+                if(index.dims[i] != matrix.dims[i])
+                    throw invalid_argument("mask index broadcasting not yet implemented\n");
+            }
+        }
+        else if(index.ndim != 1)
+            throw invalid_argument("index lists with ndim != 1 not yet implemented");
+    }
+};
 
 static int32_t emptyRefCount = 1;
 
@@ -262,6 +282,43 @@ class Mat {
         customTypeData = b.customTypeData;
     }
 
+    Mat(const iMat<Type, bool>& b){
+        size_t newSize = 0;
+        for(auto i : b.index){
+            if(i) newSize++;
+        }
+
+        refCount = new int32_t;
+        *refCount = 1;
+        ndim = 1;
+        dims = new size_type[1];
+        dims[0] = newSize;
+        buildStrides();
+
+        memory = new Type[size()];
+        data = memory;
+        b.matrix.ito(b.index, *this);
+    }
+
+    template<class Type2>
+    Mat(const iMat<Type, Type2>& b){
+        size_t newSize = b.index.size() * (b.matrix.size() / b.matrix.dims[0]);
+        ndim = b.matrix.ndim;
+
+        refCount = new int32_t;
+        refCount = 1;
+        dims = new size_t[ndim];
+        dims[0] = b.index.size();
+        for(int i = 1; i < ndim; i++){
+            dims[i] = b.matrix.dims[i];
+        }
+        buildStrides();
+
+        memory = new Type[size()];
+        data = memory;
+        b.matrix.ito(b.index, *this);
+    }
+
     ~Mat(){
         if(customDestructor){
             delete []dims;
@@ -331,6 +388,46 @@ class Mat {
         }
         return *this;
     }
+
+    Mat<Type>& operator=(const iMat<Type, bool> b){
+        this->~Mat<Type>();
+        refCount = new int32_t;
+        *refCount = 1;
+
+        size_t newSize = 0;
+        for(auto i : b.index){
+            if(i) newSize++;
+        }
+        ndim = 1;
+        dims = new size_type[1];
+        dims[0] = newSize;
+        buildStrides();
+
+        memory = new Type[size()];
+        data = memory;
+        b.matrix.ito(b.index, *this);
+        return *this;
+    }
+
+    template<class Type2>
+    Mat<Type>& operator=(const iMat<Type, Type2> b){
+        this->~Mat<Type>();
+        refCount = new int32_t;
+        *refCount = 1;
+
+        ndim = b.matrix.ndim;
+        dims = new size_t[ndim];
+        dims[0] = b.index.size();
+        for(int i = 1; i < ndim; i++){
+            dims[i] = b.matrix.dims[i];
+        }
+        buildStrides();
+
+        memory = new Type[size()];
+        data = memory;
+        b.matrix.ito(b.index, *this);
+        return *this;
+    }
     
     Mat<Type> operator+(const Mat<Type> &b){
         return broadcast(b, Add<Type>);
@@ -339,6 +436,9 @@ class Mat {
     Mat<Type> operator+(Type b){
         return broadcast(b, Add<Type>);
     }
+    /*Mat<Type> operator+(const iMat<Type> &b){
+        return broadcast(b.matrix, Add<Type>);
+    }*/
 
     void operator +=(const Mat<Type> &b){
         broadcast(b, Add<Type>, *this);
@@ -651,14 +751,14 @@ class Mat {
     //i has 4 versions depending on whether the given parameter is a boolean
     //mask or a list of indices. The default parameter in the indexed version
     //simply causes substitution to fail when a floating point matrix is passed.
-    Mat<Type> i(const Mat<bool> &mask);
+    iMat<Type, bool> i(const Mat<bool> &mask);
     template<typename Type2>
-    Mat<Type> i(const Mat<Type2> &indices,
-                typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
-    void ito(const Mat<bool> &mask, Mat<Type> &out);
+    iMat<Type, Type2> i(const Mat<Type2> &indices,
+            typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
+    void ito(const Mat<bool> &mask, Mat<Type> &out) const;
     template<typename Type2>
     void ito(const Mat<Type2> &indices, Mat<Type> &out,
-                typename std::enable_if<std::is_integral<Type2>::value>::type* = 0);
+            typename std::enable_if<std::is_integral<Type2>::value>::type* = 0) const;
 
     Mat T(Mat& dest){
         if(memory == dest.memory) throw invalid_argument
@@ -1250,43 +1350,21 @@ Mat<bool> Mat<Type>::operator!(){
 }
 
 template<class Type>
-Mat<Type> Mat<Type>::i(const Mat<bool> &mask){
-    for(long i = 0; i < ndim; i++){
-        if(mask.dims[i] != dims[i])
-            throw invalid_argument("mask index broadcasting not yet implemented\n");
-    }
-    size_type newSize = 0;
-    for(auto i : mask){
-        if(i) newSize++;
-    }
-    Mat<Type> out(newSize);
-    ito(mask, out);
+iMat<Type, bool> Mat<Type>::i(const Mat<bool> &mask){
+    iMat<Type, bool> out(*this, mask);
     return out;
 }
 
 template<class Type>
 template<class Type2>
-Mat<Type> Mat<Type>::i(const Mat<Type2> &indices,
+iMat<Type, Type2> Mat<Type>::i(const Mat<Type2> &indices,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*){
-    if(indices.ndim != 1)
-        throw invalid_argument("index lists with ndim != 1 not yet implemented");
-
-    Mat<Type> out(indices.size() * (size() / dims[0]));
-    out.ndim = ndim;
-    delete[] out.dims;
-    out.dims = new size_type[ndim];
-    out.dims[0] = indices.size();
-    for(int i = 1; i < ndim; i++){
-        out.dims[i] = dims[i];
-    }
-    out.buildStrides();
-
-    ito(indices, out);
+    iMat<Type, Type2> out(*this, indices);
     return out;
 }
 
 template<class Type>
-void Mat<Type>::ito(const Mat<bool> &mask, Mat<Type> &out){
+void Mat<Type>::ito(const Mat<bool> &mask, Mat<Type> &out)  const{
     if(out.ndim != 1)
         throw invalid_argument("output of ito() function must be 1-dimensional");
 
@@ -1302,7 +1380,7 @@ void Mat<Type>::ito(const Mat<bool> &mask, Mat<Type> &out){
 
     Mat<bool>::const_iterator j = mask.begin();
     iterator k = out.begin();
-    for(iterator i = begin(); i != end(); ++i, ++j){
+    for(const_iterator i = begin(); i != end(); ++i, ++j){
         if(*j){
             *k = *i;
             ++k;
@@ -1314,7 +1392,7 @@ void Mat<Type>::ito(const Mat<bool> &mask, Mat<Type> &out){
 template<class Type>
 template<class Type2>
 void Mat<Type>::ito(const Mat<Type2> &indices, Mat<Type> &out,
-                typename std::enable_if<std::is_integral<Type2>::value>::type*){
+                typename std::enable_if<std::is_integral<Type2>::value>::type*) const{
     if(indices.ndim != 1)
         throw invalid_argument("index lists with ndim != 1 not yet implemented");
     if(out.ndim != ndim)
@@ -1326,8 +1404,8 @@ void Mat<Type>::ito(const Mat<Type2> &indices, Mat<Type> &out,
         throw invalid_argument("output matrix shape mismatch in call to ito()");
     }
 
-    iterator dimend = begin();
-    iterator i = begin(); //for iterating the current matrix
+    const_iterator dimend = begin();
+    const_iterator i = begin(); //for iterating the current matrix
     iterator k = out.begin();
 
     size_type offset = size() / dims[0];

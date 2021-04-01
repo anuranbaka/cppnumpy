@@ -134,7 +134,7 @@ int main (){
     fprintf(outFile, "applying the mask using ito\n");
     output.print(outFile);
 
-    Mat<int> index({1,3});
+    Mat<size_t> index({1,3});
     output = y.i(index);
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
@@ -347,6 +347,10 @@ int main (){
     wrapper.roi(0,3,1,4) *= 2;
     fprintf(outFile, "doubling the center 3 columns\n");
     wrapper.print(outFile);
+
+    output = y.i(y < 6);
+    fprintf(outFile, "y.i(y < 6)\n");
+    output.print(outFile);
 
     Mat<bool> boolMat({true, true, false},1,3);
     Mat<bool> outBool;
