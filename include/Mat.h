@@ -937,8 +937,8 @@ class Mat {
         if(stop < 0) throw out_of_range("arange stop must be >= 0");
         if(step == 0) throw runtime_error("attempted division by zero in arange()");
         size_type newSize = 0;
-        if(start <= stop && step > 0) newSize = (stop - start) / step;
-        else if(stop < start && step < 0) newSize = (start - stop) / -step;
+        if(start <= stop && step > 0) newSize = 1 + ((stop - start - 1) / step);
+        else if(stop < start && step < 0) newSize = 1 + ((start - stop - 1) / -step);
         Mat<Type> out(newSize);
         int j = start;
         for(auto& i : out){

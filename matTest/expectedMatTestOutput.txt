@@ -444,6 +444,8 @@ arange(3,7)
 [3 4 5 6]
 arange(3,7,2)
 [3 5]
+arange(3,10,3)
+[3 6 9]
 arange(17,5,-4)
 [17 13 9]
 y.i(Mat<size_t>::arange(1,5,2))

@@ -327,6 +327,9 @@ int main (){
     fprintf(outFile, "arange(3,7,2)\n");
     Mat<size_t>::arange(3,7,2).print(outFile);
 
+    fprintf(outFile, "arange(3,10,3)\n");
+    Mat<size_t>::arange(3,10,3).print(outFile);
+
     fprintf(outFile, "arange(17,5,-4)\n");
     Mat<size_t>::arange(17,5,-4).print(outFile);
 
