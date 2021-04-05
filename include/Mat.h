@@ -66,7 +66,7 @@ class iMat{
         if(std::is_same<Type2, bool>::value){
             for(long i = 0; i < matrix.ndim; i++){
                 if(index.dims[i] != matrix.dims[i])
-                    throw invalid_argument("mask index broadcasting not yet implemented\n");
+                    throw invalid_argument("mask index broadcasting not yet implemented");
             }
         }
         else if(index.ndim != 1)
