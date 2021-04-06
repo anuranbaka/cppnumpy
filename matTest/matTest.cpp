@@ -351,10 +351,6 @@ int main (){
     fprintf(outFile, "doubling the center 3 columns\n");
     wrapper.print(outFile);
 
-    output = y.i(y < 6);
-    fprintf(outFile, "y.i(y < 6)\n");
-    output.print(outFile);
-
     Mat<bool> boolMat({true, true, false},1,3);
     Mat<bool> outBool;
     fprintf(outFile, "boolMat:\n");
@@ -415,6 +411,33 @@ int main (){
     fprintf(outFile, "Checking if any elements in an empty matrix are true:\n");
     if(smallerMat.any()) fprintf(outFile, "Uh oh, we found something true!\n");
     else fprintf(outFile, "Nope, nothing true here.\n");
+
+    fprintf(outFile, "printing the current state of matrix y:\n");
+    y.print(outFile);
+    
+    output = y.i(y < 6);
+    fprintf(outFile, "y.i(y < 6)\n");
+    output.print(outFile);
+
+    output = y.i(Mat<size_t>::arange(0,3,2));
+    fprintf(outFile, "assigning rows 0 and 2 of y to a matrix\n");
+    output.print(outFile);
+
+    y.i(y < 1) = 25;
+    fprintf(outFile, "y.i(y < 1) = 25\n");
+    y.print(outFile);
+
+    y.i(y == 25) = Mat<double>::arange(1,7);
+    fprintf(outFile, "replacing the 25s with a new matrix\n");
+    y.print(outFile);
+
+    y.i(Mat<size_t>::arange(1,4,2)) = 0;
+    fprintf(outFile, "assigning 0 to rows 1 and 3\n");
+    y.print(outFile);
+
+    y.i(Mat<size_t>::arange(1,4,2)) = Mat<double>::arange(1,13);
+    fprintf(outFile, "replacing rows 1 and 3 with another matrix\n");
+    y.print(outFile);
 
     Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
     fprintf(outFile, "Invertible Matrix:\n");

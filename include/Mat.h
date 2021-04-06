@@ -72,6 +72,66 @@ class iMat{
         else if(index.ndim != 1)
             throw invalid_argument("index lists with ndim != 1 not yet implemented");
     }
+
+    Mat<Type>& operator=(const Mat<Type>& b){
+        /*if(b.dims[0] != index.dims[0]) throw invalid_argument
+            ("broadcasting assignment to an indexed matrix not yet implemented");*/
+        if(matrix.memory == b.memory){
+            return *this = b.copy();
+        }
+        MatIter<Type> j = matrix.begin();
+        Const_MatIter<Type> k = b.begin();
+        if(std::is_same<Type2, bool>::value){
+            if(index.ndim > 1 && b.ndim > 1) throw invalid_argument
+                    ("assignment to indexed array requires one operand to be 1d");
+            for(auto i : index){
+                if(i){
+                    *j = *k;
+                    ++k;
+                }
+                ++j;
+            }
+        }
+        else{
+            MatIter<Type> dimend = matrix.begin();
+            size_t offset = matrix.size() / matrix.dims[0];
+
+            for(auto i : index){
+                j.index = i * offset;
+                j.position = i * matrix.strides[0];
+                dimend.index = (i + 1) * offset;
+                for(; j!= dimend; ++j){
+                    *j = *k;
+                    ++k;
+                }
+            }
+        };
+        return matrix;
+    }
+
+    Mat<Type>& operator=(Type scalar){
+        MatIter<Type> j = matrix.begin();
+        if(std::is_same<Type2, bool>::value){
+            for(auto i : index){
+                if(i) *j = scalar;
+                ++j;
+            }
+        }
+        else{
+            MatIter<Type> dimend = matrix.begin();
+            size_t offset = matrix.size() / matrix.dims[0];
+
+            for(auto i : index){
+                j.index = i * offset;
+                j.position = i * matrix.strides[0];
+                dimend.index = (i + 1) * offset;
+                for(; j!= dimend; ++j){
+                    *j = scalar;
+                }
+            }
+        };
+        return matrix;
+    }
 };
 
 static int32_t emptyRefCount = 1;
