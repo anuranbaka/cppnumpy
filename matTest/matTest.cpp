@@ -439,6 +439,29 @@ int main (){
     fprintf(outFile, "replacing rows 1 and 3 with another matrix\n");
     y.print(outFile);
 
+    Mat<double> sporadic({5,2,30,6,2,2,54,18,5,6,4,44,20,5,1},5,3);
+    fprintf(outFile, "matrix with sporadic values:\n");
+    sporadic.print(outFile);
+
+    fprintf(outFile, "+10 to all values less than 10 and printing just the changes\n");
+    (sporadic.i(sporadic < 10) + 10).print(outFile);
+
+    sporadic.i(sporadic < 10) += 10;
+    fprintf(outFile, "doing so, then printing the whole matrix\n");
+    sporadic.print(outFile);
+
+    output = 100.0 - sporadic.i(sporadic < 20);
+    fprintf(outFile, "setting a matrix equal to 100 - sporadic.i(sporadic < 20)\n");
+    output.print(outFile);
+
+    fprintf(outFile, "Checking if any values are between 10 and 20 inclusive\n");
+    if((sporadic.i(sporadic >= 10) <= 20).any()) fprintf(outFile, "some values are between 10 and 20!\n");
+    else fprintf(outFile, "Oh no, no values are!\n");
+
+    sporadic.i(sporadic != 12) = 0;
+    fprintf(outFile, "setting all values not equal to 12 to 0\n");
+    sporadic.print(outFile);
+
     Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
     fprintf(outFile, "Invertible Matrix:\n");
     invertible.print(outFile);

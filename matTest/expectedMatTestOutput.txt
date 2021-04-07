@@ -542,6 +542,30 @@ replacing rows 1 and 3 with another matrix
  [1 2 3 4 5 6]
  [13 14 4 5 6 18]
  [7 8 9 10 11 12]]
+matrix with sporadic values:
+[[5 2 30]
+ [6 2 2]
+ [54 18 5]
+ [6 4 44]
+ [20 5 1]]
++10 to all values less than 10 and printing just the changes
+[15 12 16 12 12 15 16 14 15 11]
+doing so, then printing the whole matrix
+[[15 12 30]
+ [16 12 12]
+ [54 18 15]
+ [16 14 44]
+ [20 15 11]]
+setting a matrix equal to 100 - sporadic.i(sporadic < 20)
+[85 88 84 88 88 82 85 84 86 85 89]
+Checking if any values are between 10 and 20 inclusive
+some values are between 10 and 20!
+setting all values not equal to 12 to 0
+[[0 12 0]
+ [0 12 12]
+ [0 0 0]
+ [0 0 0]
+ [0 0 0]]
 Invertible Matrix:
 [[3 0 2]
  [2 0 -2]

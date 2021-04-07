@@ -55,84 +55,8 @@ template <class Type>
 class Const_MatIter;
 template <class Type>
 class Mat;
-
-template<class Type, class Type2>
-class iMat{
-    public:
-    Mat<Type> matrix;
-    Mat<Type2> index;
-    
-    iMat(Mat<Type>& m, const Mat<Type2>& i) : matrix(m), index(i){
-        if(std::is_same<Type2, bool>::value){
-            for(long i = 0; i < matrix.ndim; i++){
-                if(index.dims[i] != matrix.dims[i])
-                    throw invalid_argument("mask index broadcasting not yet implemented");
-            }
-        }
-        else if(index.ndim != 1)
-            throw invalid_argument("index lists with ndim != 1 not yet implemented");
-    }
-
-    Mat<Type>& operator=(const Mat<Type>& b){
-        /*if(b.dims[0] != index.dims[0]) throw invalid_argument
-            ("broadcasting assignment to an indexed matrix not yet implemented");*/
-        if(matrix.memory == b.memory){
-            return *this = b.copy();
-        }
-        MatIter<Type> j = matrix.begin();
-        Const_MatIter<Type> k = b.begin();
-        if(std::is_same<Type2, bool>::value){
-            if(index.ndim > 1 && b.ndim > 1) throw invalid_argument
-                    ("assignment to indexed array requires one operand to be 1d");
-            for(auto i : index){
-                if(i){
-                    *j = *k;
-                    ++k;
-                }
-                ++j;
-            }
-        }
-        else{
-            MatIter<Type> dimend = matrix.begin();
-            size_t offset = matrix.size() / matrix.dims[0];
-
-            for(auto i : index){
-                j.index = i * offset;
-                j.position = i * matrix.strides[0];
-                dimend.index = (i + 1) * offset;
-                for(; j!= dimend; ++j){
-                    *j = *k;
-                    ++k;
-                }
-            }
-        };
-        return matrix;
-    }
-
-    Mat<Type>& operator=(Type scalar){
-        MatIter<Type> j = matrix.begin();
-        if(std::is_same<Type2, bool>::value){
-            for(auto i : index){
-                if(i) *j = scalar;
-                ++j;
-            }
-        }
-        else{
-            MatIter<Type> dimend = matrix.begin();
-            size_t offset = matrix.size() / matrix.dims[0];
-
-            for(auto i : index){
-                j.index = i * offset;
-                j.position = i * matrix.strides[0];
-                dimend.index = (i + 1) * offset;
-                for(; j!= dimend; ++j){
-                    *j = scalar;
-                }
-            }
-        };
-        return matrix;
-    }
-};
+template <class Type, class Type2>
+class iMat;
 
 static int32_t emptyRefCount = 1;
 
@@ -496,15 +420,22 @@ class Mat {
     Mat<Type> operator+(Type b){
         return broadcast(b, Add<Type>);
     }
-    /*Mat<Type> operator+(const iMat<Type> &b){
+
+    template<class Type2>
+    Mat<Type> operator+(const iMat<Type, Type2> &b){
         return broadcast(b.matrix, Add<Type>);
-    }*/
+    }
 
     void operator +=(const Mat<Type> &b){
         broadcast(b, Add<Type>, *this);
     }
 
     void operator +=(Type b){
+        broadcast(b, Add<Type>, *this);
+    }
+
+    template<class Type2>
+    void operator +=(const iMat<Type, Type2> &b){
         broadcast(b, Add<Type>, *this);
     }
 
@@ -516,11 +447,21 @@ class Mat {
         return broadcast(b, Subtract<Type>);
     }
 
+    template<class Type2>
+    Mat<Type> operator-(const iMat<Type, Type2> &b){
+        return broadcast(b, Subtract<Type>);
+    }
+
     void operator -=(const Mat<Type> &b){
         broadcast(b, Subtract<Type>, *this);
     }
 
     void operator -=(Type b){
+        broadcast(b, Subtract<Type>, *this);
+    }
+
+    template<class Type2>
+    void operator -=(const iMat<Type, Type2> &b){
         broadcast(b, Subtract<Type>, *this);
     }
 
@@ -532,6 +473,11 @@ class Mat {
         return broadcast(b, Multiply<Type>);
     }
 
+    template<class Type2>
+    Mat<Type> operator*(const iMat<Type, Type2> &b){
+        return broadcast(b, Multiply<Type>);
+    }
+
     void operator *=(const Mat<Type> &b){
         broadcast(b, Multiply<Type>, *this);
     }
@@ -540,11 +486,21 @@ class Mat {
         broadcast(b, Multiply<Type>, *this);
     }
 
+    template<class Type2>
+    void operator *=(const iMat<Type, Type2> &b){
+        broadcast(b, Multiply<Type>, *this);
+    }
+
     Mat<Type> operator/(const Mat<Type> &b){
         return broadcast(b, Divide<Type>);
     }
 
     Mat<Type> operator/(Type b){
+        return broadcast(b, Divide<Type>);
+    }
+
+    template<class Type2>
+    Mat<Type> operator/(const iMat<Type, Type2> &b){
         return broadcast(b, Divide<Type>);
     }
 
@@ -557,12 +513,22 @@ class Mat {
     }
 
     template<class Type2>
+    void operator /=(const iMat<Type, Type2> &b){
+        broadcast(b, Divide<Type>, *this);
+    }
+
+    template<class Type2>
     Mat<bool> operator&&(const Mat<Type2> &b){
         return broadcast(b, And<Type,Type2>);
     }
 
     Mat<bool> operator&&(bool b){
         return broadcast(b, And<Type,bool>);
+    }
+
+    template<class Type2, class Type3>
+    Mat<bool> operator&&(const iMat<Type2, Type3> &b){
+        return broadcast(b, And<Type,Type2>);
     }
 
     template<class Type2>
@@ -574,6 +540,11 @@ class Mat {
         return broadcast(b, Or<Type,bool>);
     }
 
+    template<class Type2, class Type3>
+    Mat<bool> operator||(const iMat<Type2, Type3> &b){
+        return broadcast(b, Or<Type,Type2>);
+    }
+
     Mat<Type> operator&(const Mat<Type> &b){
         return broadcast(b, BitAnd<Type>);
     }
@@ -582,11 +553,21 @@ class Mat {
         return broadcast(b, BitAnd<Type>);
     }
 
+    template<class Type2>
+    Mat<Type> operator&(const iMat<Type, Type2> &b){
+        return broadcast(b, BitAnd<Type>);
+    }
+
     Mat<Type> operator|(const Mat<Type> &b){
         return broadcast(b, BitOr<Type>);
     }
 
     Mat<Type> operator|(Type b){
+        return broadcast(b, BitOr<Type>);
+    }
+
+    template<class Type2>
+    Mat<Type> operator|(const iMat<Type, Type2> &b){
         return broadcast(b, BitOr<Type>);
     }
 
@@ -600,11 +581,21 @@ class Mat {
         return broadcast(b, Equality<Type>);
     }
 
+    template<class Type2>
+    Mat<bool> operator==(const iMat<Type, Type2> b){
+        return broadcast(b, Equality<Type>);
+    }
+
     Mat<bool> operator!=(const Mat<Type> b){
         return broadcast(b, Inequality<Type>);
     }
 
     Mat<bool> operator!=(Type b){
+        return broadcast(b, Inequality<Type>);
+    }
+
+    template<class Type2>
+    Mat<bool> operator!=(const iMat<Type, Type2> b){
         return broadcast(b, Inequality<Type>);
     }
 
@@ -616,11 +607,21 @@ class Mat {
         return broadcast(b, LessThan<Type>);
     }
 
+    template<class Type2>
+    Mat<bool> operator<(const iMat<Type, Type2> b){
+        return broadcast(b, LessThan<Type>);
+    }
+
     Mat<bool> operator<=(const Mat<Type> b){
         return broadcast(b, LessThanEqual<Type>);
     }
 
     Mat<bool> operator<=(Type b){
+        return broadcast(b, LessThanEqual<Type>);
+    }
+
+    template<class Type2>
+    Mat<bool> operator<=(const iMat<Type, Type2> b){
         return broadcast(b, LessThanEqual<Type>);
     }
 
@@ -632,11 +633,21 @@ class Mat {
         return broadcast(b, GreaterThan<Type>);
     }
 
+    template<class Type2>
+    Mat<bool> operator>(const iMat<Type, Type2> b){
+        return broadcast(b, GreaterThan<Type>);
+    }
+
     Mat<bool> operator>=(const Mat<Type> b){
         return broadcast(b, GreaterThanEqual<Type>);
     }
 
     Mat<bool> operator>=(Type b){
+        return broadcast(b, GreaterThanEqual<Type>);
+    }
+
+    template<class Type2>
+    Mat<bool> operator>=(const iMat<Type, Type2> b){
         return broadcast(b, GreaterThanEqual<Type>);
     }
 
@@ -1330,6 +1341,240 @@ class Const_MatIter{
     }
 };
 
+template<class Type, class Type2>
+class iMat{
+    public:
+    Mat<Type> matrix;
+    Mat<Type2> index;
+    
+    iMat(Mat<Type>& m, const Mat<Type2>& i) : matrix(m), index(i){
+        if(std::is_same<Type2, bool>::value){
+            for(long i = 0; i < matrix.ndim; i++){
+                if(index.dims[i] != matrix.dims[i])
+                    throw invalid_argument("mask index broadcasting not yet implemented");
+            }
+        }
+        else if(index.ndim != 1)
+            throw invalid_argument("index lists with ndim != 1 not yet implemented");
+    }
+
+    Mat<Type>& operator=(const Mat<Type>& b){
+        /*if(b.dims[0] != index.dims[0]) throw invalid_argument
+            ("broadcasting assignment to an indexed matrix not yet implemented");*/
+        if(matrix.memory == b.memory){
+            return *this = b.copy();
+        }
+        MatIter<Type> j = matrix.begin();
+        Const_MatIter<Type> k = b.begin();
+        if(std::is_same<Type2, bool>::value){
+            if(index.ndim > 1 && b.ndim > 1) throw invalid_argument
+                    ("assignment to indexed array requires one operand to be 1d");
+            for(auto i : index){
+                if(i){
+                    *j = *k;
+                    ++k;
+                }
+                ++j;
+            }
+        }
+        else{
+            MatIter<Type> dimend = matrix.begin();
+            size_t offset = matrix.size() / matrix.dims[0];
+
+            for(auto i : index){
+                j.index = i * offset;
+                j.position = i * matrix.strides[0];
+                dimend.index = (i + 1) * offset;
+                for(; j!= dimend; ++j){
+                    *j = *k;
+                    ++k;
+                }
+            }
+        };
+        return matrix;
+    }
+
+    Mat<Type>& operator=(Type scalar){
+        MatIter<Type> j = matrix.begin();
+        if(std::is_same<Type2, bool>::value){
+            for(auto i : index){
+                if(i) *j = scalar;
+                ++j;
+            }
+        }
+        else{
+            MatIter<Type> dimend = matrix.begin();
+            size_t offset = matrix.size() / matrix.dims[0];
+
+            for(auto i : index){
+                j.index = i * offset;
+                j.position = i * matrix.strides[0];
+                dimend.index = (i + 1) * offset;
+                for(; j!= dimend; ++j){
+                    *j = scalar;
+                }
+            }
+        };
+        return matrix;
+    }
+
+    Mat<Type> operator+(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Add<Type>);
+    }
+    
+    Mat<Type> operator+(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Add<Type>);
+    }
+
+    void operator+=(Type b){
+        *this = *this + b;
+    }
+
+    Mat<Type> operator-(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Subtract<Type>);
+    }
+    
+    Mat<Type> operator-(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Subtract<Type>);
+    }
+
+    void operator-=(Type b){
+        *this = *this - b;
+    }
+
+    Mat<Type> operator*(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Multiply<Type>);
+    }
+    
+    Mat<Type> operator*(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Multiply<Type>);
+    }
+
+    void operator*=(Type b){
+        *this = *this * b;
+    }
+
+    Mat<Type> operator/(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Divide<Type>);
+    }
+    
+    Mat<Type> operator/(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Divide<Type>);
+    }
+
+    void operator/=(Type b){
+        *this = *this / b;
+    }
+
+    Mat<bool> operator&&(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, And<Type>);
+    }
+    
+    Mat<bool> operator&&(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, And<Type>);
+    }
+
+    Mat<bool> operator||(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Or<Type>);
+    }
+    
+    Mat<bool> operator||(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Or<Type>);
+    }
+
+    Mat<Type> operator&(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, BitAnd<Type>);
+    }
+    
+    Mat<Type> operator&(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, BitAnd<Type>);
+    }
+
+    Mat<Type> operator|(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, BitOr<Type>);
+    }
+    
+    Mat<Type> operator|(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, BitOr<Type>);
+    }
+
+    Mat<bool> operator==(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Equality<Type>);
+    }
+    
+    Mat<bool> operator!=(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, Inequality<Type>);
+    }
+
+    Mat<bool> operator<(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, LessThan<Type>);
+    }
+    
+    Mat<bool> operator<(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, LessThan<Type>);
+    }
+
+    Mat<bool> operator<=(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, LessThanEqual<Type>);
+    }
+    
+    Mat<bool> operator<=(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, LessThanEqual<Type>);
+    }
+
+    Mat<bool> operator>(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, GreaterThan<Type>);
+    }
+    
+    Mat<bool> operator>(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, GreaterThan<Type>);
+    }
+
+    Mat<bool> operator>=(Mat<Type> b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, GreaterThanEqual<Type>);
+    }
+    
+    Mat<bool> operator>=(Type b){
+        Mat<Type> out(*this);
+        return out.broadcast(b, GreaterThanEqual<Type>);
+    }
+
+    void print(){
+        Mat<Type> out(*this);
+        out.print();
+    }
+
+    void print(FILE* output){
+        Mat<Type> out(*this);
+        out.print(output);
+    }
+};
+
 template<class Type>
 Mat<Type> operator+(Type a, Mat<Type> &b){
     return b.broadcast(a, Add<Type>);
@@ -1407,6 +1652,90 @@ Mat<bool> Mat<Type>::operator!(){
         *i = !(*i);
     }
     return result;
+}
+
+template<class Type, class Type2>
+Mat<Type> operator+(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Add<Type>);
+}
+
+template<class Type, class Type2>
+Mat<Type> operator-(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Subtract<Type>);
+}
+
+template<class Type, class Type2>
+Mat<Type> operator*(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Multiply<Type>);
+}
+
+template<class Type, class Type2>
+Mat<Type> operator/(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Divide<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator&&(const bool a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, And<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator||(const bool a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Or<Type>);
+}
+
+template<class Type, class Type2>
+Mat<Type> operator&(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, BitAnd<Type>);
+}
+
+template<class Type, class Type2>
+Mat<Type> operator|(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, BitOr<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator==(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Equality<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator!=(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, Inequality<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator<(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, LessThan<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator<=(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, LessThanEqual<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator>(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, GreaterThan<Type>);
+}
+
+template<class Type, class Type2>
+Mat<bool> operator>=(const Type a, const iMat<Type, Type2> &b){
+    Mat<Type> out(b);
+    return Mat<Type>::broadcast(a, out, GreaterThanEqual<Type>);
 }
 
 template<class Type>
