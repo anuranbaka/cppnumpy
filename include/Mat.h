@@ -286,11 +286,10 @@ class Mat {
 
     template<class Type2>
     Mat(const iMat<Type, Type2>& b){
-        size_t newSize = b.index.size() * (b.matrix.size() / b.matrix.dims[0]);
         ndim = b.matrix.ndim;
 
         refCount = new int32_t;
-        refCount = 1;
+        *refCount = 1;
         dims = new size_t[ndim];
         dims[0] = b.index.size();
         for(int i = 1; i < ndim; i++){
