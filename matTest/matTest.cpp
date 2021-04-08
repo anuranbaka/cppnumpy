@@ -450,6 +450,9 @@ int main (){
     fprintf(outFile, "doing so, then printing the whole matrix\n");
     sporadic.print(outFile);
 
+    fprintf(outFile, "multiplicative inverse of rows 2 and 3\n");
+    (-sporadic.i(Mat<size_t>::arange(2,4))).print(outFile);
+
     output = 100.0 - sporadic.i(sporadic < 20);
     fprintf(outFile, "setting a matrix equal to 100 - sporadic.i(sporadic < 20)\n");
     output.print(outFile);
@@ -461,6 +464,9 @@ int main (){
     sporadic.i(sporadic != 12) = 0;
     fprintf(outFile, "setting all values not equal to 12 to 0\n");
     sporadic.print(outFile);
+
+    fprintf(outFile, "printing logical inverse of rows 1,2,3\n");
+    (!sporadic.i(Mat<size_t>::arange(1,4))).print(outFile);
 
     Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
     fprintf(outFile, "Invertible Matrix:\n");

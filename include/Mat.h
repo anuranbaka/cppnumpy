@@ -1435,10 +1435,15 @@ class iMat{
         Mat<Type> out(*this);
         return out.broadcast(b, Subtract<Type>);
     }
-    
+
     Mat<Type> operator-(Type b){
         Mat<Type> out(*this);
         return out.broadcast(b, Subtract<Type>);
+    }
+
+    Mat<Type> operator-(){
+        Mat<Type> out(*this);
+        return -out;
     }
 
     void operator-=(Type b){
@@ -1491,6 +1496,11 @@ class iMat{
     Mat<bool> operator||(Type b){
         Mat<Type> out(*this);
         return out.broadcast(b, Or<Type>);
+    }
+
+    Mat<bool> operator!(){
+        Mat<Type> out(*this);
+        return !out;
     }
 
     Mat<Type> operator&(Mat<Type> b){
