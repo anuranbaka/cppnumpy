@@ -53,8 +53,6 @@ template <class Type>
 class MatIter;
 template <class Type>
 class Const_MatIter;
-template <class Type>
-class Mat;
 template <class Type, class Type2>
 class iMat;
 
