@@ -542,6 +542,11 @@ replacing rows 1 and 3 with another matrix
  [1 2 3 4 5 6]
  [13 14 4 5 6 18]
  [7 8 9 10 11 12]]
+y += y.i(Mat<size_t>::arange(1))
+[[2 4 6 8 10 12]
+ [2 4 6 8 10 12]
+ [14 16 7 9 11 24]
+ [8 10 12 14 16 18]]
 matrix with sporadic values:
 [[5 2 30]
  [6 2 2]

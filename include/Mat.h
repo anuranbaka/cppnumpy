@@ -433,7 +433,8 @@ class Mat {
 
     template<class Type2>
     void operator +=(const iMat<Type, Type2> &b){
-        broadcast(b, Add<Type>, *this);
+        Mat<Type> temp(b);
+        broadcast(temp, Add<Type>, *this);
     }
 
     Mat<Type> operator-(const Mat<Type> &b){
@@ -459,7 +460,8 @@ class Mat {
 
     template<class Type2>
     void operator -=(const iMat<Type, Type2> &b){
-        broadcast(b, Subtract<Type>, *this);
+        Mat<Type> temp(b);
+        broadcast(temp, Subtract<Type>, *this);
     }
 
     Mat<Type> operator*(const Mat<Type> &b){
@@ -485,7 +487,8 @@ class Mat {
 
     template<class Type2>
     void operator *=(const iMat<Type, Type2> &b){
-        broadcast(b, Multiply<Type>, *this);
+        Mat<Type> temp(b);
+        broadcast(temp, Multiply<Type>, *this);
     }
 
     Mat<Type> operator/(const Mat<Type> &b){
@@ -511,7 +514,8 @@ class Mat {
 
     template<class Type2>
     void operator /=(const iMat<Type, Type2> &b){
-        broadcast(b, Divide<Type>, *this);
+        Mat<Type> temp(b);
+        broadcast(temp, Divide<Type>, *this);
     }
 
     template<class Type2>

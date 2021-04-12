@@ -439,6 +439,10 @@ int main (){
     fprintf(outFile, "replacing rows 1 and 3 with another matrix\n");
     y.print(outFile);
 
+    y += y.i(Mat<size_t>::arange(1));
+    fprintf(outFile, "y += y.i(Mat<size_t>::arange(1))\n");
+    y.print(outFile);
+
     Mat<double> sporadic({5,2,30,6,2,2,54,18,5,6,4,44,20,5,1},5,3);
     fprintf(outFile, "matrix with sporadic values:\n");
     sporadic.print(outFile);
