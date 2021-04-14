@@ -123,6 +123,11 @@ int main (){
     fprintf(outFile, "x.roi(-1)\n");
     output.print(outFile);
     
+    output = m.copy();
+    output += output.roi(0,1,0,4);
+    fprintf(outFile, "m += m.roi(0,1,0,4)\n");
+    output.print(outFile);
+    
     Mat<bool> mask({true, true, false, true,
                     false, true, false, false}, 2, 4);
     output = m.i(mask);

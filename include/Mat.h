@@ -424,7 +424,8 @@ class Mat {
     }
 
     void operator +=(const Mat<Type> &b){
-        broadcast(b, Add<Type>, *this);
+        if(memory == b.memory) broadcast(b.copy(), Add<Type>, *this);
+        else broadcast(b, Add<Type>, *this);
     }
 
     void operator +=(Type b){
@@ -451,7 +452,8 @@ class Mat {
     }
 
     void operator -=(const Mat<Type> &b){
-        broadcast(b, Subtract<Type>, *this);
+        if(memory == b.memory) broadcast(b.copy(), Subtract<Type>, *this);
+        else broadcast(b, Subtract<Type>, *this);
     }
 
     void operator -=(Type b){
@@ -478,7 +480,8 @@ class Mat {
     }
 
     void operator *=(const Mat<Type> &b){
-        broadcast(b, Multiply<Type>, *this);
+        if(memory == b.memory) broadcast(b.copy(), Multiply<Type>, *this);
+        else broadcast(b, Multiply<Type>, *this);
     }
 
     void operator *=(Type b){
@@ -505,7 +508,8 @@ class Mat {
     }
 
     void operator /=(const Mat<Type> &b){
-        broadcast(b, Divide<Type>, *this);
+        if(memory == b.memory) broadcast(b.copy(), Divide<Type>, *this);
+        else broadcast(b, Divide<Type>, *this);
     }
 
     void operator /=(Type b){
