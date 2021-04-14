@@ -125,10 +125,10 @@ using bitwise and: x & 1
 [[1 0 1]
  [0 1 0]
  [1 0 1]]
-using bitwise or: x | 7
-[[7 7 7]
- [7 7 7]
- [7 15 15]]
+using bitwise not and or: ~x | 7
+[[-1 -1 -1]
+ [-1 -1 -1]
+ [-1 -9 -9]]
 m.roi(0,1,1,3)
 [[2 3]
  [6 7]]

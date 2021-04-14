@@ -95,8 +95,8 @@ int main (){
     fprintf(outFile, "using bitwise and: x & 1\n");
     outInt.print(outFile);
 
-    outInt = x.copy<int>() | 7;
-    fprintf(outFile, "using bitwise or: x | 7\n");
+    outInt = ~(x.copy<int>()) | 7;
+    fprintf(outFile, "using bitwise not and or: ~x | 7\n");
     outInt.print(outFile);
 
     output = m.roi(0,2,1,3);

@@ -546,6 +546,8 @@ class Mat {
         return broadcast(b, Or<Type,Type2>);
     }
 
+    Mat<bool> operator!(); // defined below
+
     Mat<Type> operator&(const Mat<Type> &b){
         return broadcast(b, BitAnd<Type>);
     }
@@ -572,7 +574,7 @@ class Mat {
         return broadcast(b, BitOr<Type>);
     }
 
-    Mat<bool> operator!(); // defined below
+    Mat<Type> operator~(); // defined below
 
     Mat<bool> operator==(const Mat<Type> b){
         return broadcast(b, Equality<Type>);
@@ -1525,6 +1527,11 @@ class iMat{
         return out.broadcast(b, BitOr<Type>);
     }
 
+    Mat<Type> operator~(){
+        Mat<Type> out(*this);
+        return ~out;
+    }
+
     Mat<bool> operator==(Mat<Type> b){
         Mat<Type> out(*this);
         return out.broadcast(b, Equality<Type>);
@@ -1654,6 +1661,15 @@ Mat<bool> operator>(Type a, Mat<Type> &b){
 template<class Type>
 Mat<bool> operator>=(Type a, Mat<Type> &b){
     return Mat<Type>::broadcast(a, b, GreaterThanEqual<Type>);
+}
+
+template<class Type>
+Mat<Type> Mat<Type>::operator~(){
+    Mat<Type> result(this->copy<Type>());
+    for(Mat<Type>::iterator i = result.begin(); i != result.end(); ++i){
+        *i = ~(*i);
+    }
+    return result;
 }
 
 template<class Type>
