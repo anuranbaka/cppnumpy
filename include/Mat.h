@@ -1365,7 +1365,7 @@ class iMat{
             throw invalid_argument("index lists with ndim != 1 not yet implemented");
     }
 
-    Mat<Type>& operator=(const Mat<Type>& b){
+    iMat<Type, Type2>& operator=(const Mat<Type>& b){
         /*if(b.dims[0] != index.dims[0]) throw invalid_argument
             ("broadcasting assignment to an indexed matrix not yet implemented");*/
         if(matrix.memory == b.memory){
@@ -1398,7 +1398,7 @@ class iMat{
                 }
             }
         };
-        return matrix;
+        return *this;
     }
 
     Mat<Type>& operator=(Type scalar){
