@@ -1272,8 +1272,6 @@ class iMat{
     }
 
     iMat<Type, Type2>& operator=(const Mat<Type>& b){
-        /*if(b.dims[0] != index.dims[0]) throw invalid_argument
-            ("broadcasting assignment to an indexed matrix not yet implemented");*/
         if(matrix.memory == b.memory){
             return *this = b.copy();
         }
@@ -1284,13 +1282,23 @@ class iMat{
                     ("assignment to indexed array requires one operand to be 1d");
             for(auto i : index){
                 if(i){
+                    if(k == b.end()) throw invalid_argument
+                        ("indexed matrix assignment size mismatch");
                     *j = *k;
                     ++k;
                 }
                 ++j;
             }
+            if(k != b.end()) throw invalid_argument
+                ("indexed matrix assignment size mismatch");
         }
         else{
+            if(b.dims[0] != index.dims[0]) throw invalid_argument
+                ("broadcasting assignment to an indexed matrix not yet implemented");
+            for(long i = 1; i < matrix.ndim; i++){
+                if(b.dims[i] != matrix.dims[i]) throw invalid_argument
+                    ("broadcasting assignment to an indexed matrix not yet implemented");
+            }
             MatIter<Type> dimend = matrix.begin();
             size_t offset = matrix.size() / matrix.dims[0];
 

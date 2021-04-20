@@ -449,7 +449,7 @@ int main (){
     fprintf(outFile, "assigning 0 to rows 1 and 3\n");
     y.print(outFile);
 
-    y.i(Mat<size_t>::arange(1,4,2)) = Mat<double>::arange(1,13);
+    y.i(Mat<size_t>::arange(1,4,2)) = Mat<double>::arange(1,13).reshape(2,6);
     fprintf(outFile, "replacing rows 1 and 3 with another matrix\n");
     y.print(outFile);
 
