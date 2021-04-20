@@ -161,6 +161,7 @@ int main (){
     m.T(output);
     fprintf(outFile, "m.T(output)\n");
     output.print(outFile);
+    m.T();
 
     x.T();
     fprintf(outFile, "x.T()\n");
@@ -422,6 +423,14 @@ int main (){
     
     output = y.i(y < 6);
     fprintf(outFile, "y.i(y < 6)\n");
+    output.print(outFile);
+    
+    output = y.i(y > 20) + m;
+    fprintf(outFile, "y.i(y > 20) + m\n");
+    output.print(outFile);
+    
+    output = y.i(y > 9 && y < 15) + x.i(Mat<size_t>::arange(1,3));
+    fprintf(outFile, "y.i(y > 9 && y < 15) + x.i(Mat<size_t>::arange(1,3))\n");
     output.print(outFile);
 
     output = y.i(Mat<size_t>::arange(0,3,2));
