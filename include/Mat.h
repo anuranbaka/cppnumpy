@@ -1435,6 +1435,11 @@ class iMat{
         return out.broadcast(b, Add<Type>);
     }
 
+    void operator+=(Mat<Type> b){
+        if(matrix.memory == b.memory) broadcast(b.copy(), Add<Type>, *this);
+        else *this = *this + b;
+    }
+
     void operator+=(Type b){
         *this = *this + b;
     }
@@ -1454,6 +1459,11 @@ class iMat{
         return -out;
     }
 
+    void operator-=(Mat<Type> b){
+        if(matrix.memory == b.memory) broadcast(b.copy(), Subtract<Type>, *this);
+        else *this = *this - b;
+    }
+
     void operator-=(Type b){
         *this = *this - b;
     }
@@ -1468,6 +1478,11 @@ class iMat{
         return out.broadcast(b, Multiply<Type>);
     }
 
+    void operator*=(Mat<Type> b){
+        if(matrix.memory == b.memory) broadcast(b.copy(), Multiply<Type>, *this);
+        else *this = *this * b;
+    }
+
     void operator*=(Type b){
         *this = *this * b;
     }
@@ -1480,6 +1495,11 @@ class iMat{
     Mat<Type> operator/(Type b){
         Mat<Type> out(*this);
         return out.broadcast(b, Divide<Type>);
+    }
+
+    void operator/=(Mat<Type> b){
+        if(matrix.memory == b.memory) broadcast(b.copy(), Divide<Type>, *this);
+        else *this = *this / b;
     }
 
     void operator/=(Type b){
