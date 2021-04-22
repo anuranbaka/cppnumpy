@@ -1129,9 +1129,6 @@ class MatIter{
         if(ind == 0) return;
         if(ind == matrix.size()){
             position = matrix.size();
-            for(long i = 0; i < matrix.ndim; i++){
-                position *= matrix.strides[i];
-            }
             return;
         }
         size_t temp = matrix.size(), remainder = index;
@@ -1278,8 +1275,8 @@ class iMat{
         MatIter<Type> j = matrix.begin();
         Const_MatIter<Type> k = b.begin();
         if(std::is_same<Type2, bool>::value){
-            if(index.ndim > 1 && b.ndim > 1) throw invalid_argument
-                    ("assignment to indexed array requires one operand to be 1d");
+            if(b.ndim > 1) throw invalid_argument
+                    ("assignment to indexed array requires right operand to be 1d");
             for(auto i : index){
                 if(i){
                     if(k == b.end()) throw invalid_argument
@@ -1603,7 +1600,7 @@ Mat<bool> operator>=(Type a, Mat<Type> &b){
 
 template<class Type>
 Mat<Type> Mat<Type>::operator~(){
-    Mat<Type> result(this->copy<Type>());
+    Mat<Type> result(this->copy());
     for(Mat<Type>::iterator i = result.begin(); i != result.end(); ++i){
         *i = ~(*i);
     }
