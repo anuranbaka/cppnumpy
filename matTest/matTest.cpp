@@ -95,8 +95,8 @@ int main (){
     fprintf(outFile, "using bitwise and: x & 1\n");
     outInt.print(outFile);
 
-    outInt = x.copy<int>() | 7;
-    fprintf(outFile, "using bitwise or: x | 7\n");
+    outInt = ~(x.copy<int>()) | 7;
+    fprintf(outFile, "using bitwise not and or: ~x | 7\n");
     outInt.print(outFile);
 
     output = m.roi(0,2,1,3);
@@ -123,6 +123,11 @@ int main (){
     fprintf(outFile, "x.roi(-1)\n");
     output.print(outFile);
     
+    output = m.copy();
+    output += output.roi(0,1,0,4);
+    fprintf(outFile, "m += m.roi(0,1,0,4)\n");
+    output.print(outFile);
+    
     Mat<bool> mask({true, true, false, true,
                     false, true, false, false}, 2, 4);
     output = m.i(mask);
@@ -134,7 +139,7 @@ int main (){
     fprintf(outFile, "applying the mask using ito\n");
     output.print(outFile);
 
-    Mat<int> index({1,3});
+    Mat<size_t> index({1,3});
     output = y.i(index);
     fprintf(outFile, "fancy indexing to get just rows 1 and 3 of matrix y\n");
     output.print(outFile);
@@ -156,6 +161,7 @@ int main (){
     m.T(output);
     fprintf(outFile, "m.T(output)\n");
     output.print(outFile);
+    m.T();
 
     x.T();
     fprintf(outFile, "x.T()\n");
@@ -327,6 +333,9 @@ int main (){
     fprintf(outFile, "arange(3,7,2)\n");
     Mat<size_t>::arange(3,7,2).print(outFile);
 
+    fprintf(outFile, "arange(3,10,3)\n");
+    Mat<size_t>::arange(3,10,3).print(outFile);
+
     fprintf(outFile, "arange(17,5,-4)\n");
     Mat<size_t>::arange(17,5,-4).print(outFile);
 
@@ -408,6 +417,74 @@ int main (){
     fprintf(outFile, "Checking if any elements in an empty matrix are true:\n");
     if(smallerMat.any()) fprintf(outFile, "Uh oh, we found something true!\n");
     else fprintf(outFile, "Nope, nothing true here.\n");
+
+    fprintf(outFile, "printing the current state of matrix y:\n");
+    y.print(outFile);
+    
+    output = y.i(y < 6);
+    fprintf(outFile, "y.i(y < 6)\n");
+    output.print(outFile);
+    
+    output = y.i(y > 20) + m;
+    fprintf(outFile, "y.i(y > 20) + m\n");
+    output.print(outFile);
+    
+    output = y.i(y > 9 && y < 15) + x.i(Mat<size_t>::arange(1,3));
+    fprintf(outFile, "y.i(y > 9 && y < 15) + x.i(Mat<size_t>::arange(1,3))\n");
+    output.print(outFile);
+
+    output = y.i(Mat<size_t>::arange(0,3,2));
+    fprintf(outFile, "assigning rows 0 and 2 of y to a matrix\n");
+    output.print(outFile);
+
+    y.i(y < 1) = 25;
+    fprintf(outFile, "y.i(y < 1) = 25\n");
+    y.print(outFile);
+
+    y.i(y == 25) = Mat<double>::arange(1,7);
+    fprintf(outFile, "replacing the 25s with a new matrix\n");
+    y.print(outFile);
+
+    y.i(Mat<size_t>::arange(1,4,2)) = 0;
+    fprintf(outFile, "assigning 0 to rows 1 and 3\n");
+    y.print(outFile);
+
+    y.i(Mat<size_t>::arange(1,4,2)) = Mat<double>::arange(1,13).reshape(2,6);
+    fprintf(outFile, "replacing rows 1 and 3 with another matrix\n");
+    y.print(outFile);
+
+    y += y.i(Mat<size_t>::arange(1));
+    fprintf(outFile, "y += y.i(Mat<size_t>::arange(1))\n");
+    y.print(outFile);
+
+    Mat<double> sporadic({5,2,30,6,2,2,54,18,5,6,4,44,20,5,1},5,3);
+    fprintf(outFile, "matrix with sporadic values:\n");
+    sporadic.print(outFile);
+
+    fprintf(outFile, "+10 to all values less than 10 and printing just the changes\n");
+    (sporadic.i(sporadic < 10) + 10).print(outFile);
+
+    sporadic.i(sporadic < 10) += 10;
+    fprintf(outFile, "doing so, then printing the whole matrix\n");
+    sporadic.print(outFile);
+
+    fprintf(outFile, "multiplicative inverse of rows 2 and 3\n");
+    (-sporadic.i(Mat<size_t>::arange(2,4))).print(outFile);
+
+    output = 100.0 - sporadic.i(sporadic < 20);
+    fprintf(outFile, "setting a matrix equal to 100 - sporadic.i(sporadic < 20)\n");
+    output.print(outFile);
+
+    fprintf(outFile, "Checking if any values are between 10 and 20 inclusive\n");
+    if((sporadic.i(sporadic >= 10) <= 20).any()) fprintf(outFile, "some values are between 10 and 20!\n");
+    else fprintf(outFile, "Oh no, no values are!\n");
+
+    sporadic.i(sporadic != 12) = 0;
+    fprintf(outFile, "setting all values not equal to 12 to 0\n");
+    sporadic.print(outFile);
+
+    fprintf(outFile, "printing logical inverse of rows 1,2,3\n");
+    (!sporadic.i(Mat<size_t>::arange(1,4))).print(outFile);
 
     Mat<double> invertible({3,0,2,2,0,-2,0,1,1},3,3);
     fprintf(outFile, "Invertible Matrix:\n");
