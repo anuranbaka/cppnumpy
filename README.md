@@ -1,4 +1,4 @@
-Release ver. ALPHA 2.3 3/17/2021
+Release ver. ALPHA 3.0 3/23/2021
 
 
 # CPPNUMPY Matrix Library
@@ -10,6 +10,7 @@ Generally speaking, when writing on the C++ side, functions behave just like in 
 - "T" is used for a hard transpose, while "t" is used for a soft transpose
 - Due to limitations of C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 - Array broadcasting is implemented as a function taking a function pointer
+- Fancy indexing is implemented using the i() and ito() functions which construct a special "iMat" object which can be resolved using the Mat constructor.
 
 # Usage
 The library supports several basic matrix arithmetic operations:
@@ -79,6 +80,7 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat(std::initializer_list<Type>, size_t...) `
   - ` Mat(size_t...) `
   - ` Mat(const Mat&) `
+  - ` Mat(const iMat&) `
 - **(destructor)**: underlying memory is only deleted if it is the last matrix using it
   - ` ~Mat() `
 - **operator=**: assignment can take another matrix or a scalar which assigns element-wise
@@ -107,12 +109,12 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Type operator(size_t...) `
 - **roi** specifies a region of interest and returns a submatrix of a given shape. Parameters are passed in pairs corresponding to each dimension and -1 signifies "to the beginning/end of the dimension". 
   - ` Mat& roi(int...) // e.g. m.roi(start, end, start2, end2, ...)`
-- **i** masks an array with a boolean mask or extracts elements with a list of indices.
-  - ` Mat<Type> i(Mat<bool> mask)`
-  - ` Mat<Type> i(Mat<IntegralType> indices)`
+- **i** masks an array with a boolean mask or extracts elements with a list of indices. The resulting iMat can be resolved into a new matrix by calling the Mat constructor on it.
+  - ` iMat<Type> i(Mat<bool> mask)`
+  - ` iMat<Type> i(Mat<IntegralType> indices)`
 - **ito** performs the same function as "i" but with an output parameter.
-  - ` Mat<Type> ito(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, the returned matrix will be an roi within out.`
-  - ` Mat<Type> ito(Mat<IntegralType> indices, Mat<Type> out)`
+  - ` void ito(Mat<bool> mask, Mat<Type> out) //If the output matrix is too large, the returned matrix will be an roi within out.`
+  - ` void ito(Mat<IntegralType> indices, Mat<Type> out)`
 ### Modifiers
 - **operator+**: elementwise addition
   - ` Mat<Type> operator+(const Mat<Type>&) `
@@ -171,16 +173,18 @@ Both programs are compiled when running "make" in the base directory. If "useLap
   - ` Mat<bool> operator|(const Mat<Type2>&) `
   - ` Mat<bool> operator|(const bool) `
   - ` Mat<bool> operator|(const bool, const Mat<Type2>&) `
-- **operator&**: bitwise AND
-  - ` Mat<bool> operator&(const Mat<Type2>&) `
-  - ` Mat<bool> operator&(const bool) `
-  - ` Mat<bool> operator&(const bool, const Mat<Type2>&) `
-- **operator|**: bitwise OR
-  - ` Mat<bool> operator|(const Mat<Type2>&) `
-  - ` Mat<bool> operator|(const bool) `
-  - ` Mat<bool> operator|(const bool, const Mat<Type2>&) `
 - **operator!**: elementwise logical negation
   - ` Mat<bool> operator!() `
+- **operator&**: bitwise AND
+  - ` Mat<Type> operator&(const Mat<Type2>&) `
+  - ` Mat<Type> operator&(const bool) `
+  - ` Mat<Type> operator&(const bool, const Mat<Type2>&) `
+- **operator|**: bitwise OR
+  - ` Mat<Type> operator|(const Mat<Type2>&) `
+  - ` Mat<Type> operator|(const bool) `
+  - ` Mat<Type> operator|(const bool, const Mat<Type2>&) `
+- **operator~**: bitwise logical negation
+  - ` Mat<Type> operator~() `
 - **all**: returns true if no element of matrix is false
   - ` bool all() `
 - **any**: returns true if any element of matrix is true
