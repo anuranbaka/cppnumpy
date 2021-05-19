@@ -75,14 +75,16 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
             throw invalid_argument("Strides must be a multiple of ITEMSIZE to convert to Mat");
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
+
+    AllocInfo npInfo;
+    npInfo.userdata = arrBase;
+
     out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
         PyArray_NDIM(arr),
         reinterpret_cast<typename Mat<T>::size_type*>(PyArray_DIMS(arr)),
         mat_strides,
-        &Py_REFCNT(arrBase),
-        NumpyDestructor<T>,
-        arrBase);
+        &npInfo);
     delete[] mat_strides;
     Py_INCREF(arrBase);
     return out;

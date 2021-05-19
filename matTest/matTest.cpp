@@ -304,7 +304,7 @@ int main (){
 
     output = y.roi(1,3).reshape(6,2);
     fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
-    if(output.memory == y.memory)
+    if(output.data == y.data)
         fprintf(outFile, "points to the same data because it is contiguous\n");
     else
         fprintf(outFile,
@@ -313,7 +313,7 @@ int main (){
 
     output = y.t().reshape(2,12);
     fprintf(outFile, "reshaping the transpose of y to a 2,12 matrix\n");
-    if(output.memory != y.memory)
+    if(output.data != y.data)
         fprintf(outFile, "points to a copy because it is not contiguous\n");
     else
         fprintf(outFile,
