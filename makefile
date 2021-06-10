@@ -16,7 +16,13 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic
 
-all: bin/matTest floodPybind matDebug bin/errorTest
+all: bin/matTest floodPybind matDebug bin/errorTest | lib bin
+
+lib:
+	mkdir lib/
+
+bin:
+	mkdir bin/
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -27,40 +33,40 @@ install:
 clean:
 	rm ./lib/*.so ./bin/* python/*.so
 
-lib/libInverseLapack.so: src/matMathLapack.cpp
+lib/libInverseLapack.so: src/matMathLapack.cpp | lib
 	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack.so
 
-lib/libInverse.so: src/matMath.cpp
+lib/libInverse.so: src/matMath.cpp | lib
 	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse.so
 
-lib/libInverseLapack32.so: src/matMathLapack.cpp
+lib/libInverseLapack32.so: src/matMathLapack.cpp | lib
 	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack32.so
 
-lib/libInverse32.so: src/matMath.cpp
+lib/libInverse32.so: src/matMath.cpp | lib
 	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse32.so
 
 ifeq ($(sim32bit),true)
 ifeq ($(useLapack),true)
-bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverseLapack32 -o bin/matTest $(lapackLink)
 else	
-bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse32.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse32.so | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) -m32 matTest/matTest.cpp $(LDFLAGS) -lInverse32 -o bin/matTest
 endif
 else
 ifeq ($(useLapack),true)
-bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack.so | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverseLapack -o bin/matTest $(lapackLink)
 else	
-bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so
+bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.so | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/matTest.cpp $(LDFLAGS) -lInverse -o bin/matTest
 endif
 endif
 
-bin/errorTest: matTest/errorTest.cpp include/Mat.h
+bin/errorTest: matTest/errorTest.cpp include/Mat.h | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/errorTest.cpp -o bin/errorTest
 
-bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
+bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h | bin
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 
 floodPybind: python/floodPybind$(PY_SUFFIX)
