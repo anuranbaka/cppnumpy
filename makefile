@@ -28,16 +28,16 @@ clean:
 	rm ./lib/*.so ./bin/* python/*.so
 
 lib/libInverseLapack.so: src/matMathLapack.cpp
-	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack.so
+	g++ --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack.so
 
 lib/libInverse.so: src/matMath.cpp
-	g++ -g --std=c++11 -O3 -fPIC -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse.so
+	g++ $(DEBUG_FLAGS) --std=c++11 -fPIC -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse.so
 
 lib/libInverseLapack32.so: src/matMathLapack.cpp
-	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack32.so
+	g++ --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMathLapack.cpp -shared -o lib/libInverseLapack32.so
 
 lib/libInverse32.so: src/matMath.cpp
-	g++ -g --std=c++11 -O3 -fPIC -m32 -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse32.so
+	g++ $(DEBUG_FLAGS) --std=c++11 -fPIC -m32 -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse32.so
 
 ifeq ($(sim32bit),true)
 ifeq ($(useLapack),true)
