@@ -212,14 +212,12 @@ class Mat {
 
     Mat(){
         static Mat<Type> emptyBase(0);
-        base = &emptyBase;
-        base->refCount++;
+        base = newMat(NULL);
+        (base->refCount)++;
     }
 
     template<typename... arg>
     explicit Mat(const arg... ind){
-        refCount = 1;
-
         ndim = sizeof...(arg);
         if(ndim > 32) throw invalid_argument("too many dimensions (<=32 allowed)");
 
@@ -227,11 +225,10 @@ class Mat {
         buildStrides();
      
         data = new Type[size()];
+        base = newMat(data);
     }
 
     Mat(std::initializer_list<Type> list){
-        refCount = 1;
-
         ndim = 1;
         dims = new size_type[ndim];
         dims[0] = list.size();
@@ -243,12 +240,11 @@ class Mat {
             data[i] = elem;
             i++;
         }
+        base = newMat(data);
     }
 
     template<typename... arg>
     Mat(std::initializer_list<Type> list, const arg... ind){
-        refCount = 1;
-
         ndim = sizeof...(arg);
         if(ndim > 32) throw invalid_argument("too many dimensions (<=32 allowed)");
 
@@ -263,6 +259,7 @@ class Mat {
             data[i] = elem;
             i++;
         }
+        base = newMat(data);
     }
 
     Mat(const Mat& b){
@@ -295,13 +292,13 @@ class Mat {
             if(i) newSize++;
         }
 
-        refCount = 1;
         ndim = 1;
         dims = new size_type[1];
         dims[0] = newSize;
         buildStrides();
 
         data = new Type[size()];
+        base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
 
@@ -309,7 +306,6 @@ class Mat {
     Mat(const iMat<Type, Type2>& b){
         ndim = b.matrix.ndim;
 
-        refCount = 1;
         dims = new size_t[ndim];
         dims[0] = b.index.size();
         for(int i = 1; i < ndim; i++){
@@ -318,6 +314,7 @@ class Mat {
         buildStrides();
 
         data = new Type[size()];
+        base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
 
@@ -331,10 +328,13 @@ class Mat {
                 delete []dims;
                 delete []strides;
                 strides = NULL;
+                if(base->refCount <= 0){
+                    base->~Mat();
+                    free(base);
+                }
             }
         }
         else{
-            refCount--;
             if(refCount < 0) fprintf(stderr, "Reference counter is negative somehow\n");
             if(refCount < 1){
                 delete []data;
@@ -343,6 +343,19 @@ class Mat {
             delete []strides;
             strides = NULL;
         }
+    }
+
+    Mat* newMat(Type* mem){
+        Mat* out = (Mat*)malloc(sizeof(Mat));
+        out->allocator = NULL;
+        out->ndim = 0;
+        out->dims = NULL;
+        out->strides = NULL;
+        out->base = NULL;
+        if(mem != NULL)
+            out->data = mem;
+        out->refCount = 1;
+        return out;
     }
 
     template<typename... arg>
@@ -404,9 +417,6 @@ class Mat {
 
     Mat<Type>& operator=(const iMat<Type, bool> b){
         this->~Mat<Type>();
-        refCount = 1;
-        base = NULL;
-
         ndim = 1;
         
         if(allocator != NULL){
@@ -435,6 +445,7 @@ class Mat {
         buildStrides();
 
         data = new Type[size()];
+        base = newMat(data);
         b.matrix.ito(b.index, *this);
         return *this;
     }
@@ -442,9 +453,6 @@ class Mat {
     template<class Type2>
     Mat<Type>& operator=(const iMat<Type, Type2> b){
         this->~Mat<Type>();
-        refCount = 1;
-        base = NULL;
-
         ndim = b.matrix.ndim;
         
         if(allocator != NULL){
@@ -461,6 +469,7 @@ class Mat {
         }
 
         data = new Type[size()];
+        base = newMat(data);
         b.matrix.ito(b.index, *this);
         return *this;
     }
@@ -640,8 +649,6 @@ class Mat {
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
         Mat<Type3> out;
-        out.refCount = 1;
-        out.base = NULL;
 
         size_type* big_dim;
         size_type* small_dim;
@@ -676,6 +683,7 @@ class Mat {
         out.buildStrides();
 
         out.data = new Type3[out.size()];
+        out.base = out.newMat(out.data);
 
         broadcast(b, f, out);
         return out;
@@ -997,8 +1005,6 @@ class Mat {
         if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
         if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
-        result.refCount = 1;
-        result.base = NULL;
         result.ndim = new_ndim;
         result.dims = new size_type[result.ndim];
         result.strides = new size_type[result.ndim];
@@ -1009,6 +1015,7 @@ class Mat {
         if(strides == NULL) result.buildStrides();
 
         result.data = data;
+        result.base = result.newMat(result.data);
         return result;
     }
 
@@ -1025,8 +1032,6 @@ class Mat {
             result.allocator->allocate(&result, dInfo);
         }
         else{
-            result.refCount = 1;
-            result.base = NULL;
             result.ndim = new_ndim;
             result.dims = new size_type[result.ndim];
             result.strides = new size_type[result.ndim];
@@ -1035,6 +1040,7 @@ class Mat {
                 result.strides[i] = new_strides[i];
             }
             result.data = data;
+            result.base = result.newMat(data);
         }
         return result;
     }
