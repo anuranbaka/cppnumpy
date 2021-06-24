@@ -1016,6 +1016,7 @@ class Mat {
 
         result.data = data;
         result.base = result.newMat(result.data);
+        result.base->data = NULL;
         return result;
     }
 
