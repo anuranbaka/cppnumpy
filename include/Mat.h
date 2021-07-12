@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <matMath.h>
 #include <type_traits>
+#include <cassert>//temporary while allocate is undefined
 using namespace std;
 
 template <class Type>
@@ -62,12 +63,12 @@ struct DimInfo{
     long ndim;
     size_t dims[32];
     size_t strides[32];
-    DimInfo(long a, size_t* b, size_t* c) : ndim(a){
+    DimInfo(long new_ndim, size_t* new_dims, size_t* new_strides) : ndim(new_ndim){
         for(long i = 0; i < ndim; i++){
-            dims[i] = b[i];
+            dims[i] = new_dims[i];
         }
         for(long i = 0; i < ndim; i++){
-            strides[i] = c[i];
+            strides[i] = new_strides[i];
         }
     }
 };
@@ -81,7 +82,7 @@ class AllocInfo{
         void deallocate(Mat<Type>*){return;}
 };
 
-template <class Type>
+template <class Type /*double*/>
 class Mat {
     friend class MatIter<Type>;
     friend class Const_MatIter<Type>;
@@ -211,8 +212,8 @@ class Mat {
     }
 
     Mat(){
-        static Mat<Type> emptyBase(0);
-        base = newMat(NULL);
+        thread_local Mat<Type> emptySingleton(0);
+        base = emptySingleton.base;
         (base->refCount)++;
     }
 
@@ -235,12 +236,12 @@ class Mat {
         buildStrides();
 
         data = new Type[list.size()];
+        base = newMat(data);
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
             i++;
         }
-        base = newMat(data);
     }
 
     template<typename... arg>
@@ -254,27 +255,28 @@ class Mat {
         buildStrides();
      
         data = new Type[size()];
+        base = newMat(data);
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
             i++;
         }
-        base = newMat(data);
     }
 
     Mat(const Mat& b){
-        if(b.base != NULL) base = b.base;
+        if(b.base != NULL) base = b.base; //remove this later when new base type is added
         else base = const_cast<Mat<Type>*>(&b);
         (base->refCount)++;
 
         ndim = b.ndim;
         data = b.data;
         
-        if(b.allocator != NULL){
-            DimInfo dInfo(ndim, dims, strides);
+        assert(b.allocator == NULL);
+        /*if(b.allocator != NULL){
+            DimInfo dInfo(ndim, dims, strides); //this could be problematic when allocators are defined check before removing assert
             b.allocator->allocate(this, dInfo);
         }
-        else{
+        else{*/
             dims = new size_type[ndim];
             for(long i = 0; i < ndim; i++){
                 dims[i] = b.dims[i];
@@ -283,7 +285,7 @@ class Mat {
             for(long i = 0; i < ndim; i++){
                 strides[i] = b.strides[i];
             }
-        }
+        //}
     }
 
     Mat(const iMat<Type, bool>& b){
@@ -292,13 +294,14 @@ class Mat {
             if(i) newSize++;
         }
 
+        data = new Type[newSize];
+        base = newMat(data);
+
         ndim = 1;
         dims = new size_type[1];
         dims[0] = newSize;
         buildStrides();
 
-        data = new Type[size()];
-        base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
 
@@ -313,7 +316,7 @@ class Mat {
         }
         buildStrides();
 
-        data = new Type[size()];
+        data = new Type[size()]; //may become unsafe with multithreading?
         base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
@@ -391,11 +394,12 @@ class Mat {
         ndim = b.ndim;
         data = b.data;
         
-        if(allocator != NULL){
+        assert(allocator==NULL);
+        /*if(allocator != NULL){ // check this again when removing assert after allocate is defined
             DimInfo dInfo(ndim, dims, strides);
             allocator->allocate(this, dInfo);
         }
-        else{
+        else{*/
             dims = new size_type[ndim];
             for(long i = 0; i < ndim; i++){
                 dims[i] = b.dims[i];
@@ -404,7 +408,7 @@ class Mat {
             for(long i = 0; i < ndim; i++){
                 strides[i] = b.strides[i];
             }
-        }
+        //}
         return *this;
     }
 
@@ -444,7 +448,7 @@ class Mat {
         dims[0] = newSize;
         buildStrides();
 
-        data = new Type[size()];
+        data = new Type[size()]; //may become unsafe with multithreading?
         base = newMat(data);
         b.matrix.ito(b.index, *this);
         return *this;
@@ -455,18 +459,19 @@ class Mat {
         this->~Mat<Type>();
         ndim = b.matrix.ndim;
         
-        if(allocator != NULL){
+        assert(allocator==NULL);
+        /*if(allocator != NULL){ //check when removing assert
             DimInfo dInfo(ndim, dims, strides);
             allocator->allocate(this, dInfo);
         }
-        else{
+        else{*/
             dims = new size_t[ndim];
             dims[0] = b.index.size();
             for(int i = 1; i < ndim; i++){
                 dims[i] = b.matrix.dims[i];
             }
             buildStrides();
-        }
+        //}
 
         data = new Type[size()];
         base = newMat(data);
