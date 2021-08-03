@@ -73,13 +73,12 @@ struct DimInfo{
     }
 };
 
+template<class Type>
 class AllocInfo{
     public:
-        void* userdata;
-        template<class Type>
-        void allocate(Mat<Type>*, const DimInfo&){return;}
-        template<class Type>
-        void deallocate(Mat<Type>*){return;}
+        void* userdata = NULL;
+        void (*allocate)(Mat<Type>*, void*, const DimInfo&);
+        void (*deallocate)(Mat<Type>*);
 };
 
 template <class Type /*double*/>
@@ -137,7 +136,7 @@ class Mat {
     typedef Type & reference;
 
     int32_t refCount = 0;
-    AllocInfo* allocator = NULL;
+    AllocInfo<Type>* allocator = NULL;
     Type* data = NULL;
     long ndim = 0;
     size_type* dims = NULL;
@@ -271,21 +270,21 @@ class Mat {
         ndim = b.ndim;
         data = b.data;
         
-        assert(b.allocator == NULL);
-        /*if(b.allocator != NULL){
-            DimInfo dInfo(ndim, dims, strides); //this could be problematic when allocators are defined check before removing assert
-            b.allocator->allocate(this, dInfo);
+        if(b.allocator != NULL){ //should this still be an assertion?
+            DimInfo dInfo(ndim, dims, strides);
+            b.allocator->allocate(this, NULL, dInfo); //this can't be right.
+            //Allocator should always be NULL. perhaps overload constructor to take allocatorInfo?
         }
-        else{*/
+        else{
             dims = new size_type[ndim];
-            for(long i = 0; i < ndim; i++){
-                dims[i] = b.dims[i];
-            }
             strides = new size_type[ndim];
-            for(long i = 0; i < ndim; i++){
-                strides[i] = b.strides[i];
-            }
-        //}
+        }
+        for(long i = 0; i < ndim; i++){
+            dims[i] = b.dims[i];
+        }
+        for(long i = 0; i < ndim; i++){
+            strides[i] = b.strides[i];
+        }
     }
 
     Mat(const iMat<Type, bool>& b){
@@ -425,7 +424,7 @@ class Mat {
         
         if(allocator != NULL){
             DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, dInfo);
+            allocator->allocate(this, allocator->userdata, dInfo);
         }
         else{
             dims = new size_type[1];
@@ -1027,27 +1026,31 @@ class Mat {
 
     static Mat<Type> wrap(Type* data, long new_ndim,
                         size_type* new_dims, size_type* new_strides, 
-                        AllocInfo* alloc){
+                        AllocInfo<Type>* alloc){
         if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
         if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
         if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
         Mat<Type> result;
         result.allocator = alloc;
+        result.ndim = new_ndim;
+
         if(alloc != NULL){
             DimInfo dInfo(new_ndim, new_dims, new_strides);
-            result.allocator->allocate(&result, dInfo);
+            result.allocator->allocate(&result, result.allocator->userdata, dInfo);
         }
         else{
-            result.ndim = new_ndim;
             result.dims = new size_type[result.ndim];
             result.strides = new size_type[result.ndim];
-            for(long i = 0; i < result.ndim; i++){
-                result.dims[i] = new_dims[i];
-                result.strides[i] = new_strides[i];
-            }
-            result.data = data;
-            result.base = result.newMat(data);
         }
+
+        for(long i = 0; i < result.ndim; i++){
+            result.dims[i] = new_dims[i];
+            result.strides[i] = new_strides[i];
+        }
+
+        result.data = data;
+        result.base = result.newMat(data);
+
         return result;
     }
 

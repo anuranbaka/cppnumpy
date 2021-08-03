@@ -29,15 +29,23 @@ int getTypenum(){
 }
 
 template <class T>
+void wrap_numpy_allocate(Mat<T>* new_mat, void* userdata, const DimInfo& dim_info){ //do we need a struct or is ndim enough?
+    new_mat->dims = new size_t[dim_info.ndim];
+    new_mat->strides = new size_t[dim_info.ndim];
+    new_mat->allocator->userdata = userdata;
+    Py_INCREF((PyObject*)userdata);
+}
+
+template <class T>
+void wrap_numpy_deallocate(Mat<T>* mat){
+    Py_DECREF((PyObject*)mat->allocator->userdata);
+}
+
+template <class T>
 static void destructor_wrapper(PyObject* o){
     void* ptr = PyCapsule_GetPointer(o, MAT_NAME);
     Mat<T>* m = (Mat<T>*)ptr;
     delete m;
-}
-
-template<class T>
-static void NumpyDestructor(Mat<T>* mat, void* data){
-    Py_DECREF((PyObject*)data);
 }
 
 template<class T>
@@ -76,8 +84,10 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
 
-    AllocInfo npInfo;
+    AllocInfo<T> npInfo;
     npInfo.userdata = arrBase;
+    npInfo.allocate = *wrap_numpy_allocate<T>;
+    npInfo.deallocate = *wrap_numpy_deallocate<T>;
 
     out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
