@@ -199,7 +199,7 @@ int main (){
     output.print(outFile);
 
     Mat<> a({1,2,3,4,5,6}, 6);
-    Mat<> b({3,3,3,3,3,3}, 6);
+    Mat<> b({3,3,3,3,3,3});
     Mat<> c({5}, 1);
     Mat<> d(0);
 

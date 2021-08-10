@@ -38,6 +38,8 @@ void wrap_numpy_allocate(Mat<T>* new_mat, void* userdata, const DimInfo& dim_inf
 
 template <class T>
 void wrap_numpy_deallocate(Mat<T>* mat){
+    delete[] mat->dims;
+    delete[] mat->strides;
     Py_DECREF((PyObject*)mat->allocator->userdata);
 }
 

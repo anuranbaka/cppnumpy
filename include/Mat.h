@@ -5,7 +5,7 @@
 #include <initializer_list>
 #include <matMath.h>
 #include <type_traits>
-#include <cassert>//temporary while allocate is undefined
+
 using namespace std;
 
 template <class Type>
@@ -315,13 +315,13 @@ class Mat {
         DimInfo dInfo(ndim, temp_dims, temp_strides);
         allocator->allocate(this, alloc.userdata, dInfo);
 
+        base = newMat(data);
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
             i++;
         }
 
-        base = newMat(data);
     }
 
     Mat(const Mat& b){
@@ -483,12 +483,11 @@ class Mat {
         ndim = b.ndim;
         data = b.data;
         
-        assert(allocator==NULL);
-        /*if(allocator != NULL){ // check this again when removing assert after allocate is defined
+        if(allocator != NULL){ //should this check be before destruction?
             DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, dInfo);
+            allocator->allocate(this, allocator->userdata, dInfo);
         }
-        else{*/
+        else{
             dims = new size_type[ndim];
             for(long i = 0; i < ndim; i++){
                 dims[i] = b.dims[i];
@@ -497,7 +496,7 @@ class Mat {
             for(long i = 0; i < ndim; i++){
                 strides[i] = b.strides[i];
             }
-        //}
+        }
         return *this;
     }
 
@@ -548,19 +547,18 @@ class Mat {
         this->~Mat<Type>();
         ndim = b.matrix.ndim;
         
-        assert(allocator==NULL);
-        /*if(allocator != NULL){ //check when removing assert
+        if(allocator != NULL){ //maybe this check up before destruction
             DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, dInfo);
+            allocator->allocate(this, allocator->userdata, dInfo);
         }
-        else{*/
+        else{
             dims = new size_t[ndim];
             dims[0] = b.index.size();
             for(int i = 1; i < ndim; i++){
                 dims[i] = b.matrix.dims[i];
             }
             buildStrides();
-        //}
+        }
 
         data = new Type[size()];
         base = newMat(data);
