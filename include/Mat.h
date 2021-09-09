@@ -58,6 +58,8 @@ template <class Type, class Type2>
 class iMat;
 template <class Type = double>
 class Mat;
+template <class Type = double>
+class MatBase;
 
 struct DimInfo{
     long ndim;
@@ -77,8 +79,38 @@ template<class Type>
 class AllocInfo{
     public:
         void* userdata = NULL;
-        void (*allocate)(Mat<Type>*, void*, const DimInfo&);
-        void (*deallocate)(Mat<Type>*);
+        void (*allocateMeta)(Mat<Type>*, void*, const DimInfo&); //allocates dims, strides and (if not copying another matrix) base
+        void (*deallocateMeta)(Mat<Type>*);
+        void (*allocateData)(MatBase<Type>*, void*, const size_t);
+        void (*deallocateData)(MatBase<Type>*);
+};
+
+template <class Type /*double*/>
+class MatBase{
+    public:
+    int32_t refCount = 0;
+    AllocInfo<Type>* allocator = NULL;
+    Type* data = NULL;
+
+    MatBase(size_t size = 0){
+        if(size != 0)
+            data = new Type[size];
+    }
+
+    MatBase(size_t size, AllocInfo<Type>* allocIn) : allocator(allocIn) {
+        allocator.allocateData(this, allocator.userdata, size);
+    }
+
+    MatBase(void* newdata) : data((Type*)newdata) {}
+    
+    ~MatBase(){
+        if(allocator != NULL){
+            allocator->deallocateData(this);
+        }
+        else{
+            delete[] data;
+        }
+    }
 };
 
 template <class Type /*double*/>
@@ -135,13 +167,12 @@ class Mat {
     typedef Type * pointer;
     typedef Type & reference;
 
-    int32_t refCount = 0;
     AllocInfo<Type>* allocator = NULL;
     Type* data = NULL;
     long ndim = 0;
     size_type* dims = NULL;
     size_type* strides = NULL;
-    Mat* base = NULL;
+    MatBase<Type>* base = NULL;
 
     iterator begin(){
         return iterator(*this, 0);
@@ -211,8 +242,8 @@ class Mat {
     }
 
     Mat(){
-        thread_local Mat<Type> emptySingleton(0);
-        base = emptySingleton.base;
+        thread_local MatBase<Type> emptySingleton;
+        base = &emptySingleton;
         (base->refCount)++;
     }
 
@@ -223,9 +254,12 @@ class Mat {
 
         dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
         buildStrides();
-     
-        data = new Type[size()];
-        base = newMat(data);
+
+        MatBase<Type>* newBase;
+        newBase = new MatBase<Type>(size());
+        base = newBase;
+        base->refCount++;
+        data = newBase->data;
     }
 
     template<typename... arg>
@@ -243,9 +277,7 @@ class Mat {
 
         allocator = alloc;
         DimInfo dInfo(ndim, temp_dims, temp_strides);
-        allocator->allocate(this, alloc.userdata, dInfo);
-
-        base = newMat(data);
+        allocator->allocateMeta(this, alloc.userdata, dInfo);
     }
 
     Mat(std::initializer_list<Type> list){
@@ -254,8 +286,12 @@ class Mat {
         dims[0] = list.size();
         buildStrides();
 
-        data = new Type[list.size()];
-        base = newMat(data);
+        MatBase<Type>* newBase;
+        newBase = new MatBase<Type>(size());
+        base = newBase;
+        base->refCount++;
+        data = newBase->data;
+
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
@@ -269,9 +305,8 @@ class Mat {
 
         allocator = alloc;
         DimInfo dInfo(ndim, list.size(), temp_strides);
-        allocator->allocate(this, alloc.userdata, dInfo);
-        
-        base = newMat(data);
+        allocator->allocateMeta(this, alloc.userdata, dInfo);
+
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
@@ -288,9 +323,13 @@ class Mat {
         if(list.size() != size())
             throw invalid_argument("Initializer list size inconsistent with dimensions");
         buildStrides();
-     
-        data = new Type[size()];
-        base = newMat(data);
+
+        MatBase<Type>* newBase;
+        newBase = new MatBase<Type>(size());
+        base = newBase;
+        base->refCount++;
+        data = newBase->data;
+
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
@@ -313,9 +352,8 @@ class Mat {
 
         allocator = alloc;
         DimInfo dInfo(ndim, temp_dims, temp_strides);
-        allocator->allocate(this, alloc.userdata, dInfo);
+        allocator->allocateMeta(this, alloc.userdata, dInfo);
 
-        base = newMat(data);
         size_type i = 0;
         for(auto elem : list){
             data[i] = elem;
@@ -325,17 +363,14 @@ class Mat {
     }
 
     Mat(const Mat& b){
-        if(b.base != NULL) base = b.base; //remove this later when new base type is added
-        else base = const_cast<Mat<Type>*>(&b);
-        (base->refCount)++;
-
+        base = b.base;
         ndim = b.ndim;
         data = b.data;
         
         if(b.allocator != NULL){
             allocator = b.allocator;
             DimInfo dInfo(ndim, b.dims, b.strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
         else{
             dims = new size_type[ndim];
@@ -361,6 +396,12 @@ class Mat {
             dims = new size_type[1];
             dims[0] = newSize;
             buildStrides();
+            
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>(size());
+            base = newBase;
+            base->refCount++;
+            data = newBase->data;
         }
         else{
             size_type temp_dims[1] = {newSize};
@@ -368,10 +409,9 @@ class Mat {
 
             allocator = b.matrix.allocator;
             DimInfo dInfo(ndim, temp_dims, temp_strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
 
-        base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
 
@@ -386,7 +426,12 @@ class Mat {
                 dims[i] = b.matrix.dims[i];
             }
             buildStrides();
-            data = new Type[size()]; //may become unsafe with multithreading?
+
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>(size());
+            base = newBase;
+            base->refCount++;
+            data = newBase->data;
         }
         else{
             size_type temp_dims[32];
@@ -403,51 +448,26 @@ class Mat {
 
             allocator = b.matrix.allocator;
             DimInfo dInfo(ndim, temp_dims, temp_strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
 
-        base = newMat(data);
         b.matrix.ito(b.index, *this);
     }
 
     ~Mat(){
-        if(base != NULL){
-            if(allocator != NULL){
-                allocator->deallocate(this);
-            }
-            else{
-                (base->refCount)--;
-                delete []dims;
-                delete []strides;
-                strides = NULL;
-                if(base->refCount <= 0){
-                    base->~Mat();
-                    free(base);
-                }
-            }
+        if(allocator != NULL){
+            allocator->deallocateMeta(this);
+            base->allocator->deallocateData(base);
         }
         else{
-            if(refCount < 0) fprintf(stderr, "Reference counter is negative somehow\n");
-            if(refCount < 1){
-                delete []data;
-            }
+            (base->refCount)--;
             delete []dims;
             delete []strides;
             strides = NULL;
+            if(base->refCount <= 0){
+                base->~MatBase();
+            }
         }
-    }
-
-    Mat* newMat(Type* mem){
-        Mat* out = (Mat*)malloc(sizeof(Mat));
-        out->allocator = NULL;
-        out->ndim = 0;
-        out->dims = NULL;
-        out->strides = NULL;
-        out->base = NULL;
-        if(mem != NULL)
-            out->data = mem;
-        out->refCount = 1;
-        return out;
     }
 
     template<typename... arg>
@@ -476,16 +496,15 @@ class Mat {
 
     Mat& operator= (const Mat &b){
         this->~Mat<Type>();
-        if(b.base != NULL) base = b.base;
-        else base = const_cast<Mat<Type>*>(&b);
+        base = b.base;
         (base->refCount)++;
 
         ndim = b.ndim;
         data = b.data;
         
-        if(allocator != NULL){ //should this check be before destruction?
+        if(allocator != NULL){
             DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
         else{
             dims = new size_type[ndim];
@@ -510,34 +529,33 @@ class Mat {
     Mat<Type>& operator=(const iMat<Type, bool> b){
         this->~Mat<Type>();
         ndim = 1;
-        
+        allocator = b.matrix.allocator;
+
+        size_type newdims[1];
+        for(auto i : b.index){
+            if(i) newdims[0]++;
+        }
+        size_type newstrides[1];
+        newstrides[0] = 1;
+
         if(allocator != NULL){
-            DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+            DimInfo dInfo(ndim, newdims, newstrides);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
         else{
-            dims = new size_type[1];
-            dims[0] = 0;
-            for(auto i : b.index){
-                if(i) dims[0]++;
-            }
+            dims = new size_type[ndim];
             strides = new size_type[ndim];
-            for(long i = 0; i < ndim; i++){
-                strides[i] = b.matrix.strides[i];
-            }
+
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>(newdims);
+            base = newBase;
+            base->refCount++;
+            data = newBase->data;
         }
 
-        size_t newSize = 0;
-        for(auto i : b.index){
-            if(i) newSize++;
-        }
-        ndim = 1;
-        dims = new size_type[1];
-        dims[0] = newSize;
-        buildStrides();
+        dims = newdims;
+        strides = newstrides;
 
-        data = new Type[size()]; //may become unsafe with multithreading?
-        base = newMat(data);
         b.matrix.ito(b.index, *this);
         return *this;
     }
@@ -546,22 +564,36 @@ class Mat {
     Mat<Type>& operator=(const iMat<Type, Type2> b){
         this->~Mat<Type>();
         ndim = b.matrix.ndim;
+
+        size_type newdims[32];
+        dims[0] = b.index.size();
+        for(int i = 1; i < ndim; i++){
+            newdims[i] = b.matrix.dims[i];
+        }
+        size_type newstrides[32];
+        newstrides[ndim-1] = 1;
+        for(long j = ndim-2; j >= 0; j--){
+            newstrides[j] = newstrides[j+1]*newdims[j+1];
+        }
         
-        if(allocator != NULL){ //maybe this check up before destruction
-            DimInfo dInfo(ndim, dims, strides);
-            allocator->allocate(this, allocator->userdata, dInfo);
+        if(allocator != NULL){
+            DimInfo dInfo(ndim, newdims, newstrides);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
         else{
-            dims = new size_t[ndim];
-            dims[0] = b.index.size();
-            for(int i = 1; i < ndim; i++){
-                dims[i] = b.matrix.dims[i];
-            }
-            buildStrides();
+            dims = new size_type[ndim];
+            strides = new size_type[ndim];
+
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>(newdims);
+            base = newBase;
+            base->refCount++;
+            data = newBase->data;
         }
 
-        data = new Type[size()];
-        base = newMat(data);
+        dims = newdims;
+        strides = newstrides;
+
         b.matrix.ito(b.index, *this);
         return *this;
     }
@@ -738,6 +770,8 @@ class Mat {
         return false;
     }
 
+    //currently does not support custom allocation.
+    //If needed, allocate output matrix first and call overload below.
     template<class Type2, class Type3>
     Mat<Type3> broadcast(const Mat<Type2> &b, Type3 (*f)(Type, Type2)){
         Mat<Type3> out;
@@ -774,8 +808,11 @@ class Mat {
         }
         out.buildStrides();
 
-        out.data = new Type3[out.size()];
-        out.base = out.newMat(out.data);
+        MatBase<Type3>* newBase;
+        newBase = new MatBase<Type3>(out.size());
+        out.base = newBase;
+        out.base->refCount++;
+        out.data = newBase->data;
 
         broadcast(b, f, out);
         return out;
@@ -903,7 +940,7 @@ class Mat {
             typename std::enable_if<std::is_integral<Type2>::value>::type* = 0) const;
 
     Mat T(Mat& dest){
-        if(dest.base == this || base == &dest || base == dest.base){
+        if(base == dest.base){
             throw invalid_argument
                 ("Source and destination matrix share same backing data");
             }
@@ -1106,9 +1143,11 @@ class Mat {
         }
         if(strides == NULL) result.buildStrides();
 
-        result.data = data;
-        result.base = result.newMat(result.data);
-        result.base->data = NULL;
+        MatBase<Type>* newBase;
+        newBase = new MatBase<Type>(data);
+        result.base = newBase;
+        result.base->refCount++;
+        result.data = newBase->data;
         return result;
     }
 
@@ -1124,20 +1163,23 @@ class Mat {
 
         if(alloc != NULL){
             DimInfo dInfo(new_ndim, new_dims, new_strides);
-            result.allocator->allocate(&result, result.allocator->userdata, dInfo);
+            result.allocator->allocateMeta(&result, result.allocator->userdata, dInfo);
         }
         else{
             result.dims = new size_type[result.ndim];
             result.strides = new size_type[result.ndim];
+
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>(data);
+            result.base = newBase;
+            result.base->refCount++;
+            result.data = newBase->data;
         }
 
         for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
             result.strides[i] = new_strides[i];
         }
-
-        result.data = data;
-        result.base = result.newMat(data);
 
         return result;
     }
@@ -1408,7 +1450,7 @@ class iMat{
     }
 
     iMat<Type, Type2>& operator=(const Mat<Type>& b){
-        if(matrix.base == &b || b.base == &matrix || matrix.base == b.base){
+        if(matrix.base == b.base){
             return *this = b.copy();
         }
         MatIter<Type> j = matrix.begin();

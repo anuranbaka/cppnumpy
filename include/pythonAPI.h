@@ -88,8 +88,8 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
 
     AllocInfo<T> npInfo;
     npInfo.userdata = arrBase;
-    npInfo.allocate = *wrap_numpy_allocate<T>;
-    npInfo.deallocate = *wrap_numpy_deallocate<T>;
+    npInfo.allocateMeta = *wrap_numpy_allocate<T>;
+    npInfo.deallocateMeta = *wrap_numpy_deallocate<T>;
 
     out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
