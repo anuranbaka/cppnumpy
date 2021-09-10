@@ -301,7 +301,7 @@ class Mat {
 
     Mat(std::initializer_list<Type> list, AllocInfo<Type> alloc){
         ndim = 1;
-        size_type temp_strides[1] = {1};
+        size_type temp_strides[ndim] = {1};
 
         allocator = alloc;
         DimInfo dInfo(ndim, list.size(), temp_strides);
@@ -364,6 +364,7 @@ class Mat {
 
     Mat(const Mat& b){
         base = b.base;
+        base->refCount++;
         ndim = b.ndim;
         data = b.data;
         
@@ -393,7 +394,7 @@ class Mat {
 
         if(b.matrix.allocator == NULL){
             data = new Type[newSize];
-            dims = new size_type[1];
+            dims = new size_type[ndim];
             dims[0] = newSize;
             buildStrides();
             
@@ -465,7 +466,7 @@ class Mat {
             delete []strides;
             strides = NULL;
             if(base->refCount <= 0){
-                base->~MatBase();
+                delete base;
             }
         }
     }
@@ -532,6 +533,7 @@ class Mat {
         allocator = b.matrix.allocator;
 
         size_type newdims[1];
+        newdims[0] = 0;
         for(auto i : b.index){
             if(i) newdims[0]++;
         }
@@ -553,8 +555,8 @@ class Mat {
             data = newBase->data;
         }
 
-        dims = newdims;
-        strides = newstrides;
+        dims[0] = newdims[0];
+        strides[0] = newstrides[0];
 
         b.matrix.ito(b.index, *this);
         return *this;
@@ -566,8 +568,8 @@ class Mat {
         ndim = b.matrix.ndim;
 
         size_type newdims[32];
-        dims[0] = b.index.size();
-        for(int i = 1; i < ndim; i++){
+        newdims[0] = b.index.size();
+        for(long i = 1; i < ndim; i++){
             newdims[i] = b.matrix.dims[i];
         }
         size_type newstrides[32];
@@ -591,8 +593,10 @@ class Mat {
             data = newBase->data;
         }
 
-        dims = newdims;
-        strides = newstrides;
+        for(long i = 0; i < ndim; i++){
+            dims[i] = newdims[i];
+            strides[i] = newstrides[i];
+        }
 
         b.matrix.ito(b.index, *this);
         return *this;
