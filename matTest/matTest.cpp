@@ -348,14 +348,14 @@ int main (){
     fprintf(outFile, "printing arange(1,5,-2), which should just be size 0\n");
     temp.print(outFile);
 
-    double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    /*double e[15] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     size_t shape[2] = {3,5};
     Mat<double> wrapper = Mat<double>::wrap(e, 2, shape);
     fprintf(outFile, "15 element c-style array wrapped into a 3x5 matrix\n");
     wrapper.print(outFile);
     wrapper.roi(0,3,1,4) *= 2;
     fprintf(outFile, "doubling the center 3 columns\n");
-    wrapper.print(outFile);
+    wrapper.print(outFile);*/
 
     Mat<bool> boolMat({true, true, false},1,3);
     Mat<bool> outBool;

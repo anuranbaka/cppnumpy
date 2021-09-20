@@ -79,7 +79,8 @@ template<class Type>
 class AllocInfo{
     public:
         void* userdata = NULL;
-        void (*allocateMeta)(Mat<Type>*, void*, const DimInfo&); //allocates dims, strides and (if not copying another matrix) base
+        //allocates dims, strides and (if not copying another matrix) base
+        void (*allocateMeta)(Mat<Type>*, void*, const DimInfo&);
         void (*deallocateMeta)(Mat<Type>*);
         void (*allocateData)(MatBase<Type>*, void*, const size_t);
         void (*deallocateData)(MatBase<Type>*);
@@ -104,11 +105,11 @@ class MatBase{
     MatBase(void* newdata) : data((Type*)newdata) {}
     
     ~MatBase(){
-        if(allocator != NULL){
-            allocator->deallocateData(this);
+        if(allocator == NULL){
+            delete[] data;
         }
         else{
-            delete[] data;
+            allocator->deallocateData(this);
         }
     }
 };
@@ -244,6 +245,7 @@ class Mat {
     Mat(){
         thread_local MatBase<Type> emptySingleton;
         base = &emptySingleton;
+        if(base->refCount == 0) (base->refCount)++;
         (base->refCount)++;
     }
 
@@ -368,15 +370,16 @@ class Mat {
         ndim = b.ndim;
         data = b.data;
         
-        if(b.allocator != NULL){
+        if(b.allocator == NULL){
+            dims = new size_type[ndim];
+            strides = new size_type[ndim];
+        }
+        else{
             allocator = b.allocator;
             DimInfo dInfo(ndim, b.dims, b.strides);
             allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
-        else{
-            dims = new size_type[ndim];
-            strides = new size_type[ndim];
-        }
+
         for(long i = 0; i < ndim; i++){
             dims[i] = b.dims[i];
         }
@@ -456,11 +459,7 @@ class Mat {
     }
 
     ~Mat(){
-        if(allocator != NULL){
-            allocator->deallocateMeta(this);
-            base->allocator->deallocateData(base);
-        }
-        else{
+        if(allocator == NULL){
             (base->refCount)--;
             delete []dims;
             delete []strides;
@@ -468,6 +467,10 @@ class Mat {
             if(base->refCount <= 0){
                 delete base;
             }
+        }
+        else{
+            allocator->deallocateMeta(this);
+            base->allocator->deallocateData(base);
         }
     }
 
@@ -503,11 +506,7 @@ class Mat {
         ndim = b.ndim;
         data = b.data;
         
-        if(allocator != NULL){
-            DimInfo dInfo(ndim, dims, strides);
-            allocator->allocateMeta(this, allocator->userdata, dInfo);
-        }
-        else{
+        if(allocator == NULL){
             dims = new size_type[ndim];
             for(long i = 0; i < ndim; i++){
                 dims[i] = b.dims[i];
@@ -516,6 +515,10 @@ class Mat {
             for(long i = 0; i < ndim; i++){
                 strides[i] = b.strides[i];
             }
+        }
+        else{
+            DimInfo dInfo(ndim, dims, strides);
+            allocator->allocateMeta(this, NULL, dInfo);
         }
         return *this;
     }
@@ -540,19 +543,19 @@ class Mat {
         size_type newstrides[1];
         newstrides[0] = 1;
 
-        if(allocator != NULL){
-            DimInfo dInfo(ndim, newdims, newstrides);
-            allocator->allocateMeta(this, allocator->userdata, dInfo);
-        }
-        else{
+        if(allocator == NULL){
             dims = new size_type[ndim];
             strides = new size_type[ndim];
 
             MatBase<Type>* newBase;
-            newBase = new MatBase<Type>(newdims);
+            newBase = new MatBase<Type>(newdims[0]);
             base = newBase;
             base->refCount++;
             data = newBase->data;
+        }
+        else{
+            DimInfo dInfo(ndim, newdims, newstrides);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
 
         dims[0] = newdims[0];
@@ -569,8 +572,10 @@ class Mat {
 
         size_type newdims[32];
         newdims[0] = b.index.size();
+        size_type newsize = newdims[0];
         for(long i = 1; i < ndim; i++){
             newdims[i] = b.matrix.dims[i];
+            newsize *= b.matrix.dims[i];
         }
         size_type newstrides[32];
         newstrides[ndim-1] = 1;
@@ -578,19 +583,19 @@ class Mat {
             newstrides[j] = newstrides[j+1]*newdims[j+1];
         }
         
-        if(allocator != NULL){
-            DimInfo dInfo(ndim, newdims, newstrides);
-            allocator->allocateMeta(this, allocator->userdata, dInfo);
-        }
-        else{
+        if(allocator == NULL){
             dims = new size_type[ndim];
             strides = new size_type[ndim];
 
             MatBase<Type>* newBase;
-            newBase = new MatBase<Type>(newdims);
+            newBase = new MatBase<Type>(newsize);
             base = newBase;
             base->refCount++;
             data = newBase->data;
+        }
+        else{
+            DimInfo dInfo(ndim, newdims, newstrides);
+            allocator->allocateMeta(this, allocator->userdata, dInfo);
         }
 
         for(long i = 0; i < ndim; i++){
