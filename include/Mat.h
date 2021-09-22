@@ -234,8 +234,8 @@ class Mat {
     void buildStrides(){
         if(ndim == 0)
             throw length_error("Cannot build strides for 0 dimensional matrix");
-        if(strides != NULL) delete[] strides;
-        strides = new size_type[ndim];
+        if(strides == NULL)
+            throw runtime_error("Matrix strides cannot be NULL");
         strides[ndim-1] = 1;
         for(long j = ndim-2; j >= 0; j--){
             strides[j] = strides[j+1]*dims[j+1];
@@ -255,6 +255,7 @@ class Mat {
         if(ndim > 32) throw invalid_argument("too many dimensions (<=32 allowed)");
 
         dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
+        strides = new size_type[ndim];
         buildStrides();
 
         MatBase<Type>* newBase;
@@ -286,6 +287,7 @@ class Mat {
         ndim = 1;
         dims = new size_type[ndim];
         dims[0] = list.size();
+        strides = new size_type[ndim];
         buildStrides();
 
         MatBase<Type>* newBase;
@@ -324,6 +326,7 @@ class Mat {
         dims = new size_type[ndim]{(static_cast<size_type>(ind))...};
         if(list.size() != size())
             throw invalid_argument("Initializer list size inconsistent with dimensions");
+        strides = new size_type[ndim];
         buildStrides();
 
         MatBase<Type>* newBase;
@@ -399,6 +402,7 @@ class Mat {
             data = new Type[newSize];
             dims = new size_type[ndim];
             dims[0] = newSize;
+            strides = new size_type[ndim];
             buildStrides();
             
             MatBase<Type>* newBase;
@@ -424,11 +428,12 @@ class Mat {
         ndim = b.matrix.ndim;
 
         if(b.matrix.allocator == NULL){
-            dims = new size_t[ndim];
+            dims = new size_type[ndim];
             dims[0] = b.index.size();
             for(int i = 1; i < ndim; i++){
                 dims[i] = b.matrix.dims[i];
             }
+            strides = new size_type[ndim];
             buildStrides();
 
             MatBase<Type>* newBase;
@@ -463,7 +468,6 @@ class Mat {
             (base->refCount)--;
             delete []dims;
             delete []strides;
-            strides = NULL;
             if(base->refCount <= 0){
                 delete base;
             }
@@ -1051,6 +1055,7 @@ class Mat {
         for(long i = 0; i < ndim; i++){
             dest.dims[i] = dims[i];
         }
+        dest.strides = new size_type[ndim];
         dest.buildStrides();
         copy(dest);
         return dest;
@@ -1106,6 +1111,7 @@ class Mat {
             if(i == autodim) out.dims[i] = autoLength;
             else out.dims[i] = temp[i];
         }
+        out.strides = new size_type[out.ndim];
         out.buildStrides();
         return out;
     }
@@ -1236,6 +1242,7 @@ class Mat {
         for(long i = 0; i < a.ndim; i++){
             result.dims[i] = a.dims[i];
         }
+        result.strides = new size_type[a.ndim];
         result.buildStrides();
         return result;
     }
