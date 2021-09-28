@@ -29,9 +29,9 @@ int getTypenum(){
 }
 
 template <class T>
-void wrap_numpy_allocate(Mat<T>* new_mat, void* userdata, const DimInfo& dim_info){ //do we need a struct or is ndim enough?
-    new_mat->dims = new size_t[dim_info.ndim];
-    new_mat->strides = new size_t[dim_info.ndim];
+void wrap_numpy_allocate(Mat<T>* new_mat, void* userdata, const long new_ndim){
+    new_mat->dims = new size_t[new_ndim];
+    new_mat->strides = new size_t[new_ndim];
     new_mat->allocator->userdata = userdata;
     Py_INCREF((PyObject*)userdata);
 }
