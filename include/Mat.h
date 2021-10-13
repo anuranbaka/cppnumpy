@@ -497,12 +497,17 @@ class Mat {
     }
 
     ~Mat(){
-        if(allocator == NULL){
+        if(allocator == NULL || allocator->allocateMeta == NULL){
             (base->refCount)--;
             delete []dims;
             delete []strides;
             if(base->refCount <= 0){
-                delete base;
+                if(allocator == NULL || allocator->allocateData == NULL){
+                    delete base;
+                }
+                else{
+                    allocator->deallocateData(base);
+                }
             }
         }
         else{
@@ -1184,11 +1189,17 @@ class Mat {
         if(strides == NULL) result.buildStrides();
 
         MatBase<Type>* newBase;
-        newBase = new MatBase<Type>();
+        newBase = new MatBase<Type>(data);
         result.base = newBase;
         result.base->refCount++;
-        result.base->data = data;
-        result.data = newBase->data;
+        result.data = data;
+
+        thread_local AllocInfo<Type> wrap_alloc;
+        wrap_alloc.deallocateData = [](MatBase<Type>*){return;};
+
+        result.allocator = &wrap_alloc;
+        result.base->allocator = &wrap_alloc;
+
         return result;
     }
 
@@ -1202,24 +1213,24 @@ class Mat {
         result.allocator = alloc;
         result.ndim = new_ndim;
 
-        if(alloc != NULL){
-            result.allocator->allocateMeta(&result, result.allocator->userdata, new_ndim);
-        }
-        else{
+        if(alloc == NULL){
             result.dims = new size_type[result.ndim];
             result.strides = new size_type[result.ndim];
 
             MatBase<Type>* newBase;
             newBase = new MatBase<Type>();
             result.base = newBase;
-            result.base->refCount++;
-            result.data = newBase->data;
         }
+        else
+            result.allocator->allocateMeta(&result, result.allocator->userdata, result.ndim);
+        result.base->refCount++;
 
         for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
             result.strides[i] = new_strides[i];
         }
+
+        result.data = result.base->data;
 
         return result;
     }
