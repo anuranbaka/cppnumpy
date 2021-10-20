@@ -64,7 +64,7 @@ bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 
 floodPybind: python/floodPybind$(PY_SUFFIX)
-python/floodPybind$(PY_SUFFIX): pybind/floodFillPybind.cpp include/matPybind.h bin/floodFill
+python/floodPybind$(PY_SUFFIX): pybind/floodFillPybind.cpp include/matPybind.h bin/floodFill include/pythonAPI.h
 	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)
 
 matDebug: python/matDebug$(PY_SUFFIX)
