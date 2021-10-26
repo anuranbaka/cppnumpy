@@ -14,7 +14,7 @@ NUMPY_INCLUDES = `python3 -c 'import numpy; print(numpy.get_include())'`
 
 PY_SUFFIX := $(shell python3-config --extension-suffix)
 
-DEBUG_FLAGS = -g -Wall -Wextra -pedantic
+DEBUG_FLAGS = -g -Wall -Wextra -pedantic -O0
 
 all: bin/matTest floodPybind matDebug bin/errorTest
 
@@ -65,11 +65,11 @@ bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
 
 floodPybind: python/floodPybind$(PY_SUFFIX)
 python/floodPybind$(PY_SUFFIX): pybind/floodFillPybind.cpp include/matPybind.h bin/floodFill include/pythonAPI.h
-	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)
+	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) floodFill/floodFill.cpp pybind/floodFillPybind.cpp -o python/floodPybind$(PY_SUFFIX)
 
 matDebug: python/matDebug$(PY_SUFFIX)
 python/matDebug$(PY_SUFFIX): pybind/matDebugTest.cpp include/Mat.h include/pythonAPI.h
-	g++ -O3 -Wall -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matDebugTest.cpp -o python/matDebug$(PY_SUFFIX)
+	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/matDebugTest.cpp -o python/matDebug$(PY_SUFFIX)
 	
 python/pyCapsuleTest: include/matPybind.h pybind/pyCapsuleTest.cpp
 	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/pyCapsuleTest.cpp -o python/pyCapsuleTest$(PY_SUFFIX)
