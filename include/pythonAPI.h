@@ -29,18 +29,30 @@ int getTypenum(){
 }
 
 template <class T>
-void wrap_numpy_allocate(Mat<T>* new_mat, void* userdata, const long new_ndim){
+void wrap_numpy_allocateMeta(Mat<T>* new_mat, void*, const long new_ndim){
     new_mat->dims = new size_t[new_ndim];
     new_mat->strides = new size_t[new_ndim];
-    new_mat->allocator->userdata = userdata;
+    MatBase<T>* newBase;
+    newBase = new MatBase<T>;
+    new_mat->base = newBase;
+}
+
+template <class T>
+void wrap_numpy_deallocateMeta(Mat<T>* mat){
+    delete[] mat->dims;
+    delete[] mat->strides;
+    if(mat->base->refCount <= 0) delete mat->base;
+}
+
+template <class T>
+void wrap_numpy_allocateData(MatBase<T>* base, void* userdata, const size_t){
+    base->data = (T*)userdata;
     Py_INCREF((PyObject*)userdata);
 }
 
 template <class T>
-void wrap_numpy_deallocate(Mat<T>* mat){
-    delete[] mat->dims;
-    delete[] mat->strides;
-    Py_DECREF((PyObject*)mat->allocator->userdata);
+void wrap_numpy_deallocateData(MatBase<T>* base){
+    Py_DECREF((PyObject*)base->allocator->userdata);
 }
 
 template <class T>
@@ -88,8 +100,10 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
 
     AllocInfo<T> npInfo;
     npInfo.userdata = arrBase;
-    npInfo.allocateMeta = *wrap_numpy_allocate<T>;
-    npInfo.deallocateMeta = *wrap_numpy_deallocate<T>;
+    npInfo.allocateMeta = *wrap_numpy_allocateMeta<T>;
+    npInfo.deallocateMeta = *wrap_numpy_deallocateMeta<T>;
+    npInfo.allocateData = *wrap_numpy_allocateData<T>;
+    npInfo.deallocateData = *wrap_numpy_deallocateData<T>;
 
     out = Mat<T>::wrap(
         (T*)PyArray_DATA(arr),
