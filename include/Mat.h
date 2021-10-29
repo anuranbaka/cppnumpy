@@ -506,9 +506,7 @@ class Mat {
     }
 
     ~Mat(){
-        printf("deleting Mat at %p, with base at %p.\n", (void*)this, (void*)base);
         (base->refCount)--;
-        printf("refCount is now %i.\n", base->refCount);
         if(allocator == NULL || allocator->deallocateMeta == NULL){
             delete []dims;
             delete []strides;
@@ -1227,6 +1225,7 @@ class Mat {
         else{
             result.allocator->allocateMeta(&result, result.allocator->userdata, result.ndim);
         }
+        result.base->allocator = alloc;
         result.base->refCount++;
         printf("base at %p now has a refcount of %i\n", (void*)result.base, result.base->refCount);
 
@@ -1239,7 +1238,7 @@ class Mat {
             result.base->data = data;
         }
         else{
-            result.allocator->allocateData(result.base, data, result.size());
+            result.base->allocator->allocateData(result.base, result.base->allocator->userdata, result.size());
         }
         result.data = result.base->data;
 

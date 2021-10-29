@@ -46,13 +46,13 @@ void wrap_numpy_deallocateMeta(Mat<T>* mat){
 
 template <class T>
 void wrap_numpy_allocateData(MatBase<T>* base, void* userdata, const size_t){
-    base->data = (T*)userdata;
-    Py_INCREF((PyObject*)userdata);
+    base->data = (T*)PyArray_DATA((PyArrayObject*)userdata);
+    Py_INCREF(base->allocator->userdata);
 }
 
 template <class T>
 void wrap_numpy_deallocateData(MatBase<T>* base){
-    Py_DECREF((PyObject*)base->allocator->userdata);
+    Py_DECREF(base->allocator->userdata);
 }
 
 template <class T>
@@ -98,7 +98,7 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
         mat_strides[i] = (PyArray_STRIDES(arr)[i])/PyArray_ITEMSIZE(arr);
     }
 
-    AllocInfo<T> npInfo;
+    static AllocInfo<T> npInfo;
     npInfo.userdata = arrBase;
     npInfo.allocateMeta = *wrap_numpy_allocateMeta<T>;
     npInfo.deallocateMeta = *wrap_numpy_deallocateMeta<T>;
