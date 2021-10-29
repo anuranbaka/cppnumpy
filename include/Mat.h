@@ -94,16 +94,12 @@ class MatBase{
     Type* data = NULL;
 
     MatBase(AllocInfo<Type>* allocIn = NULL) : allocator(allocIn) {
-        printf("constructing base at %p.\n", (void*)this);
     }
 
     MatBase(void* newdata) : data((Type*)newdata) {
-        printf("constructing base at %p.\n", (void*)this);
     }
     
     ~MatBase(){
-        printf("deleting base at %p, with data at %p\n", (void*)this, (void*)data);
-        printf("first three data points are %i, %i, and %i.\n", (int)data[0], (int)data[1], (int)data[2]);
         if(allocator == NULL || allocator->deallocateData == NULL){
             delete[] data;
         }
@@ -244,10 +240,8 @@ class Mat {
     Mat(){
         thread_local MatBase<Type> emptySingleton;
         base = &emptySingleton;
-        printf("making an empty Mat at %p\n", (void*)this);
         if(base->refCount == 0) (base->refCount)++;
         (base->refCount)++;
-        printf("empty Mat refCount is now %i\n", base->refCount);
     }
 
     template<typename... arg>
@@ -414,7 +408,6 @@ class Mat {
     }
 
     Mat(const Mat& b){
-        printf("calling copy constructor, with base at %p\n", (void*)b.base);
         base = b.base;
         base->refCount++;
         ndim = b.ndim;
@@ -540,7 +533,6 @@ class Mat {
     }
 
     Mat& operator= (const Mat &b){
-        printf("calling assignment, from Mat at %p to Mat at %p, with new base at %p\n", (void*)&b, (void*)this, (void*)b.base);
         this->~Mat<Type>();
         base = b.base;
         (base->refCount)++;
@@ -1206,7 +1198,6 @@ class Mat {
     static Mat<Type> wrap(Type* data, long new_ndim,
                         size_type* new_dims, size_type* new_strides, 
                         AllocInfo<Type>* alloc){
-        printf("***wrap is called, pointing at the data at %p.***\n", (void*)data);
         if(new_ndim < 0) throw out_of_range("number of dimensions cannot be negative");
         if(new_ndim == 0) throw out_of_range("0 dimensional matrices not implemented");
         if(new_ndim > 32) throw out_of_range("wrapped matrix has too many dimensions");
@@ -1227,7 +1218,6 @@ class Mat {
         }
         result.base->allocator = alloc;
         result.base->refCount++;
-        printf("base at %p now has a refcount of %i\n", (void*)result.base, result.base->refCount);
 
         for(long i = 0; i < result.ndim; i++){
             result.dims[i] = new_dims[i];
