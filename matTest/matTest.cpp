@@ -510,7 +510,7 @@ int main (){
     fprintf(outFile, "inverse of the Hilbert matrix\n");
     output.print(outFile);
 
-    fflush(outFile);
+    fclose(outFile);
     std::ifstream testFile("matTest/matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     std::ifstream testCheck("matTest/expectedMatTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     if(testFile.tellg() != testCheck.tellg()){

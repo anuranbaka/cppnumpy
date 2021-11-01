@@ -1077,6 +1077,7 @@ class Mat {
         for(long i = 0; i < ndim; i++){
             dest.dims[i] = dims[i];
         }
+        delete[] dest.strides;
         dest.strides = new size_type[ndim];
         dest.buildStrides();
         copy(dest);
@@ -1133,6 +1134,7 @@ class Mat {
             if(i == autodim) out.dims[i] = autoLength;
             else out.dims[i] = temp[i];
         }
+        delete[] out.strides;
         out.strides = new size_type[out.ndim];
         out.buildStrides();
         return out;
@@ -1278,6 +1280,7 @@ class Mat {
         for(long i = 0; i < a.ndim; i++){
             result.dims[i] = a.dims[i];
         }
+        delete[] result.strides;
         result.strides = new size_type[a.ndim];
         result.buildStrides();
         return result;
@@ -1353,7 +1356,8 @@ class MatIter{
         for(long i = 0; i < matrix.ndim; i++){
             coord[i] = 0;
         }
-        for(long i = matrix.ndim-1; i >= 0; i--){
+        eff_last_dim = matrix.ndim-1;
+        for(long i = eff_last_dim; i >= 0; i--){
             if(matrix.dims[i] != 1){
                 eff_last_dim = i;
                 break;
@@ -1424,7 +1428,8 @@ class Const_MatIter{
         for(int i = 0; i < matrix.ndim; i++){
             coord[i] = 0;
         }
-        for(long i = matrix.ndim-1; i >= 0; i--){
+        eff_last_dim = matrix.ndim-1;
+        for(long i = eff_last_dim; i >= 0; i--){
             if(matrix.dims[i] != 1){
                 eff_last_dim = i;
                 break;
