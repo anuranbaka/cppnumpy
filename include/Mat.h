@@ -80,10 +80,10 @@ class AllocInfo{
     public:
         void* userdata = NULL;
         //allocates dims, strides and (if not copying another matrix) base
-        void (*allocateMeta)(Mat<Type>*, void*, long) = NULL;
-        void (*deallocateMeta)(Mat<Type>*) = NULL;
-        void (*allocateData)(MatBase<Type>*, void*, const size_t) = NULL;
-        void (*deallocateData)(MatBase<Type>*) = NULL;
+        void (*allocateMeta)(Mat<Type>&, void*, long) = NULL;
+        void (*deallocateMeta)(Mat<Type>&) = NULL;
+        void (*allocateData)(MatBase<Type>&, void*, const size_t) = NULL;
+        void (*deallocateData)(MatBase<Type>&) = NULL;
 };
 
 template <class Type /*double*/>
@@ -93,18 +93,16 @@ class MatBase{
     AllocInfo<Type>* allocator = NULL;
     Type* data = NULL;
 
-    MatBase(AllocInfo<Type>* allocIn = NULL) : allocator(allocIn) {
-    }
+    MatBase(AllocInfo<Type>* allocIn = NULL) : allocator(allocIn) {}
 
-    MatBase(void* newdata) : data((Type*)newdata) {
-    }
+    MatBase(void* newdata) : data((Type*)newdata) {}
     
     ~MatBase(){
         if(allocator == NULL || allocator->deallocateData == NULL){
             delete[] data;
         }
         else{
-            allocator->deallocateData(this);
+            allocator->deallocateData(*this);
         }
     }
 };
@@ -276,7 +274,7 @@ class Mat {
             newBase = new MatBase<Type>();
             base = newBase;
         }
-        else allocator->allocateMeta(this, alloc.userdata, ndim);
+        else allocator->allocateMeta(*this, alloc.userdata, ndim);
         base->refCount++;
 
         dims = {(static_cast<size_type>(ind))...};
@@ -284,7 +282,7 @@ class Mat {
 
         if(allocator->allocateData == NULL)
             base->data = new Type[size()];
-        else allocator->allocateData(base, alloc.userdata, size());
+        else allocator->allocateData(*base, alloc.userdata, size());
         data = base->data;
     }
 
@@ -324,7 +322,7 @@ class Mat {
             newBase = new MatBase<Type>();
             base = newBase;
         }
-        else allocator->allocateMeta(this, alloc.userdata, ndim);
+        else allocator->allocateMeta(*this, alloc.userdata, ndim);
         base->refCount++;
 
         dims[0] = list.size();
@@ -333,7 +331,7 @@ class Mat {
         if(allocator->allocateData == NULL)
             base->data = new Type[size()];
         else
-            allocator->allocateData(base, alloc.userdata, size());
+            allocator->allocateData(*base, alloc.userdata, size());
         data = base->data;
 
         size_type i = 0;
@@ -376,16 +374,16 @@ class Mat {
         allocator = alloc;
 
         if(allocator->allocateMeta == NULL){
-        dims = new size_type[ndim];
-        if(list.size() != size())
-            throw invalid_argument("Initializer list size inconsistent with dimensions");
-        strides = new size_type[ndim];
+            dims = new size_type[ndim];
+            if(list.size() != size())
+                throw invalid_argument("Initializer list size inconsistent with dimensions");
+            strides = new size_type[ndim];
 
-        MatBase<Type>* newBase;
-        newBase = new MatBase<Type>();
-        base = newBase;
+            MatBase<Type>* newBase;
+            newBase = new MatBase<Type>();
+            base = newBase;
         }
-        else allocator->allocateMeta(this, alloc.userdata, ndim);
+        else allocator->allocateMeta(*this, alloc.userdata, ndim);
         base->refCount++;
 
         dims = {(static_cast<size_type>(ind))...};
@@ -397,7 +395,7 @@ class Mat {
             base->data = new Type[size()];
         }
         else
-            allocator->allocateData(base, allocator->userdata, size());
+            allocator->allocateData(*base, allocator->userdata, size());
         data = base->data;
 
         size_type i = 0;
@@ -419,7 +417,7 @@ class Mat {
             strides = new size_type[ndim];
         }
         else{
-            allocator->allocateMeta(this, allocator->userdata, ndim);
+            allocator->allocateMeta(*this, allocator->userdata, ndim);
         }
 
         for(long i = 0; i < ndim; i++){
@@ -446,7 +444,7 @@ class Mat {
             newBase = new MatBase<Type>();
             base = newBase;
         }
-        else allocator->allocateMeta(this, allocator->userdata, ndim);
+        else allocator->allocateMeta(*this, allocator->userdata, ndim);
         base->refCount++;
 
         dims[0] = newSize;
@@ -455,7 +453,7 @@ class Mat {
         if(allocator == NULL || allocator->allocateData == NULL){
             base->data = new Type[newSize];
         }
-        else allocator->allocateData(base, allocator->userdata, newSize);
+        else allocator->allocateData(*base, allocator->userdata, newSize);
         data = base->data;
         
         b.matrix.ito(b.index, *this);
@@ -479,7 +477,7 @@ class Mat {
             base = newBase;
         }
         else{
-            allocator->allocateMeta(this, allocator->userdata, ndim);
+            allocator->allocateMeta(*this, allocator->userdata, ndim);
         }
         base->refCount++;
 
@@ -492,7 +490,7 @@ class Mat {
         if(allocator == NULL || allocator->allocateData == NULL){
             base->data = new Type[newSize];
         }
-        else allocator->allocateData(base, allocator->userdata, newSize);
+        else allocator->allocateData(*base, allocator->userdata, newSize);
         data = base->data;
 
         b.matrix.ito(b.index, *this);
@@ -505,7 +503,7 @@ class Mat {
             delete []strides;
             if(base->refCount <= 0) delete base;
         }
-        else allocator->deallocateMeta(this);
+        else allocator->deallocateMeta(*this);
     }
 
     template<typename... arg>
@@ -544,7 +542,7 @@ class Mat {
             strides = new size_type[ndim];
         }
         else{
-            allocator->allocateMeta(this, NULL, ndim);
+            allocator->allocateMeta(*this, NULL, ndim);
         }
 
         for(long i = 0; i < ndim; i++){
@@ -577,7 +575,7 @@ class Mat {
             base = newBase;
         }
         else{
-            allocator->allocateMeta(this, allocator->userdata, ndim);
+            allocator->allocateMeta(*this, allocator->userdata, ndim);
         }
         base->refCount++;
         
@@ -590,7 +588,7 @@ class Mat {
         if(allocator == NULL || allocator->allocateData == NULL)
             base->data = new Type[size()];
         else
-            allocator->allocateData(base, allocator->userdata, size());
+            allocator->allocateData(*base, allocator->userdata, size());
         data = base->data;
 
         b.matrix.ito(b.index, *this);
@@ -611,7 +609,7 @@ class Mat {
             base = newBase;
         }
         else{
-            allocator->allocateMeta(this, allocator->userdata, ndim);
+            allocator->allocateMeta(*this, allocator->userdata, ndim);
         }
         base->refCount++;
 
@@ -624,7 +622,7 @@ class Mat {
         if(allocator == NULL || allocator->allocateData == NULL)
             base->data = new Type[size()];
         else
-            allocator->allocateData(base, allocator->userdata, size());
+            allocator->allocateData(*base, allocator->userdata, size());
         data = base->data;
 
         b.matrix.ito(b.index, *this);
@@ -1189,7 +1187,7 @@ class Mat {
         result.data = data;
 
         thread_local AllocInfo<Type> wrap_alloc;
-        wrap_alloc.deallocateData = [](MatBase<Type>*){return;};
+        wrap_alloc.deallocateData = [](MatBase<Type>&){return;};
 
         result.allocator = &wrap_alloc;
         result.base->allocator = &wrap_alloc;
@@ -1216,7 +1214,7 @@ class Mat {
             result.base = newBase;
         }
         else{
-            result.allocator->allocateMeta(&result, result.allocator->userdata, result.ndim);
+            result.allocator->allocateMeta(result, result.allocator->userdata, result.ndim);
         }
         result.base->allocator = alloc;
         result.base->refCount++;
@@ -1230,7 +1228,7 @@ class Mat {
             result.base->data = data;
         }
         else{
-            result.base->allocator->allocateData(result.base, result.base->allocator->userdata, result.size());
+            result.base->allocator->allocateData(*result.base, result.base->allocator->userdata, result.size());
         }
         result.data = result.base->data;
 

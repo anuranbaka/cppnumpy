@@ -16,7 +16,7 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic -O0
 
-all: bin/matTest floodPybind matDebug bin/errorTest
+all: matTest floodFill floodPybind matDebug errorTest allocTest
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -39,6 +39,7 @@ lib/libInverseLapack32.so: src/matMathLapack.cpp
 lib/libInverse32.so: src/matMath.cpp
 	g++ $(DEBUG_FLAGS) --std=c++11 -fPIC -m32 -I $(INCLUDES) src/matMath.cpp -shared -o lib/libInverse32.so
 
+matTest: bin/matTest
 ifeq ($(sim32bit),true)
 ifeq ($(useLapack),true)
 bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverseLapack32.so
@@ -57,9 +58,11 @@ bin/matTest: matTest/matTest.cpp include/Mat.h include/matMath.h lib/libInverse.
 endif
 endif
 
+errorTest: bin/errorTest
 bin/errorTest: matTest/errorTest.cpp include/Mat.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/errorTest.cpp -o bin/errorTest
 
+floodFill: bin/floodFill
 bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
 	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 

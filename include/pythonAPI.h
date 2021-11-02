@@ -29,30 +29,30 @@ int getTypenum(){
 }
 
 template <class T>
-void wrap_numpy_allocateMeta(Mat<T>* new_mat, void*, const long new_ndim){
-    new_mat->dims = new size_t[new_ndim];
-    new_mat->strides = new size_t[new_ndim];
+void wrap_numpy_allocateMeta(Mat<T> &new_mat, void*, const long new_ndim){
+    new_mat.dims = new size_t[new_ndim];
+    new_mat.strides = new size_t[new_ndim];
     MatBase<T>* newBase;
     newBase = new MatBase<T>;
-    new_mat->base = newBase;
+    new_mat.base = newBase;
 }
 
 template <class T>
-void wrap_numpy_deallocateMeta(Mat<T>* mat){
-    delete[] mat->dims;
-    delete[] mat->strides;
-    if(mat->base->refCount <= 0) delete mat->base;
+void wrap_numpy_deallocateMeta(Mat<T> &mat){
+    delete[] mat.dims;
+    delete[] mat.strides;
+    if(mat.base->refCount <= 0) delete mat.base;
 }
 
 template <class T>
-void wrap_numpy_allocateData(MatBase<T>* base, void* userdata, const size_t){
-    base->data = (T*)PyArray_DATA((PyArrayObject*)userdata);
-    Py_INCREF(base->allocator->userdata);
+void wrap_numpy_allocateData(MatBase<T> &base, void* userdata, const size_t){
+    base.data = (T*)PyArray_DATA((PyArrayObject*)userdata);
+    Py_INCREF(base.allocator->userdata);
 }
 
 template <class T>
-void wrap_numpy_deallocateData(MatBase<T>* base){
-    Py_DECREF(base->allocator->userdata);
+void wrap_numpy_deallocateData(MatBase<T> &base){
+    Py_DECREF(base.allocator->userdata);
 }
 
 template <class T>
