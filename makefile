@@ -16,7 +16,7 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic -O0
 
-all: matTest floodFill floodPybind matDebug errorTest allocTest
+all: matTest floodFill floodPybind matDebug errorTest
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/

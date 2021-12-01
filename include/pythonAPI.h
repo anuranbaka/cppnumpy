@@ -32,9 +32,11 @@ template <class T>
 void wrap_numpy_allocateMeta(Mat<T> &new_mat, void*, const long new_ndim){
     new_mat.dims = new size_t[new_ndim];
     new_mat.strides = new size_t[new_ndim];
-    MatBase<T>* newBase;
-    newBase = new MatBase<T>;
-    new_mat.base = newBase;
+    if(new_mat.base == NULL){
+        MatBase<T>* newBase;
+        newBase = new MatBase<T>;
+        new_mat.base = newBase;
+    }
 }
 
 template <class T>
@@ -45,9 +47,10 @@ void wrap_numpy_deallocateMeta(Mat<T> &mat){
 }
 
 template <class T>
-void wrap_numpy_allocateData(MatBase<T> &base, void* userdata, const size_t){
-    base.data = (T*)PyArray_DATA((PyArrayObject*)userdata);
-    Py_INCREF(base.allocator->userdata);
+void wrap_numpy_allocateData(MatBase<T> &base, void*, const size_t size){
+    const long temp = size;
+    const npy_intp* dim = &temp;
+    base.data = (T*)PyArray_DATA(PyArray_SimpleNew(1, dim, getTypenum<T>()));
 }
 
 template <class T>
@@ -68,7 +71,7 @@ PyObject* wrap_mat(Mat<T>& cmat){
     PyObject* capsule = PyCapsule_New(temp, MAT_NAME, destructor_wrapper<T>);
     int writeFlag = 0;
     if(!is_const<T>()) writeFlag = NPY_ARRAY_WRITEABLE;
-    npy_intp py_strides[cmat.ndim];
+    npy_intp py_strides[MAX_NDIM];
     for(long i = 0; i < cmat.ndim; i++){
         py_strides[i] = cmat.strides[i]*sizeof(T);
     }
@@ -102,7 +105,7 @@ Mat<T> wrap_numpy(PyArrayObject* arr){
     npInfo.userdata = arrBase;
     npInfo.allocateMeta = *wrap_numpy_allocateMeta<T>;
     npInfo.deallocateMeta = *wrap_numpy_deallocateMeta<T>;
-    npInfo.allocateData = *wrap_numpy_allocateData<T>;
+    //npInfo.allocateData = *wrap_numpy_allocateData<T>;
     npInfo.deallocateData = *wrap_numpy_deallocateData<T>;
 
     out = Mat<T>::wrap(
