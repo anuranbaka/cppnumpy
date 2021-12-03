@@ -5,11 +5,14 @@ Release ver. ALPHA 2.3 3/17/2021
 This is standalone C++ matrix header library that was built to be byte compatible with Numpy. Included are bindings that correctly propagate memory management and error systems between C++ and Python, so that developers can write code without thinking about where the matrix originated.
 Our design goal was to have a library that maps 1:1 to a basic subset of the Numpy API. In the rare case that this isn't possible due to language constraints (such as Python's matrix multiply operator "@" which isn't available in C++) we aim for a close equivalent to minimize mental load when porting code between the two.
 Any code written in C++ that takes in our matrices can be compiled with a special header we provide, and the resulting shared library will be importable as a module in CPython. The functions and classes will take and return Numpy arrays wherever our matrix class was used.
+
 Generally speaking, when writing on the C++ side, functions behave just like in NumPy, except for the following changes:
 - The operator "^" is overloaded to perform matrix multiplication rather than bitwise XOR
 - "T" is used for a hard transpose, while "t" is used for a soft transpose
 - Due to limitations of C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 - Array broadcasting is implemented as a function taking a function pointer
+
+Additionally, the library contains an interface for custom allocation procedures. Although by default matrix data is heap allocated, using custom procedures could allow for all memory allocation to occur at compile time if needed.
 
 # Usage
 The library supports several basic matrix arithmetic operations:
@@ -62,7 +65,48 @@ map = np.array([[1,2,3]
 s.func(map)
 print(map)
 ```
-
+Custom memory allocation is done by defining allocation and deallocation functions:
+```
+  //specifies how to allocate meta-data such as the list of dims
+  void customAllocator_Meta(Mat<T> &mat, void* userdata, long ndim){
+    mat.dims = /*address for storing array of size ndim*/;
+    mat.strides = /*another address for storing array of size ndim*/;
+    
+    //mat.base is only allocated on construction. If not NULL you're making a copy of another matrix!
+    if(mat.base == NULL)
+    {
+        mat.base = /*address with enough space for a MatBase<T>*/;
+    }
+  }
+  void customDellocator_Meta(Mat<T> &mat){
+    //deallocation procedures for dims and strides go here
+    if(mat.base->refCount <= 0){
+      //deallocation procedure for mat.base goes here
+    }
+  }
+  //allocation procured for the data contained by the matrix
+  void customAllocator_Data(MatBase<T> &base, void* userdata, size_t data_size){
+    base.data = /*address with enough space for all data elements*/;
+  }
+  void customDeallocator_Data(MatBase<T>&){
+    //deallocate data here
+  }
+```
+Those functions can then be assigned to an AllocInfo struct which is passed in during construction:
+```
+  AllocInfo<T> alloc;
+  //userdata is a void* that is passed along to the allocation functions for addressing purposes
+  //this could be a memory buffer or struct with address information for example
+  alloc.userdata = buffer;
+  alloc.allocateMeta = customallocatorMeta<T>;
+  alloc.deallocateMeta = customdeallocatorMeta<T>;
+  alloc.allocateData = customallocatorData<T>;
+  alloc.deallocateData = customdeallocatorData<T>;
+  
+  Mat<T> mat(&alloc, 3, 4); //constructs a 3x3 matrix using the allocation functions defined above
+```
+  
+  
 # Installing
 The project is built using make. Running "make install" will copy the relevant header files into the default include path. <Mat.h> contains the matrix header and its basic functions, while <matPybind.h> contains the type-caster that allows automatic conversion to/from a NumPy array.
 
@@ -75,9 +119,11 @@ Both programs are compiled when running "make" in the base directory. If "useLap
 
 # Functions
 ###### Template parameter "Type" used to signify the element type
-- **(constructor)**: takes an optional initializer list followed by dimensions
+- **(constructor)**: takes an optional initializer list followed by an optional alloc_info struct, and finally the list of dimensions
   - ` Mat(std::initializer_list<Type>, size_t...) `
   - ` Mat(size_t...) `
+  - ` Mat(std::initializer_list<Type>, AllocInfo<Type>, size_t...) `
+  - ` Mat(AllocInfo<Type>, size_t...) `
   - ` Mat(const Mat&) `
 - **(destructor)**: underlying memory is only deleted if it is the last matrix using it
   - ` ~Mat() `
