@@ -16,7 +16,7 @@ PY_SUFFIX := $(shell python3-config --extension-suffix)
 
 DEBUG_FLAGS = -g -Wall -Wextra -pedantic -O0
 
-all: matTest floodFill floodPybind matDebug errorTest
+all: matTest floodFill floodPybind matDebug errorTest allocTest
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
@@ -76,3 +76,7 @@ python/matDebug$(PY_SUFFIX): pybind/matDebugTest.cpp include/Mat.h include/pytho
 	
 python/pyCapsuleTest: include/matPybind.h pybind/pyCapsuleTest.cpp
 	g++ $(DEBUG_FLAGS) -shared -std=c++14 -fPIC -I include $(PYTHON_INCLUDES) -I $(NUMPY_INCLUDES) pybind/pyCapsuleTest.cpp -o python/pyCapsuleTest$(PY_SUFFIX)
+
+allocTest: bin/allocTest
+bin/allocTest: matTest/allocTest.cpp include/Mat.h
+	g++ $(DEBUG_FLAGS) -Wno-pointer-arith --std=c++11 -I $(INCLUDES) matTest/allocTest.cpp -o bin/allocTest

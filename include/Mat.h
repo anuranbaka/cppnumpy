@@ -282,9 +282,9 @@ class Mat {
         else allocator->allocateMeta(*this, alloc->userdata, ndim);
         base->refCount++;
 
-        size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
+        size_type temp_dims[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
         for(long i = 0; i < ndim; ++i){
-            dims[i] = temp[i];
+            dims[i] = temp_dims[i];
         }
         buildStrides();
 
@@ -330,7 +330,7 @@ class Mat {
             newBase = new MatBase<Type>();
             base = newBase;
         }
-        else allocator->allocateMeta(*this, alloc.userdata, ndim);
+        else allocator->allocateMeta(*this, alloc->userdata, ndim);
         base->refCount++;
 
         dims[0] = list.size();
@@ -339,7 +339,7 @@ class Mat {
         if(allocator->allocateData == NULL)
             base->data = new Type[size()];
         else
-            allocator->allocateData(*base, alloc.userdata, size());
+            allocator->allocateData(*base, alloc->userdata, size());
         data = base->data;
 
         size_type i = 0;
@@ -393,7 +393,7 @@ class Mat {
             newBase = new MatBase<Type>();
             base = newBase;
         }
-        else allocator->allocateMeta(*this, alloc.userdata, ndim);
+        else allocator->allocateMeta(*this, alloc->userdata, ndim);
         base->refCount++;
 
         size_type temp[sizeof...(arg)] = {(static_cast<size_type>(ind))...};
@@ -549,13 +549,14 @@ class Mat {
         (base->refCount)++;
         ndim = b.ndim;
         data = b.data;
+        allocator = b.allocator;
         
-        if(allocator == NULL){
+        if(allocator == NULL || allocator->allocateMeta == NULL){
             dims = new size_type[ndim];
             strides = new size_type[ndim];
         }
         else{
-            allocator->allocateMeta(*this, NULL, ndim);
+            allocator->allocateMeta(*this, allocator->userdata, ndim);
         }
 
         for(long i = 0; i < ndim; i++){
@@ -1143,7 +1144,7 @@ class Mat {
             out.strides = new size_type[out.ndim];
         }
         else{
-            out.allocator->allocateMeta(*this, out.allocator->userdata, out.ndim);
+            out.allocator->allocateMeta(out, out.allocator->userdata, out.ndim);
         }
 
         for(long i = 0; i < out.ndim; i++){
@@ -1166,14 +1167,14 @@ class Mat {
         return out;
     }
 
-    static Mat<Type> arange(int start, int stop, int step = 1){
+    static Mat<Type> arange(int start, int stop, int step = 1, AllocInfo<Type>* alloc = NULL){
         if(start < 0) throw out_of_range("arange start must be >= 0");
         if(stop < 0) throw out_of_range("arange stop must be >= 0");
         if(step == 0) throw runtime_error("attempted division by zero in arange()");
         size_type newSize = 0;
         if(start <= stop && step > 0) newSize = 1 + ((stop - start - 1) / step);
         else if(stop < start && step < 0) newSize = 1 + ((start - stop - 1) / -step);
-        Mat<Type> out(newSize);
+        Mat<Type> out(alloc, newSize);
         int j = start;
         for(auto& i : out){
             i = j;
