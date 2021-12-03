@@ -12,7 +12,7 @@ Generally speaking, when writing on the C++ side, functions behave just like in 
 - Due to limitations of C++ syntax, array slicing is replaced by a "region-of-interest" function (roi()).
 - Array broadcasting is implemented as a function taking a function pointer
 
-Additionally, the library contains an interface for custom allocation procedures. Although by default matrix data is heap allocated, using custom procedures could allow for all memory allocation to occur at compile time if needed.
+Additionally, the library contains an interface for custom allocation procedures. Although by default matrix data is heap allocated, using custom procedures could allow for all memory allocation to occur at program start if needed.
 
 # Usage
 The library supports several basic matrix arithmetic operations:
@@ -97,6 +97,7 @@ Those functions can then be assigned to an AllocInfo struct which is passed in d
   AllocInfo<T> alloc;
   //userdata is a void* that is passed along to the allocation functions for addressing purposes
   //this could be a memory buffer or struct with address information for example
+  //if any of these functions are left undefined, then default allocation on the heap will be used
   alloc.userdata = buffer;
   alloc.allocateMeta = customallocatorMeta<T>;
   alloc.deallocateMeta = customdeallocatorMeta<T>;
