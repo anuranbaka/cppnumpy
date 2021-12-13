@@ -436,7 +436,7 @@ int main (){
     output = y.i(Mat<size_t>::arange(0,3,2));
     fprintf(outFile, "assigning rows 0 and 2 of y to a matrix\n");
     output.print(outFile);
-    fflush(outFile);
+    
     y.i(y < 1) = 25;
     fprintf(outFile, "y.i(y < 1) = 25\n");
     y.print(outFile);

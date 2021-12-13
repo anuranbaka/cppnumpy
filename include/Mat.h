@@ -7,8 +7,9 @@
 #include <type_traits>
 
 using namespace std;
-
+#ifndef ERROR_IF_FAILED_ALLOC
 #define ERROR_IF_FAILED_ALLOC false
+#endif
 const long MAX_NDIM = 32;
 
 template <class Type>
@@ -1290,12 +1291,20 @@ class Mat {
                 alloc = (AllocInfo<newType>*)a.allocator;
             }
             else{
-                static_assert(!ERROR_IF_FAILED_ALLOC, "failed to inherit allocator during type conversion");
+                static_assert(!ERROR_IF_FAILED_ALLOC,
+                        "failed to inherit allocator during type conversion");
             }
         }
         Mat<newType> result(alloc, a.size());
 
         result.ndim = a.ndim;
+        if(result.allocator != NULL){
+            if((result.allocator->allocateMeta == NULL
+                && result.allocator->deallocateMeta != NULL)
+                || (result.allocator->allocateMeta != NULL
+                && result.allocator->deallocateMeta == NULL))
+                    throw runtime_error("inherited allocator must define both allocation and deallocation procedures");
+        }
         if(result.allocator == NULL || result.allocator->deallocateMeta == NULL){
             delete[] result.dims;
             delete[] result.strides;
@@ -2019,14 +2028,18 @@ template<class Type2>
 void Mat<Type>::ito(const Mat<Type2> &indices, Mat<Type> &out,
                 typename std::enable_if<std::is_integral<Type2>::value>::type*) const{
     if(indices.ndim != 1)
-        throw invalid_argument("index lists with ndim != 1 not yet implemented");
+        throw invalid_argument
+            ("index lists with ndim != 1 not yet implemented");
     if(out.ndim != ndim)
-        throw invalid_argument("inconsistent number of dimensions in output matrix in call to ito()");
+        throw invalid_argument
+            ("inconsistent number of dimensions in output matrix in call to ito()");
     if(out.dims[0] != indices.size())
-        throw invalid_argument("output matrix shape does not match given index list in call to ito()");
+        throw invalid_argument
+            ("output matrix shape does not match given index list in call to ito()");
     for(long i = 1; i < ndim; i++){
         if(out.dims[i] != dims[i])
-        throw invalid_argument("output matrix shape mismatch in call to ito()");
+        throw invalid_argument
+            ("output matrix shape mismatch in call to ito()");
     }
 
     const_iterator dimend = begin();

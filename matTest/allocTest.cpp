@@ -1,3 +1,7 @@
+//This test shows how custom allocators can be used to avoid heap allocations
+//In this case a memory buffer is used in the stack frame
+//Matrices are constructed, copied and used without allocating additional memory
+
 #include <Mat.h>
 
 class mem_buffer{
@@ -31,7 +35,7 @@ void customAllocator_Meta(Mat<T> &mat, void* buf, long ndim){
 }
 template<typename T>
 void customDeallocator_Meta(Mat<T>&){
-    //maybe write this later
+    //Not needed for this brief test
 }
 template<typename T>
 void customAllocator_Data(MatBase<T> &base, void* buf, const size_t size){
@@ -39,10 +43,7 @@ void customAllocator_Data(MatBase<T> &base, void* buf, const size_t size){
 }
 template<typename T>
 void customDeallocator_Data(MatBase<T>&){
-    //maybe write this later
-}
-void test(){
-    
+    //not needed for this brief test
 }
 
 int main (){
@@ -69,8 +70,11 @@ int main (){
     Mat<double> c({2,3,4}, &alloc_double);
     Mat<double> d(a);
     Mat<double> e = a.copy();
-    Mat<double> f = a.reshape(6,2); // one alloc while this line exists... :/
+    Mat<double> f = a.reshape(6,2);
     Mat<double> g = a.i(Mat<size_t>::arange(2,4,1,&alloc_size_t));
+
+    a += e;
+    a.print(); 
 
     return 0;
 }
