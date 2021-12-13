@@ -199,7 +199,7 @@ int main (){
     output.print(outFile);
 
     Mat<> a({1,2,3,4,5,6}, 6);
-    Mat<> b({3,3,3,3,3,3}, 6);
+    Mat<> b({3,3,3,3,3,3});
     Mat<> c({5}, 1);
     Mat<> d(0);
 
@@ -304,7 +304,7 @@ int main (){
 
     output = y.roi(1,3).reshape(6,2);
     fprintf(outFile, "y.roi(1,3).reshape(6,2)\n");
-    if(output.memory == y.memory)
+    if(output.base == y.base)
         fprintf(outFile, "points to the same data because it is contiguous\n");
     else
         fprintf(outFile,
@@ -313,7 +313,7 @@ int main (){
 
     output = y.t().reshape(2,12);
     fprintf(outFile, "reshaping the transpose of y to a 2,12 matrix\n");
-    if(output.memory != y.memory)
+    if(output.base != y.base)
         fprintf(outFile, "points to a copy because it is not contiguous\n");
     else
         fprintf(outFile,
@@ -436,7 +436,7 @@ int main (){
     output = y.i(Mat<size_t>::arange(0,3,2));
     fprintf(outFile, "assigning rows 0 and 2 of y to a matrix\n");
     output.print(outFile);
-
+    
     y.i(y < 1) = 25;
     fprintf(outFile, "y.i(y < 1) = 25\n");
     y.print(outFile);
@@ -510,7 +510,7 @@ int main (){
     fprintf(outFile, "inverse of the Hilbert matrix\n");
     output.print(outFile);
 
-    fflush(outFile);
+    fclose(outFile);
     std::ifstream testFile("matTest/matTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     std::ifstream testCheck("matTest/expectedMatTestOutput.txt", std::ifstream::ate | std::ifstream::binary);
     if(testFile.tellg() != testCheck.tellg()){

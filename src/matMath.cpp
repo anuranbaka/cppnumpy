@@ -10,7 +10,7 @@ Type determinant(const Mat<Type>& mat){
     }
     else{
         Type result = 0;
-        for(int i = 0; i < mat.columns(); i++){
+        for(size_t i = 0; i < mat.columns(); i++){
             if(i%2 == 0) result += mat(0,i)*minor(mat,0,i);
             else result -= mat(0,i)*minor(mat,0,i);
         }
@@ -20,8 +20,8 @@ Type determinant(const Mat<Type>& mat){
 template<class Type>
 Mat<Type> adjugate(const Mat<Type>& mat){
     Mat<Type> result(Mat<Type>::empty_like(mat));
-    for(int i = 0; i < result.rows(); i++){
-        for(int j = 0; j < result.columns(); j++){
+    for(size_t i = 0; i < result.rows(); i++){
+        for(size_t j = 0; j < result.columns(); j++){
             if(i%2 ^ j%2) result(i,j) = -1*minor(mat, i, j);
             else result(i,j) = minor(mat, i, j);
         }
@@ -33,10 +33,10 @@ template<class Type>
 Type minor(const Mat<Type>& mat, size_t x, size_t y){
     Mat<Type> temp(mat.rows()-1,mat.columns()-1);
     size_t inRow = 0, inCol = 0;
-    for(int i = 0; i < temp.rows(); i++){
+    for(size_t i = 0; i < temp.rows(); i++){
         if(i == x) inRow++;
         inCol = 0;
-        for(int j = 0; j < temp.columns(); j++){
+        for(size_t j = 0; j < temp.columns(); j++){
             if(j == y) inCol++;
             temp(i,j) = mat(inRow,inCol);
             inCol++;
