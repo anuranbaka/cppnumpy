@@ -70,12 +70,6 @@ bin/errorTest: matTest/errorTest.cpp include/Mat.h | bin
 
 floodFill: bin/floodFill | bin
 bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h
-=======
-bin/errorTest: matTest/errorTest.cpp include/Mat.h | bin
-	g++ $(DEBUG_FLAGS) --std=c++11 -I $(INCLUDES) matTest/errorTest.cpp -o bin/errorTest
-
-bin/floodFill: floodFill/floodFill.cpp include/Mat.h include/floodFill.h | bin
-	g++ $(DEBUG_FLAGS) --std=c++11 -O3 -I $(INCLUDES) floodFill/floodFill.cpp -o bin/floodFill
 
 floodPybind: python/floodPybind$(PY_SUFFIX)
 python/floodPybind$(PY_SUFFIX): pybind/floodFillPybind.cpp include/matPybind.h bin/floodFill include/pythonAPI.h
