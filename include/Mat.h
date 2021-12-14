@@ -614,6 +614,7 @@ class Mat {
     Mat<Type>& operator=(const iMat<Type, Type2> b){
         this->~Mat<Type>();
         ndim = b.matrix.ndim;
+        allocator = b.matrix.allocator;
         
         if(allocator == NULL){
             dims = new size_type[ndim];
